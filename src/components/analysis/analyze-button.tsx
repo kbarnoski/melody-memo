@@ -9,13 +9,14 @@ import { toast } from "sonner";
 
 interface AnalyzeButtonProps {
   recordingId: string;
+  recordingTitle?: string;
   audioUrl: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onComplete: (analysis: any) => void;
   hasExisting?: boolean;
 }
 
-export function AnalyzeButton({ recordingId, audioUrl, onComplete, hasExisting }: AnalyzeButtonProps) {
+export function AnalyzeButton({ recordingId, recordingTitle, audioUrl, onComplete, hasExisting }: AnalyzeButtonProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [stage, setStage] = useState("");
   const [progress, setProgress] = useState(0);
@@ -59,6 +60,29 @@ export function AnalyzeButton({ recordingId, audioUrl, onComplete, hasExisting }
         .single();
 
       if (error) throw error;
+
+      setStage("Generating teaching summary...");
+      setProgress(97);
+
+      // Generate AI teaching summary
+      try {
+        const res = await fetch("/api/analysis/summarize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            analysisId: data.id,
+            analysis: data,
+            title: recordingTitle,
+          }),
+        });
+        if (res.ok) {
+          const { summary } = await res.json();
+          data.summary = summary;
+        }
+      } catch (summaryErr) {
+        console.error("Summary generation failed:", summaryErr);
+        // Non-fatal — analysis still works without summary
+      }
 
       setProgress(100);
       toast.success("Analysis complete!");

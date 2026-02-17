@@ -45,14 +45,10 @@ export default async function CollectionPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">{collection.name}</h1>
-        {collection.description && (
-          <p className="text-muted-foreground">{collection.description}</p>
-        )}
-      </div>
       <CollectionDetail
         collectionId={id}
+        initialName={collection.name}
+        initialDescription={collection.description ?? ""}
         initialRecordings={recordings}
         availableRecordings={availableRecordings}
       />

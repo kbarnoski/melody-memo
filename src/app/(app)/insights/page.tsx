@@ -1,16 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { KeyDistribution } from "@/components/insights/key-distribution";
-import { ChordFrequency } from "@/components/insights/chord-frequency";
-import { ProgressionPatterns } from "@/components/insights/progression-patterns";
-import { SimilarRecordings } from "@/components/insights/similar-recordings";
-import { InsightsChat } from "@/components/insights/insights-chat";
-import {
-  getKeyDistribution,
-  getChordFrequency,
-  findCommonProgressions,
-  findSimilarRecordings,
-} from "@/lib/analysis/cross-recording";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InsightsDashboard } from "@/components/insights/insights-dashboard";
 import { BarChart3 } from "lucide-react";
 
 export default async function InsightsPage() {
@@ -48,11 +37,6 @@ export default async function InsightsPage() {
     );
   }
 
-  const keyDist = getKeyDistribution(analysesData);
-  const chordFreq = getChordFrequency(analysesData);
-  const progressions = findCommonProgressions(analysesData);
-  const similar = findSimilarRecordings(analysesData);
-
   return (
     <div className="space-y-6">
       <div>
@@ -62,25 +46,7 @@ export default async function InsightsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="chat">AI Chat</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <KeyDistribution data={keyDist} />
-            <ChordFrequency data={chordFreq} />
-          </div>
-          <ProgressionPatterns progressions={progressions} />
-          <SimilarRecordings pairs={similar} />
-        </TabsContent>
-
-        <TabsContent value="chat">
-          <InsightsChat analyses={analysesData} />
-        </TabsContent>
-      </Tabs>
+      <InsightsDashboard analyses={analysesData} />
     </div>
   );
 }

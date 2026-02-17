@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -21,8 +21,9 @@ import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-import { GripVertical, FileAudio, Clock, Plus, X } from "lucide-react";
+import { GripVertical, FileAudio, Clock, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Recording {
@@ -82,11 +83,12 @@ function SortableRecording({
           </Link>
           <Button
             variant="ghost"
-            size="icon"
-            className="shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
+            size="sm"
+            className="shrink-0 text-muted-foreground hover:text-destructive"
             onClick={() => onRemove(recording.id)}
           >
-            <X className="h-4 w-4" />
+            <Trash2 className="mr-1 h-3.5 w-3.5" />
+            Remove
           </Button>
         </CardContent>
       </Card>
@@ -96,16 +98,53 @@ function SortableRecording({
 
 export function CollectionDetail({
   collectionId,
+  initialName,
+  initialDescription,
   initialRecordings,
   availableRecordings: initialAvailable = [],
 }: {
   collectionId: string;
+  initialName: string;
+  initialDescription: string;
   initialRecordings: Recording[];
   availableRecordings?: AvailableRecording[];
 }) {
   const [recordings, setRecordings] = useState(initialRecordings);
   const [available, setAvailable] = useState(initialAvailable);
   const [showPicker, setShowPicker] = useState(false);
+  const [name, setName] = useState(initialName);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState(initialName);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  async function saveName() {
+    const trimmed = editName.trim();
+    if (!trimmed || trimmed === name) {
+      setEditName(name);
+      setIsEditingName(false);
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("collections")
+      .update({ name: trimmed })
+      .eq("id", collectionId);
+    if (error) {
+      toast.error("Failed to rename collection");
+      setEditName(name);
+    } else {
+      setName(trimmed);
+      toast.success("Collection renamed");
+    }
+    setIsEditingName(false);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -184,6 +223,41 @@ export function CollectionDetail({
 
   return (
     <div className="space-y-4">
+      <div>
+        {isEditingName ? (
+          <div className="flex items-center gap-2">
+            <Input
+              ref={nameInputRef}
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveName();
+                if (e.key === "Escape") {
+                  setEditName(name);
+                  setIsEditingName(false);
+                }
+              }}
+              onBlur={saveName}
+              className="text-2xl font-bold h-auto py-1 px-2"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              setEditName(name);
+              setIsEditingName(true);
+            }}
+            className="group flex items-center gap-2 text-left"
+          >
+            <h1 className="text-2xl font-bold">{name}</h1>
+            <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        )}
+        {initialDescription && (
+          <p className="text-muted-foreground mt-1">{initialDescription}</p>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {recordings.length} recording{recordings.length !== 1 ? "s" : ""}

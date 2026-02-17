@@ -1,8 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Music, Gauge, Clock, TrendingUp, Repeat, Guitar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Music, Gauge, Clock, TrendingUp, Repeat, Guitar,
+  BookOpen, Lightbulb, ListMusic, ChevronDown, ChevronUp,
+} from "lucide-react";
+
+interface Summary {
+  overview: string;
+  key_center: string;
+  sections: { label: string; description: string }[];
+  chord_vocabulary: string[];
+  harmonic_highlights: string;
+  rhythm_and_feel: string;
+  relearning_tips: string;
+}
 
 interface AnalysisDisplayProps {
   analysis: {
@@ -16,6 +31,7 @@ interface AnalysisDisplayProps {
     melody?: { midi: number; time: number; duration: number; velocity: number }[];
     bass_line?: { midi: number; time: number; duration: number; velocity: number }[];
     notes: { midi: number; time: number; duration: number; velocity: number }[];
+    summary?: Summary | null;
   };
 }
 
@@ -25,10 +41,121 @@ function midiToNote(midi: number): string {
   return `${NOTE_NAMES[midi % 12]}${Math.floor(midi / 12) - 1}`;
 }
 
-export function AnalysisDisplay({ analysis }: AnalysisDisplayProps) {
+function TeachingSummary({ summary }: { summary: Summary }) {
+  return (
+    <div className="space-y-4">
+      {/* Overview Card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <BookOpen className="h-4 w-4" />
+            Overview
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm leading-relaxed">{summary.overview}</p>
+          <p className="mt-2 text-sm">
+            <span className="font-medium">Key Center:</span>{" "}
+            <span className="text-muted-foreground">{summary.key_center}</span>
+          </p>
+          {summary.rhythm_and_feel && (
+            <p className="mt-1 text-sm">
+              <span className="font-medium">Feel:</span>{" "}
+              <span className="text-muted-foreground">{summary.rhythm_and_feel}</span>
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Sections Timeline */}
+      {summary.sections.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <ListMusic className="h-4 w-4" />
+              Sections
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="relative space-y-4">
+              {summary.sections.map((section, i) => (
+                <div key={i} className="relative pl-6">
+                  <div className="absolute left-0 top-1 h-3 w-3 rounded-full bg-primary" />
+                  {i < summary.sections.length - 1 && (
+                    <div className="absolute left-[5px] top-4 bottom-0 w-0.5 bg-border" />
+                  )}
+                  <p className="text-sm font-medium">{section.label}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground leading-relaxed">
+                    {section.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Chord Vocabulary */}
+      {summary.chord_vocabulary.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Guitar className="h-4 w-4" />
+              Chord Vocabulary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {summary.chord_vocabulary.map((chord) => (
+                <Badge key={chord} variant="outline" className="text-sm">
+                  {chord}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Harmonic Highlights */}
+      {summary.harmonic_highlights && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Music className="h-4 w-4" />
+              Harmonic Highlights
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {summary.harmonic_highlights}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Relearning Tips */}
+      {summary.relearning_tips && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-sm font-medium text-primary">
+              <Lightbulb className="h-4 w-4" />
+              Tips for Relearning
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm leading-relaxed">
+              {summary.relearning_tips}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function RawAnalysisDetails({ analysis }: AnalysisDisplayProps) {
   const uniqueChords = [...new Set(analysis.chords.map((c) => c.chord))];
 
-  // Chord frequency for display
   const chordCounts = new Map<string, number>();
   for (const c of analysis.chords) {
     chordCounts.set(c.chord, (chordCounts.get(c.chord) || 0) + 1);
@@ -36,7 +163,6 @@ export function AnalysisDisplay({ analysis }: AnalysisDisplayProps) {
   const sortedChords = [...chordCounts.entries()]
     .sort((a, b) => b[1] - a[1]);
 
-  // Note range
   const midiValues = analysis.notes.map((n) => n.midi);
   const minNote = midiValues.length > 0 ? midiToNote(Math.min(...midiValues)) : "N/A";
   const maxNote = midiValues.length > 0 ? midiToNote(Math.max(...midiValues)) : "N/A";
@@ -162,6 +288,41 @@ export function AnalysisDisplay({ analysis }: AnalysisDisplayProps) {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+export function AnalysisDisplay({ analysis }: AnalysisDisplayProps) {
+  const [showRawData, setShowRawData] = useState(false);
+  const hasSummary = analysis.summary && typeof analysis.summary === "object";
+
+  if (!hasSummary) {
+    return <RawAnalysisDetails analysis={analysis} />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <TeachingSummary summary={analysis.summary!} />
+
+      <Button
+        variant="ghost"
+        className="w-full text-muted-foreground"
+        onClick={() => setShowRawData(!showRawData)}
+      >
+        {showRawData ? (
+          <>
+            <ChevronUp className="mr-2 h-4 w-4" />
+            Hide Raw Analysis Data
+          </>
+        ) : (
+          <>
+            <ChevronDown className="mr-2 h-4 w-4" />
+            Show Raw Analysis Data
+          </>
+        )}
+      </Button>
+
+      {showRawData && <RawAnalysisDetails analysis={analysis} />}
     </div>
   );
 }

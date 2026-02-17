@@ -32,6 +32,37 @@ create policy "Users can update own recordings"
 create policy "Users can delete own recordings"
   on recordings for delete using (auth.uid() = user_id);
 
+-- V2: Preserve original file date
+alter table recordings add column if not exists recorded_at timestamptz;
+
+-- V2: Markers (timestamp notes on waveform)
+create table if not exists markers (
+  id uuid default gen_random_uuid() primary key,
+  recording_id uuid references recordings(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  time real not null,
+  label text not null,
+  color text default '#primary',
+  created_at timestamptz default now()
+);
+
+alter table markers enable row level security;
+
+create policy "Users can view own markers"
+  on markers for select using (auth.uid() = user_id);
+
+create policy "Users can insert own markers"
+  on markers for insert with check (auth.uid() = user_id);
+
+create policy "Users can update own markers"
+  on markers for update using (auth.uid() = user_id);
+
+create policy "Users can delete own markers"
+  on markers for delete using (auth.uid() = user_id);
+
+-- V2: Analysis teaching summary
+alter table analyses add column if not exists summary jsonb;
+
 -- ============================================
 -- Phase 2: Analyses
 -- ============================================

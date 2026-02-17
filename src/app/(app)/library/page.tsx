@@ -9,7 +9,7 @@ export default async function LibraryPage() {
 
   const { data: recordings } = await supabase
     .from("recordings")
-    .select("id, title, duration, created_at, analyses(id)")
+    .select("id, title, duration, created_at, recorded_at, file_name, description, analyses(id)")
     .order("created_at", { ascending: false });
 
   return (
@@ -35,6 +35,9 @@ export default async function LibraryPage() {
               title={rec.title}
               duration={rec.duration}
               createdAt={rec.created_at}
+              recordedAt={rec.recorded_at}
+              fileName={rec.file_name}
+              description={rec.description}
               hasAnalysis={Array.isArray(rec.analyses) && rec.analyses.length > 0}
             />
           ))}

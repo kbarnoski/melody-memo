@@ -6,11 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
+import { Input } from "@/components/ui/input";
 import { Upload, X, FileAudio, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface UploadingFile {
   file: File;
+  description: string;
   progress: number;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
@@ -32,7 +34,7 @@ export default function UploadPage() {
     }
     setFiles((prev) => [
       ...prev,
-      ...audioFiles.map((file) => ({ file, progress: 0, status: "pending" as const })),
+      ...audioFiles.map((file) => ({ file, description: "", progress: 0, status: "pending" as const })),
     ]);
   }, []);
 
@@ -102,6 +104,10 @@ export default function UploadPage() {
 
       const title = file.name.replace(/\.[^/.]+$/, "");
 
+      const recordedAt = file.lastModified
+        ? new Date(file.lastModified).toISOString()
+        : null;
+
       const { error: dbError } = await supabase.from("recordings").insert({
         user_id: user.id,
         title,
@@ -109,6 +115,8 @@ export default function UploadPage() {
         audio_url: fileName, // stored path, we'll proxy via /api/audio/[id]
         duration,
         file_size: file.size,
+        recorded_at: recordedAt,
+        description: files[i].description || null,
       }).select("id").single();
 
       if (dbError) {
@@ -196,6 +204,22 @@ export default function UploadPage() {
                   <p className="text-xs text-muted-foreground">
                     {(f.file.size / 1024 / 1024).toFixed(1)} MB
                   </p>
+                  {f.status !== "done" && (
+                    <Input
+                      placeholder="Add a description (optional)"
+                      value={f.description}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFiles((prev) =>
+                          prev.map((file, idx) =>
+                            idx === i ? { ...file, description: value } : file
+                          )
+                        );
+                      }}
+                      className="mt-1 h-7 text-xs"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
                   {f.status === "uploading" && (
                     <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
                       <div

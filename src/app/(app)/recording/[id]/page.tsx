@@ -45,14 +45,16 @@ export default async function RecordingPage({
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">{recording.title}</h1>
+        {recording.description && (
+          <p className="mt-1 text-sm text-muted-foreground">{recording.description}</p>
+        )}
         <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Calendar className="h-3.5 w-3.5" />
-            {new Date(recording.created_at).toLocaleDateString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {recording.recorded_at
+              ? `Recorded ${new Date(recording.recorded_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+              : new Date(recording.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+            }
           </span>
           {recording.duration && (
             <span className="flex items-center gap-1">
@@ -67,7 +69,7 @@ export default async function RecordingPage({
       </div>
 
       <RecordingDetail
-        recording={{ ...recording, audio_url: audioUrl }}
+        recording={{ ...recording, audio_url: audioUrl, description: recording.description ?? null, file_name: recording.file_name }}
         analysis={analysis}
         initialMessages={messages ?? []}
       />

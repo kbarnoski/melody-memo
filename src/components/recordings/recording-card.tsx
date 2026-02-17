@@ -1,15 +1,33 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileAudio, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { FileAudio, Clock, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface RecordingCardProps {
   id: string;
   title: string;
   duration: number | null;
   createdAt: string;
+  recordedAt?: string | null;
+  fileName: string;
+  description?: string | null;
   hasAnalysis?: boolean;
 }
 
@@ -32,34 +50,103 @@ export function RecordingCard({
   title,
   duration,
   createdAt,
+  recordedAt,
+  fileName,
+  description,
   hasAnalysis,
 }: RecordingCardProps) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    setDeleting(true);
+    const supabase = createClient();
+
+    const { error: storageError } = await supabase.storage
+      .from("recordings")
+      .remove([fileName]);
+
+    if (storageError) {
+      toast.error(`Failed to delete file: ${storageError.message}`);
+      setDeleting(false);
+      return;
+    }
+
+    const { error: dbError } = await supabase
+      .from("recordings")
+      .delete()
+      .eq("id", id);
+
+    if (dbError) {
+      toast.error(`Failed to delete recording: ${dbError.message}`);
+      setDeleting(false);
+      return;
+    }
+
+    toast.success("Recording deleted");
+    router.refresh();
+  }
+
   return (
-    <Link href={`/recording/${id}`}>
-      <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
-        <CardContent className="flex items-center gap-4 py-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-            <FileAudio className="h-5 w-5 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="truncate font-medium">{title}</p>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-              <span>{formatDate(createdAt)}</span>
-              {duration && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {formatDuration(duration)}
-                </span>
-              )}
-            </div>
-          </div>
-          {hasAnalysis && (
-            <Badge variant="secondary" className="shrink-0">
-              Analyzed
-            </Badge>
+    <Card
+      className="transition-colors hover:bg-accent/50 cursor-pointer"
+      onClick={() => router.push(`/recording/${id}`)}
+    >
+      <CardContent className="flex items-center gap-4 py-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+          <FileAudio className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="truncate font-medium">{title}</p>
+          {description && (
+            <p className="truncate text-xs text-muted-foreground">{description}</p>
           )}
-        </CardContent>
-      </Card>
-    </Link>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>{recordedAt ? `Recorded ${formatDate(recordedAt)}` : formatDate(createdAt)}</span>
+            {duration && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatDuration(duration)}
+              </span>
+            )}
+          </div>
+        </div>
+        {hasAnalysis && (
+          <Badge variant="secondary" className="shrink-0">
+            Analyzed
+          </Badge>
+        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              disabled={deleting}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete recording?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete &ldquo;{title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
   );
 }

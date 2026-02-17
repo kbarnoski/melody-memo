@@ -20,6 +20,7 @@
     "@supabase/supabase-js": "^2.95.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@tonejs/midi": "^2.0.28",
+    "@types/three": "^0.182.0",
     "@wavesurfer/react": "^1.0.12",
     "ai": "^4.3.19",
     "class-variance-authority": "^0.7.1",
@@ -36,6 +37,7 @@
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.1",
+    "three": "^0.182.0",
     "tonal": "^6.4.3",
     "wavesurfer.js": "^7.12.1"
   },

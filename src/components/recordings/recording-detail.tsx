@@ -1,13 +1,32 @@
 "use client";
 
-import { useState } from "react";
-import { WaveformPlayer } from "@/components/audio/waveform-player";
+import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { WaveformPlayer, type WaveformPlayerHandle } from "@/components/audio/waveform-player";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
 import { AnalysisDisplay } from "@/components/analysis/analysis-display";
 import { ChordTimeline } from "@/components/analysis/chord-timeline";
 import { PianoRoll } from "@/components/analysis/piano-roll";
 import { ExportMidiButton } from "@/components/analysis/export-midi-button";
 import { ChatPanel } from "@/components/chat/chat-panel";
+import { MarkersPanel, type Marker } from "@/components/markers/markers-panel";
+import { Visualizer } from "@/components/audio/visualizer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface RecordingDetailProps {
@@ -17,6 +36,8 @@ interface RecordingDetailProps {
     audio_url: string;
     duration: number | null;
     created_at: string;
+    description: string | null;
+    file_name: string;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis: any | null;
@@ -33,18 +54,110 @@ export function RecordingDetail({
   analysis: initialAnalysis,
   initialMessages,
 }: RecordingDetailProps) {
+  const router = useRouter();
   const [analysis, setAnalysis] = useState(initialAnalysis);
   const [currentTime, setCurrentTime] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [markers, setMarkers] = useState<Marker[]>([]);
+  const [showVisualizer, setShowVisualizer] = useState(false);
+  const [description, setDescription] = useState(recording.description ?? "");
+  const playerRef = useRef<WaveformPlayerHandle>(null);
+
+  const handleSeek = useCallback((time: number) => {
+    playerRef.current?.seekTo(time);
+  }, []);
+
+  async function handleDelete() {
+    setDeleting(true);
+    const supabase = createClient();
+
+    await supabase.storage.from("recordings").remove([recording.file_name]);
+
+    const { error } = await supabase
+      .from("recordings")
+      .delete()
+      .eq("id", recording.id);
+
+    if (error) {
+      toast.error(`Failed to delete: ${error.message}`);
+      setDeleting(false);
+      return;
+    }
+
+    toast.success("Recording deleted");
+    router.push("/library");
+  }
+
+  async function saveDescription() {
+    const trimmed = description.trim();
+    if (trimmed === (recording.description ?? "")) return;
+    const supabase = createClient();
+    await supabase
+      .from("recordings")
+      .update({ description: trimmed || null })
+      .eq("id", recording.id);
+  }
 
   return (
     <>
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Add a description..."
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          onBlur={saveDescription}
+          className="text-sm text-muted-foreground"
+        />
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete recording?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete &ldquo;{recording.title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       <WaveformPlayer
+        ref={playerRef}
         audioUrl={recording.audio_url}
         onTimeUpdate={setCurrentTime}
+        markers={markers}
+        onVisualizerOpen={() => setShowVisualizer(true)}
+      />
+
+      <MarkersPanel
+        recordingId={recording.id}
+        currentTime={currentTime}
+        duration={recording.duration ?? 0}
+        onSeek={handleSeek}
+        onMarkersChange={setMarkers}
       />
 
       <AnalyzeButton
         recordingId={recording.id}
+        recordingTitle={recording.title}
         audioUrl={recording.audio_url}
         onComplete={setAnalysis}
         hasExisting={analysis?.status === "completed"}
@@ -92,6 +205,13 @@ export function RecordingDetail({
           )}
         </TabsContent>
       </Tabs>
+
+      {showVisualizer && (
+        <Visualizer
+          audioElement={playerRef.current?.getAudioElement() ?? null}
+          onClose={() => setShowVisualizer(false)}
+        />
+      )}
     </>
   );
 }

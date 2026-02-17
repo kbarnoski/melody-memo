@@ -105,6 +105,77 @@ You are talking to a pianist who recorded this as a creative sketch. Respond as 
 8. **Keep it conversational** and encouraging. This is brainstorming, not a lecture.`;
 }
 
+export function buildCompareSystemPrompt(
+  titleA: string,
+  analysisA: Analysis,
+  titleB: string,
+  analysisB: Analysis
+): string {
+  function summarizeAnalysis(title: string, a: Analysis): string {
+    const chordCounts = new Map<string, number>();
+    for (const c of a.chords) {
+      chordCounts.set(c.chord, (chordCounts.get(c.chord) || 0) + 1);
+    }
+    const topChords = [...chordCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12);
+
+    const progression = a.chords
+      .slice(0, 25)
+      .map((c) => c.chord)
+      .join(" | ");
+
+    const midiValues = a.notes.map((n) => n.midi);
+    const minNote = midiValues.length > 0 ? midiToNote(Math.min(...midiValues)) : "N/A";
+    const maxNote = midiValues.length > 0 ? midiToNote(Math.max(...midiValues)) : "N/A";
+
+    const melodySummary = a.melody && a.melody.length > 0
+      ? a.melody.slice(0, 15).map((n) => midiToNote(n.midi)).join(" ")
+      : "Not extracted";
+
+    const bassSummary = a.bass_line && a.bass_line.length > 0
+      ? a.bass_line.slice(0, 10).map((n) => NOTE_NAMES[n.midi % 12]).join(" ")
+      : "Not extracted";
+
+    const progressionsStr = a.progressions && a.progressions.length > 0
+      ? a.progressions.join(", ")
+      : "None detected";
+
+    return `### "${title}"
+- **Key:** ${a.key_signature ?? "Unknown"} (confidence: ${a.key_confidence ? Math.round(a.key_confidence * 100) + "%" : "N/A"})
+- **Tempo:** ${a.tempo ? `~${a.tempo} BPM` : "Unknown"}
+- **Time Signature:** ${a.time_signature ?? "Unknown"}
+- **Harmonic Rhythm:** ${a.harmonic_rhythm ?? "Unknown"}
+- **Range:** ${minNote} to ${maxNote} (${a.notes.length} notes)
+- **Top Chords:** ${topChords.map(([c, n]) => `${c} (×${n})`).join(", ")}
+- **Progression:** ${progression}${a.chords.length > 25 ? ` ... (+${a.chords.length - 25} more)` : ""}
+- **Recurring Progressions:** ${progressionsStr}
+- **Melody:** ${melodySummary}
+- **Bass:** ${bassSummary}`;
+  }
+
+  return `You are an expert music theorist comparing two piano voice memos. Both were analyzed by AI audio transcription (Basic Pitch).
+
+## Recording A
+${summarizeAnalysis(titleA, analysisA)}
+
+## Recording B
+${summarizeAnalysis(titleB, analysisB)}
+
+## Your Approach
+
+Compare these two recordings as a knowledgeable composition coach:
+
+1. **Find commonalities** — shared chords, similar progressions, compatible keys, related tempos
+2. **Highlight differences** — different harmonic languages, contrasting moods, rhythmic differences
+3. **Assess compatibility** — could these work as sections (A/B) of the same piece? What key/tempo adjustments would be needed?
+4. **Suggest combinations** — how might elements from one enhance the other (chord substitutions, shared motifs, medley potential)
+5. **Identify key relationships** — relative major/minor, parallel keys, common modulation paths between them
+6. **Be specific** — reference actual chords, progressions, and patterns from the analyses
+7. **Be honest about transcription limitations** — flag anything that looks like an artifact
+8. **Keep it conversational** and encouraging.`;
+}
+
 export function buildInsightsSystemPrompt(
   analyses: { recording_title: string; key_signature: string | null; tempo: number | null; chords: { chord: string }[] }[]
 ): string {

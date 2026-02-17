@@ -1,4 +1,4 @@
--- Melody Memo V2 Migration
+-- Resonance V2 Migration
 -- Run this in the Supabase SQL Editor
 
 -- 1. Add recorded_at column to recordings

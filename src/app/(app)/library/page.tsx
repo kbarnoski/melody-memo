@@ -1,59 +1,49 @@
 import { createClient } from "@/lib/supabase/server";
-import { RecordingCard } from "@/components/recordings/recording-card";
-import { Library } from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { LibraryClient } from "@/components/recordings/library-client";
 
 export default async function LibraryPage() {
   const supabase = await createClient();
 
   const { data: recordings } = await supabase
     .from("recordings")
-    .select("id, title, duration, created_at, recorded_at, file_name, description, analyses(id)")
+    .select(
+      "id, title, duration, created_at, recorded_at, file_name, description, analyses(id, key_signature, tempo), recording_tags(tag_id, tags(id, name))"
+    )
     .order("created_at", { ascending: false });
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Library</h1>
-          <p className="text-muted-foreground">
-            {recordings?.length ?? 0} recording{recordings?.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link href="/upload">
-          <Button>Upload</Button>
-        </Link>
-      </div>
+  const { data: tags } = await supabase
+    .from("tags")
+    .select("id, name")
+    .order("name", { ascending: true });
 
-      {recordings && recordings.length > 0 ? (
-        <div className="grid gap-3">
-          {recordings.map((rec) => (
-            <RecordingCard
-              key={rec.id}
-              id={rec.id}
-              title={rec.title}
-              duration={rec.duration}
-              createdAt={rec.created_at}
-              recordedAt={rec.recorded_at}
-              fileName={rec.file_name}
-              description={rec.description}
-              hasAnalysis={Array.isArray(rec.analyses) && rec.analyses.length > 0}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
-          <Library className="mb-4 h-10 w-10 text-muted-foreground" />
-          <p className="mb-2 text-lg font-medium">No recordings yet</p>
-          <p className="mb-4 text-sm text-muted-foreground">
-            Upload your voice memos to get started
-          </p>
-          <Link href="/upload">
-            <Button>Upload Recordings</Button>
-          </Link>
-        </div>
-      )}
-    </div>
+  const normalized = (recordings ?? []).map((rec) => ({
+    id: rec.id,
+    title: rec.title,
+    duration: rec.duration,
+    createdAt: rec.created_at,
+    recordedAt: rec.recorded_at,
+    fileName: rec.file_name,
+    description: rec.description,
+    hasAnalysis: Array.isArray(rec.analyses) && rec.analyses.length > 0,
+    keySignature:
+      Array.isArray(rec.analyses) && rec.analyses.length > 0
+        ? (rec.analyses[0] as { key_signature?: string | null }).key_signature ?? null
+        : null,
+    tempo:
+      Array.isArray(rec.analyses) && rec.analyses.length > 0
+        ? (rec.analyses[0] as { tempo?: number | null }).tempo ?? null
+        : null,
+    tags: Array.isArray(rec.recording_tags)
+      ? rec.recording_tags
+          .map((rt: Record<string, unknown>) => rt.tags as { id: string; name: string } | null)
+          .filter(Boolean) as { id: string; name: string }[]
+      : [],
+  }));
+
+  return (
+    <LibraryClient
+      recordings={normalized}
+      allTags={tags ?? []}
+    />
   );
 }

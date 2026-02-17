@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Melody Memo",
-  description: "Analyze your voice memos with AI-powered music theory",
+  title: "Resonance",
+  description: "Your personal audio workspace — analyze, visualize, and explore your music",
 };
 
 export default function RootLayout({

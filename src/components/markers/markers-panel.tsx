@@ -32,6 +32,7 @@ function formatTime(seconds: number): string {
 export function MarkersPanel({
   recordingId,
   currentTime,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   duration,
   onSeek,
   onMarkersChange,

@@ -105,6 +105,54 @@ export function getKeyDistribution(
     .sort((a, b) => b.count - a.count);
 }
 
+export function getHarmonicTendencies(
+  analyses: RecordingAnalysis[]
+): { tendencies: string[]; dominantStyle: string } {
+  const allChordNames: string[] = [];
+  for (const a of analyses) {
+    for (const c of a.chords) {
+      allChordNames.push(c.chord);
+    }
+  }
+
+  if (allChordNames.length === 0) {
+    return { tendencies: [], dominantStyle: "Not enough data" };
+  }
+
+  const tendencies: string[] = [];
+  const total = allChordNames.length;
+
+  // Count chord types
+  const seventh = allChordNames.filter((c) =>
+    /7|maj7|m7|dim7|m7b5|9|11|13/.test(c)
+  ).length;
+  const minor = allChordNames.filter((c) =>
+    /^[A-G][#b]?m(?!aj)/.test(c)
+  ).length;
+  const sus = allChordNames.filter((c) => /sus/.test(c)).length;
+  const dim = allChordNames.filter((c) => /dim|°/.test(c)).length;
+  const aug = allChordNames.filter((c) => /aug|\+/.test(c)).length;
+
+  if (seventh / total > 0.3) tendencies.push("Jazz-influenced harmony");
+  if (minor / total > 0.5) tendencies.push("Drawn to minor tonalities");
+  if (sus / total > 0.1) tendencies.push("Uses suspended chords for color");
+  if (dim / total > 0.05) tendencies.push("Employs diminished passing chords");
+  if (aug / total > 0.05) tendencies.push("Uses augmented chords for tension");
+
+  if (seventh / total <= 0.1 && sus / total <= 0.05) {
+    tendencies.push("Diatonic/straightforward harmony");
+  }
+
+  // Determine dominant style
+  let dominantStyle = "Mixed";
+  if (seventh / total > 0.4) dominantStyle = "Jazz / Neo-Soul";
+  else if (minor / total > 0.6) dominantStyle = "Minor-key driven";
+  else if (seventh / total <= 0.1) dominantStyle = "Pop / Folk / Classical";
+  else dominantStyle = "Contemporary blend";
+
+  return { tendencies, dominantStyle };
+}
+
 export function getChordFrequency(
   analyses: RecordingAnalysis[]
 ): { chord: string; count: number }[] {

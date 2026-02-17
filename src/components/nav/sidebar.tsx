@@ -11,12 +11,13 @@ import {
   FolderOpen,
   BarChart3,
   LogOut,
-  Music,
+  GitCompareArrows,
 } from "lucide-react";
 
 const navItems = [
   { href: "/library", label: "Library", icon: Library },
   { href: "/upload", label: "Upload", icon: Upload },
+  { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },
 ];
@@ -33,15 +34,36 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-card">
-      <div className="flex items-center gap-2 border-b px-6 py-4">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Music className="h-4 w-4 text-primary-foreground" />
-        </div>
-        <span className="text-lg font-semibold">Melody Memo</span>
+    <aside className="flex h-full w-56 flex-col border-r">
+      <div className="flex items-center gap-2.5 px-5 py-4">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          className="h-6 w-6"
+          strokeWidth="1.5"
+          stroke="currentColor"
+        >
+          <path
+            d="M12 3C12 3 12 8 12 12C12 16 12 21 12 21"
+            strokeLinecap="round"
+          />
+          <path
+            d="M12 7C14.5 7 16.5 5.5 16.5 3.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M12 12C9 12 6.5 10 6.5 7.5"
+            strokeLinecap="round"
+          />
+          <path
+            d="M12 17C15 17 17.5 15 17.5 12.5"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="text-base font-semibold tracking-tight">Resonance</span>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 px-2 py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
@@ -50,10 +72,10 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-foreground text-background"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -63,10 +85,10 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="border-t p-3">
+      <div className="border-t px-2 py-2">
         <Button
           variant="ghost"
-          className="w-full justify-start gap-3 text-muted-foreground"
+          className="w-full justify-start gap-2.5 text-muted-foreground hover:text-foreground text-sm h-8"
           onClick={handleSignOut}
         >
           <LogOut className="h-4 w-4" />

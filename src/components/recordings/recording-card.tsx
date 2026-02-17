@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { FileAudio, Clock, Trash2 } from "lucide-react";
+import { FileAudio, Clock, Trash2, Music, Activity } from "lucide-react";
 import { toast } from "sonner";
 
 interface RecordingCardProps {
@@ -29,6 +29,9 @@ interface RecordingCardProps {
   fileName: string;
   description?: string | null;
   hasAnalysis?: boolean;
+  tags?: { id: string; name: string }[];
+  keySignature?: string | null;
+  tempo?: number | null;
 }
 
 function formatDuration(seconds: number): string {
@@ -54,6 +57,9 @@ export function RecordingCard({
   fileName,
   description,
   hasAnalysis,
+  tags,
+  keySignature,
+  tempo,
 }: RecordingCardProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -109,7 +115,32 @@ export function RecordingCard({
                 {formatDuration(duration)}
               </span>
             )}
+            {keySignature && (
+              <span className="flex items-center gap-1">
+                <Music className="h-3 w-3" />
+                {keySignature}
+              </span>
+            )}
+            {tempo && (
+              <span className="flex items-center gap-1">
+                <Activity className="h-3 w-3" />
+                {Math.round(tempo)} bpm
+              </span>
+            )}
           </div>
+          {/* Tags */}
+          {tags && tags.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center rounded-full border border-border px-2 py-0 text-[10px] font-medium text-muted-foreground"
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         {hasAnalysis && (
           <Badge variant="secondary" className="shrink-0">

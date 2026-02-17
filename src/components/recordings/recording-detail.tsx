@@ -16,7 +16,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Trash2, Share2, Copy, Check, Link } from "lucide-react";
 import { toast } from "sonner";
 import { WaveformPlayer, type WaveformPlayerHandle } from "@/components/audio/waveform-player";
 import { AnalyzeButton } from "@/components/analysis/analyze-button";
@@ -38,6 +45,7 @@ interface RecordingDetailProps {
     created_at: string;
     description: string | null;
     file_name: string;
+    share_token: string | null;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis: any | null;
@@ -61,6 +69,10 @@ export function RecordingDetail({
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [showVisualizer, setShowVisualizer] = useState(false);
   const [description, setDescription] = useState(recording.description ?? "");
+  const [shareToken, setShareToken] = useState(recording.share_token);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const playerRef = useRef<WaveformPlayerHandle>(null);
 
   const handleSeek = useCallback((time: number) => {
@@ -98,6 +110,44 @@ export function RecordingDetail({
       .eq("id", recording.id);
   }
 
+  async function handleShare() {
+    if (shareToken) {
+      setShareDialogOpen(true);
+      return;
+    }
+    setSharing(true);
+    const token = crypto.randomUUID();
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("recordings")
+      .update({ share_token: token })
+      .eq("id", recording.id);
+    if (error) {
+      toast.error(`Failed to create share link: ${error.message}`);
+      setSharing(false);
+      return;
+    }
+    setShareToken(token);
+    setSharing(false);
+    setShareDialogOpen(true);
+  }
+
+  function getShareUrl() {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/share/${shareToken}`;
+  }
+
+  async function copyShareUrl() {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setCopied(true);
+      toast.success("Link copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }
+
   return (
     <>
       <div className="flex items-center gap-2">
@@ -108,6 +158,42 @@ export function RecordingDetail({
           onBlur={saveDescription}
           className="text-sm text-muted-foreground"
         />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+          onClick={handleShare}
+          disabled={sharing}
+        >
+          {shareToken ? <Link className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+        </Button>
+
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Share Recording</DialogTitle>
+              <DialogDescription>
+                Anyone with this link can view the recording and its analysis.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={getShareUrl()}
+                className="font-mono text-xs"
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                onClick={copyShareUrl}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button

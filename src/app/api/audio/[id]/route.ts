@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { execFile } from "child_process";
 import { writeFile, readFile, unlink, mkdtemp, access } from "fs/promises";
 import { tmpdir } from "os";
@@ -83,16 +84,34 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
 
-  const { data: recording, error } = await supabase
+  // Try authenticated client first, fall back to anon for shared recordings
+  let supabase = await createClient();
+  // eslint-disable-next-line prefer-const
+  let { data: recording, error } = await supabase
     .from("recordings")
     .select("file_name")
     .eq("id", id)
     .single();
 
   if (error || !recording) {
-    return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+    // Fallback: use anon client for publicly shared recordings
+    const anonClient = createAnonClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: sharedRec } = await anonClient
+      .from("recordings")
+      .select("file_name")
+      .eq("id", id)
+      .not("share_token", "is", null)
+      .single();
+
+    if (!sharedRec) {
+      return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+    }
+    recording = sharedRec;
+    supabase = anonClient;
   }
 
   const { data: fileData, error: downloadError } = await supabase.storage

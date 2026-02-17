@@ -32,7 +32,7 @@ interface LibrarySummaryProps {
   }[];
 }
 
-const CACHE_KEY = "melody-memo-library-summary";
+const CACHE_KEY = "resonance-library-summary";
 const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
 export function LibrarySummaryPanel({ analyses }: LibrarySummaryProps) {

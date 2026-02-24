@@ -13,19 +13,27 @@ export async function transcribeAudio(
     const data = await res.json();
     if (data.url) {
       finalUrl = data.url;
-    } else {
-      // Fall back to transcoded version
-      finalUrl = audioUrl + "?transcode=1";
     }
   }
 
-  const response = await fetch(finalUrl);
-  const arrayBuffer = await response.arrayBuffer();
-
-  onProgress?.("Decoding audio...", 20);
-
   const audioContext = new AudioContext({ sampleRate: 22050 });
-  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  let audioBuffer: AudioBuffer;
+
+  // Try decoding the signed URL first; if it fails (ALAC on Chrome), use server transcoding
+  try {
+    const response = await fetch(finalUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    onProgress?.("Decoding audio...", 20);
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  } catch {
+    // ALAC decode failed — fall back to server-side transcoding
+    onProgress?.("Transcoding audio (this may take a minute)...", 15);
+    const transcodeUrl = audioUrl.startsWith("/api/") ? audioUrl + "?transcode=1" : audioUrl;
+    const response = await fetch(transcodeUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    onProgress?.("Decoding audio...", 20);
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+  }
 
   // Get mono audio data
   const audioData = audioBuffer.getChannelData(0);

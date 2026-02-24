@@ -35,8 +35,14 @@ export async function transcribeAudio(
     audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
   }
 
-  // Get mono audio data
-  const audioData = audioBuffer.getChannelData(0);
+  // Get mono audio data — cap at 10 minutes to avoid memory issues
+  const maxSamples = 22050 * 60 * 10; // 10 minutes at 22050 Hz
+  const fullData = audioBuffer.getChannelData(0);
+  const audioData = fullData.length > maxSamples ? fullData.slice(0, maxSamples) : fullData;
+
+  if (fullData.length > maxSamples) {
+    onProgress?.("Analyzing first 10 minutes...", 25);
+  }
 
   onProgress?.("Loading AI model...", 30);
 
@@ -64,14 +70,13 @@ export async function transcribeAudio(
     }
   );
 
-  onProgress?.("Extracting notes...", 85);
+  onProgress?.("Extracting notes (may take a moment)...", 82);
 
-  const notes = noteFramesToTime(
-    addPitchBendsToNoteEvents(
-      contours,
-      outputToNotesPoly(frames, onsets, 0.25, 0.25, 5)
-    )
-  );
+  const rawNotes = outputToNotesPoly(frames, onsets, 0.25, 0.25, 5);
+  onProgress?.("Processing pitch bends...", 87);
+  const bentNotes = addPitchBendsToNoteEvents(contours, rawNotes);
+  onProgress?.("Finalizing...", 90);
+  const notes = noteFramesToTime(bentNotes);
 
   await audioContext.close();
 

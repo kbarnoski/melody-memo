@@ -178,7 +178,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
                 return (
                   <button
                     key={i}
-                    className="absolute top-0 pointer-events-auto group"
+                    className="absolute top-0 pointer-events-auto group p-2 -m-2"
                     style={{ left: `${pct}%` }}
                     onClick={() => handleMarkerClick(marker.time)}
                     title={`${formatTime(marker.time)}: ${marker.label}`}

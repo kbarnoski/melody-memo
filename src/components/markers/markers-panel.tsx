@@ -192,7 +192,7 @@ export function MarkersPanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                  className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteMarker(marker.id);

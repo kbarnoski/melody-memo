@@ -107,7 +107,7 @@ export function RecordingCard({
           {description && (
             <p className="truncate text-xs text-muted-foreground">{description}</p>
           )}
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span>{recordedAt ? `Recorded ${formatDate(recordedAt)}` : formatDate(createdAt)}</span>
             {duration && (
               <span className="flex items-center gap-1">

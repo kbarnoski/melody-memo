@@ -125,7 +125,7 @@ function CompareChat({
         </p>
       </CardHeader>
       <CardContent>
-        <div className="flex h-[400px] flex-col rounded-lg border">
+        <div className="flex h-[300px] flex-col rounded-lg border sm:h-[400px]">
           <ScrollArea ref={scrollRef} className="flex-1 p-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3">
@@ -246,7 +246,7 @@ export default function ComparePage() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
             <div className="space-y-1.5">
               <label className="text-xs uppercase tracking-widest text-muted-foreground">
                 Recording A
@@ -332,7 +332,7 @@ export default function ComparePage() {
                         valueA={noteRange(analysisA?.notes ?? null)}
                         valueB={noteRange(analysisB?.notes ?? null)}
                       />
-                      <div className="grid grid-cols-2 gap-6 pt-4">
+                      <div className="grid grid-cols-1 gap-4 pt-4 sm:grid-cols-2 sm:gap-6">
                         <div>
                           <p className="mb-2 text-center text-xs uppercase tracking-widest text-muted-foreground">
                             Chords
@@ -385,7 +385,7 @@ export default function ComparePage() {
 
               {/* Full analysis side-by-side */}
               {bothAnalyzed && analysisA && analysisB && (
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                   <div>
                     <p className="mb-3 text-xs uppercase tracking-widest text-muted-foreground">
                       {recA.title}

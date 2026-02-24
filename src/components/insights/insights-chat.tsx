@@ -41,7 +41,7 @@ export function InsightsChat({ analyses }: InsightsChatProps) {
   }, [messages]);
 
   return (
-    <div className="flex h-[500px] flex-col rounded-lg border">
+    <div className="flex h-[350px] flex-col rounded-lg border sm:h-[500px]">
       <ScrollArea ref={scrollRef} className="flex-1 p-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3">

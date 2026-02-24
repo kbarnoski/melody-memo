@@ -58,7 +58,7 @@ function StatCard({
           <Icon className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <p className="text-2xl font-bold leading-none">{value}</p>
+          <p className="text-xl font-bold leading-none sm:text-2xl">{value}</p>
           <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">
             {label}
           </p>
@@ -104,7 +104,7 @@ export function InsightsDashboard({ analyses, totalRecordings }: InsightsDashboa
   return (
     <div className="space-y-8">
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
         <StatCard
           label="Total Recordings"
           value={String(totalRecordings)}

@@ -71,7 +71,7 @@ export default async function SharedRecordingPage({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-2xl px-6 py-16">
+      <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-16">
         {/* Header */}
         <header className="mb-12">
           <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground mb-6">
@@ -120,7 +120,7 @@ export default async function SharedRecordingPage({
             </div>
 
             {/* Key / Tempo / Time Signature */}
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Card>
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">

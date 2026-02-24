@@ -48,7 +48,7 @@ export function PianoRoll({ notes, currentTime, duration }: PianoRollProps) {
       <div className="rounded-lg border bg-card overflow-x-auto">
         <svg
           viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}
-          className="w-full min-w-[600px]"
+          className="w-full min-w-[400px] sm:min-w-[600px]"
           preserveAspectRatio="xMidYMid meet"
         >
           {/* Grid lines for octave Cs */}

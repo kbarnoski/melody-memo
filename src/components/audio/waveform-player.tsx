@@ -41,6 +41,32 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     const [duration, setDuration] = useState(0);
     const [isReady, setIsReady] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+
+    // Resolve signed URL from the API
+    useEffect(() => {
+      let cancelled = false;
+      async function resolve() {
+        try {
+          const res = await fetch(audioUrl);
+          const data = await res.json();
+          if (!cancelled && data.url) {
+            setResolvedUrl(data.url);
+          } else if (!cancelled) {
+            setError("Failed to load audio URL");
+          }
+        } catch {
+          if (!cancelled) setError("Failed to load audio URL");
+        }
+      }
+      // If audioUrl is an API path, resolve it; if it's already a full URL, use directly
+      if (audioUrl.startsWith("/api/")) {
+        resolve();
+      } else {
+        setResolvedUrl(audioUrl);
+      }
+      return () => { cancelled = true; };
+    }, [audioUrl]);
 
     useImperativeHandle(ref, () => ({
       seekTo(time: number) {
@@ -55,17 +81,16 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
     const initWaveSurfer = useCallback(
       (node: HTMLDivElement | null) => {
-        if (!node) return;
+        if (!node || !resolvedUrl) return;
         containerRef.current = node;
 
         if (wavesurferRef.current) {
           wavesurferRef.current.destroy();
         }
 
-        // Use an HTML5 audio element for decoding —
-        // this supports more codecs than Web Audio API's decodeAudioData()
         const audio = new Audio();
-        audio.src = audioUrl;
+        audio.crossOrigin = "anonymous";
+        audio.src = resolvedUrl;
         audioRef.current = audio;
 
         const ws = WaveSurfer.create({
@@ -124,7 +149,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
         wavesurferRef.current = ws;
       },
-      [audioUrl, onTimeUpdate]
+      [resolvedUrl, onTimeUpdate]
     );
 
     // Update waveform colors when theme changes (without recreating WaveSurfer)
@@ -229,7 +254,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
               <p>{error || "Unable to load waveform"}</p>
             </div>
             <p className="text-xs text-muted-foreground">Fallback player:</p>
-            <audio controls src={audioUrl} className="w-full" preload="metadata">
+            <audio controls src={resolvedUrl || audioUrl} className="w-full" preload="metadata">
               Your browser does not support the audio element.
             </audio>
           </div>

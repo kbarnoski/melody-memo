@@ -22,7 +22,7 @@ export async function GET(
       .createSignedUrl(recording.file_name, 3600);
 
     if (signedData?.signedUrl) {
-      return NextResponse.redirect(signedData.signedUrl);
+      return NextResponse.json({ url: signedData.signedUrl });
     }
   }
 
@@ -53,5 +53,5 @@ export async function GET(
     );
   }
 
-  return NextResponse.redirect(signedData.signedUrl);
+  return NextResponse.json({ url: signedData.signedUrl });
 }

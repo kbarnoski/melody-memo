@@ -43,23 +43,45 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     const [error, setError] = useState<string | null>(null);
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
 
-    // Resolve signed URL from the API
+    // Resolve audio URL: try signed URL first, fall back to transcoded proxy for ALAC
     useEffect(() => {
       let cancelled = false;
       async function resolve() {
         try {
+          // Step 1: Get signed URL (fast, direct from CDN)
           const res = await fetch(audioUrl);
           const data = await res.json();
-          if (!cancelled && data.url) {
-            setResolvedUrl(data.url);
-          } else if (!cancelled) {
-            setError("Failed to load audio URL");
+          if (cancelled) return;
+
+          if (data.url) {
+            // Test if the browser can play this URL
+            const testAudio = new Audio();
+            const canPlay = await new Promise<boolean>((resolve) => {
+              testAudio.preload = "metadata";
+              testAudio.onloadedmetadata = () => { resolve(true); URL.revokeObjectURL(testAudio.src); };
+              testAudio.onerror = () => { resolve(false); };
+              testAudio.src = data.url;
+              // Timeout after 5s
+              setTimeout(() => resolve(false), 5000);
+            });
+
+            if (cancelled) return;
+
+            if (canPlay) {
+              setResolvedUrl(data.url);
+              return;
+            }
+          }
+
+          // Step 2: Fall back to server-side transcoding (for ALAC on Chrome)
+          if (!cancelled) {
+            setResolvedUrl(audioUrl + "?transcode=1");
           }
         } catch {
-          if (!cancelled) setError("Failed to load audio URL");
+          if (!cancelled) setResolvedUrl(audioUrl + "?transcode=1");
         }
       }
-      // If audioUrl is an API path, resolve it; if it's already a full URL, use directly
+
       if (audioUrl.startsWith("/api/")) {
         resolve();
       } else {

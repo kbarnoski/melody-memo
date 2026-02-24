@@ -42,32 +42,36 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     const [isReady, setIsReady] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+    const [loadingStatus, setLoadingStatus] = useState("Loading...");
 
     // Resolve audio URL: try signed URL first, fall back to transcoded proxy for ALAC
     useEffect(() => {
       let cancelled = false;
       async function resolve() {
         try {
+          setLoadingStatus("Fetching audio...");
+
           // Step 1: Get signed URL (fast, direct from CDN)
           const res = await fetch(audioUrl);
           const data = await res.json();
           if (cancelled) return;
 
           if (data.url) {
+            setLoadingStatus("Checking format...");
             // Test if the browser can play this URL
             const testAudio = new Audio();
             const canPlay = await new Promise<boolean>((resolve) => {
               testAudio.preload = "metadata";
-              testAudio.onloadedmetadata = () => { resolve(true); URL.revokeObjectURL(testAudio.src); };
+              testAudio.onloadedmetadata = () => { resolve(true); };
               testAudio.onerror = () => { resolve(false); };
               testAudio.src = data.url;
-              // Timeout after 5s
               setTimeout(() => resolve(false), 5000);
             });
 
             if (cancelled) return;
 
             if (canPlay) {
+              setLoadingStatus("Loading waveform...");
               setResolvedUrl(data.url);
               return;
             }
@@ -75,10 +79,14 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
           // Step 2: Fall back to server-side transcoding (for ALAC on Chrome)
           if (!cancelled) {
+            setLoadingStatus("Transcoding audio...");
             setResolvedUrl(audioUrl + "?transcode=1");
           }
         } catch {
-          if (!cancelled) setResolvedUrl(audioUrl + "?transcode=1");
+          if (!cancelled) {
+            setLoadingStatus("Transcoding audio...");
+            setResolvedUrl(audioUrl + "?transcode=1");
+          }
         }
       }
 
@@ -234,16 +242,19 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
             ref={initWaveSurfer}
             className="rounded-lg border bg-card p-3"
           />
-          {/* Loading skeleton */}
+          {/* Loading skeleton with status */}
           {!isReady && !error && (
-            <div className="absolute inset-0 flex items-end gap-[3px] rounded-lg border bg-card p-3">
-              {[30,42,55,38,60,48,35,52,65,40,28,50,62,45,33,55,68,43,30,48,58,36,25,45,60,50,38,55,70,42,28,52,63,47,35,57,44,30,50,62,40,27,48,58,37,53,42,32].map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-full bg-muted-foreground/10 animate-pulse"
-                  style={{ height: `${h}%` }}
-                />
-              ))}
+            <div className="absolute inset-0 flex flex-col items-center justify-center rounded-lg border bg-card p-3">
+              <div className="absolute inset-0 flex items-end gap-[3px] p-3 opacity-30">
+                {[30,42,55,38,60,48,35,52,65,40,28,50,62,45,33,55,68,43,30,48,58,36,25,45,60,50,38,55,70,42,28,52,63,47,35,57,44,30,50,62,40,27,48,58,37,53,42,32].map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-full bg-muted-foreground/10 animate-pulse"
+                    style={{ height: `${h}%` }}
+                  />
+                ))}
+              </div>
+              <p className="relative z-10 text-xs text-muted-foreground animate-pulse">{loadingStatus}</p>
             </div>
           )}
           {/* Marker indicators overlay */}

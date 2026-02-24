@@ -6,8 +6,20 @@ export async function transcribeAudio(
 ): Promise<NoteEvent[]> {
   onProgress?.("Loading audio...", 10);
 
-  // Fetch and decode audio
-  const response = await fetch(audioUrl);
+  // Resolve signed URL if needed (the audio API now returns JSON with a URL)
+  let finalUrl = audioUrl;
+  if (audioUrl.startsWith("/api/")) {
+    const res = await fetch(audioUrl);
+    const data = await res.json();
+    if (data.url) {
+      finalUrl = data.url;
+    } else {
+      // Fall back to transcoded version
+      finalUrl = audioUrl + "?transcode=1";
+    }
+  }
+
+  const response = await fetch(finalUrl);
   const arrayBuffer = await response.arrayBuffer();
 
   onProgress?.("Decoding audio...", 20);

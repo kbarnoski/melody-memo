@@ -26,8 +26,8 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
         className={cn(
           "max-w-[80%] rounded-2xl px-4 py-3 text-sm",
           role === "user"
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted"
+            ? "bg-primary text-primary-foreground rounded-tr-sm"
+            : "bg-muted rounded-tl-sm"
         )}
       >
         {role === "assistant" ? (

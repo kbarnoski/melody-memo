@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import {
   GitCompareArrows,
   Menu,
   X,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +32,10 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
+
+  useEffect(() => setMounted(true), []);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -59,7 +66,7 @@ export function Sidebar() {
       <svg
         viewBox="0 0 24 24"
         fill="none"
-        className="h-6 w-6"
+        className="h-6 w-6 text-primary"
         strokeWidth="1.5"
         stroke="currentColor"
       >
@@ -86,7 +93,7 @@ export function Sidebar() {
 
   const navContent = (
     <>
-      <nav className="flex-1 space-y-0.5 px-2 py-2">
+      <nav className="flex-1 space-y-1 px-2 py-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname.startsWith(item.href);
@@ -97,8 +104,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
                 isActive
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -109,14 +116,31 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t px-2 py-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-2.5 text-muted-foreground hover:text-foreground text-sm h-9"
-          onClick={handleSignOut}
-        >
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            className="flex-1 justify-start gap-2.5 text-muted-foreground hover:text-foreground text-sm h-9"
+            onClick={handleSignOut}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+          {mounted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {resolvedTheme === "dark" ? (
+                <Sun className="h-4 w-4" />
+              ) : (
+                <Moon className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </>
   );

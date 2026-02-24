@@ -181,7 +181,7 @@ function RawAnalysisDetails({ analysis }: AnalysisDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold tracking-tight">
               {analysis.key_signature ?? "Unknown"}
             </p>
             {analysis.key_confidence !== undefined && (
@@ -200,7 +200,7 @@ function RawAnalysisDetails({ analysis }: AnalysisDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold tracking-tight tabular-nums">
               {analysis.tempo ? `~${analysis.tempo} BPM` : "Unknown"}
             </p>
           </CardContent>
@@ -214,7 +214,7 @@ function RawAnalysisDetails({ analysis }: AnalysisDisplayProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
+            <p className="text-3xl font-bold tracking-tight">
               {analysis.time_signature ?? "Unknown"}
             </p>
           </CardContent>

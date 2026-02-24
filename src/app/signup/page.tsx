@@ -36,13 +36,16 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+      </div>
+      <div className="relative w-full max-w-sm space-y-8">
         <div className="text-center">
           <svg
             viewBox="0 0 24 24"
             fill="none"
-            className="mx-auto h-8 w-8"
+            className="mx-auto h-10 w-10 text-primary"
             strokeWidth="1.5"
             stroke="currentColor"
           >
@@ -51,7 +54,7 @@ export default function SignupPage() {
             <path d="M12 12C9 12 6.5 10 6.5 7.5" strokeLinecap="round" />
             <path d="M12 17C15 17 17.5 15 17.5 12.5" strokeLinecap="round" />
           </svg>
-          <h1 className="mt-4 text-xl font-semibold tracking-tight">Create Account</h1>
+          <h1 className="mt-4 text-2xl font-bold tracking-tight">Create Account</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Start exploring your music
           </p>

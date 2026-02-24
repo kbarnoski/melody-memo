@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -95,7 +94,7 @@ export function RecordingCard({
 
   return (
     <Card
-      className="transition-colors hover:bg-accent/50 cursor-pointer"
+      className="transition-all duration-200 hover:bg-accent/50 hover:shadow-md dark:hover:shadow-primary/5 cursor-pointer"
       onClick={() => router.push(`/recording/${id}`)}
     >
       <CardContent className="flex items-center gap-4 py-4">
@@ -143,9 +142,9 @@ export function RecordingCard({
           )}
         </div>
         {hasAnalysis && (
-          <Badge variant="secondary" className="shrink-0">
+          <span className="shrink-0 inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             Analyzed
-          </Badge>
+          </span>
         )}
         <AlertDialog>
           <AlertDialogTrigger asChild>

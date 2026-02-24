@@ -95,7 +95,7 @@ export function LibraryClient({ recordings, allTags }: LibraryClientProps) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Library</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Library</h1>
           <p className="text-muted-foreground">
             {recordings.length} recording{recordings.length !== 1 ? "s" : ""}
           </p>

@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Upload, X, FileAudio, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { getMp4CreationDate } from "@/lib/audio/mp4-creation-date";
 
 interface UploadingFile {
   file: File;
@@ -32,10 +33,21 @@ export default function UploadPage() {
       toast.error("Please select audio files (M4A, MP3, WAV)");
       return;
     }
-    setFiles((prev) => [
-      ...prev,
-      ...audioFiles.map((file) => ({ file, description: "", progress: 0, status: "pending" as const })),
-    ]);
+    setFiles((prev) => {
+      const remaining = 100 - prev.length;
+      if (remaining <= 0) {
+        toast.error("Maximum 100 files per batch");
+        return prev;
+      }
+      const toAdd = audioFiles.slice(0, remaining);
+      if (toAdd.length < audioFiles.length) {
+        toast.warning(`Added ${toAdd.length} of ${audioFiles.length} files (100 file limit)`);
+      }
+      return [
+        ...prev,
+        ...toAdd.map((file) => ({ file, description: "", progress: 0, status: "pending" as const })),
+      ];
+    });
   }, []);
 
   function handleDrop(e: React.DragEvent) {
@@ -55,6 +67,9 @@ export default function UploadPage() {
       toast.error(authError?.message ?? "Not logged in. Please sign in first.");
       return;
     }
+
+    let successCount = 0;
+    let failCount = 0;
 
     for (let i = 0; i < files.length; i++) {
       if (files[i].status === "done") continue;
@@ -78,11 +93,15 @@ export default function UploadPage() {
         });
 
       if (uploadError) {
+        const msg = uploadError.message.includes("maximum allowed size")
+          ? `File too large (${(file.size / 1024 / 1024).toFixed(0)} MB). Increase the limit in Supabase Dashboard → Storage → Settings.`
+          : `Storage: ${uploadError.message}`;
         setFiles((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, status: "error", error: `Storage: ${uploadError.message}` } : f
+            idx === i ? { ...f, status: "error", error: msg } : f
           )
         );
+        failCount++;
         continue;
       }
 
@@ -90,23 +109,35 @@ export default function UploadPage() {
         prev.map((f, idx) => (idx === i ? { ...f, progress: 70 } : f))
       );
 
-      // Determine duration from original file bytes
+      // Detect duration via HTML Audio element (lightweight, no full decode)
       let duration: number | null = null;
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const audioCtx = new AudioContext();
-        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-        duration = audioBuffer.duration;
-        await audioCtx.close();
+        duration = await new Promise<number | null>((resolve) => {
+          const audio = new Audio();
+          audio.preload = "metadata";
+          audio.onloadedmetadata = () => {
+            resolve(isFinite(audio.duration) ? audio.duration : null);
+            URL.revokeObjectURL(audio.src);
+          };
+          audio.onerror = () => {
+            resolve(null);
+            URL.revokeObjectURL(audio.src);
+          };
+          audio.src = URL.createObjectURL(file);
+        });
       } catch {
         // Duration detection failed, continue without it
       }
 
       const title = file.name.replace(/\.[^/.]+$/, "");
 
-      const recordedAt = file.lastModified
-        ? new Date(file.lastModified).toISOString()
-        : null;
+      // Try to read the actual creation date from MP4/M4A metadata
+      const mp4Date = await getMp4CreationDate(file);
+      const recordedAt = mp4Date
+        ? mp4Date.toISOString()
+        : file.lastModified
+          ? new Date(file.lastModified).toISOString()
+          : null;
 
       const { error: dbError } = await supabase.from("recordings").insert({
         user_id: user.id,
@@ -125,21 +156,24 @@ export default function UploadPage() {
             idx === i ? { ...f, status: "error", error: `Database: ${dbError.message} (code: ${dbError.code})` } : f
           )
         );
+        failCount++;
         continue;
       }
 
       setFiles((prev) =>
         prev.map((f, idx) => (idx === i ? { ...f, status: "done", progress: 100 } : f))
       );
+      successCount++;
     }
 
-    toast.success("Upload complete!");
-    // If only one file, go straight to it for analysis; otherwise go to library
-    const doneFiles = files.filter((f) => f.status === "done");
-    if (doneFiles.length === 1) {
+    if (successCount > 0 && failCount === 0) {
+      toast.success("Upload complete!");
       setTimeout(() => router.push("/library"), 1000);
-    } else {
+    } else if (successCount > 0) {
+      toast.warning(`${successCount} uploaded, ${failCount} failed`);
       setTimeout(() => router.push("/library"), 1500);
+    } else {
+      toast.error("Upload failed");
     }
   }
 
@@ -148,7 +182,7 @@ export default function UploadPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Upload Recordings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Upload Recordings</h1>
         <p className="text-muted-foreground">
           Drag and drop your voice memos or click to browse
         </p>
@@ -170,7 +204,7 @@ export default function UploadPage() {
           <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
           <p className="mb-2 text-lg font-medium">Drop audio files here</p>
           <p className="mb-4 text-sm text-muted-foreground">
-            Supports M4A, MP3, WAV
+            M4A, MP3, WAV &middot; Up to 100 files &middot; 60 min max
           </p>
           <input
             ref={fileInputRef}
@@ -233,7 +267,7 @@ export default function UploadPage() {
                   )}
                 </div>
                 {f.status === "done" ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
                 ) : (
                   <Button
                     variant="ghost"

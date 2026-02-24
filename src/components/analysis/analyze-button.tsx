@@ -105,7 +105,7 @@ export function AnalyzeButton({ recordingId, recordingTitle, audioUrl, onComplet
               <p className="text-sm font-medium">{stage}</p>
               <div className="mt-2 h-2 w-full rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
+                  className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>

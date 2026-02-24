@@ -2,12 +2,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { useThemeColors } from "@/lib/use-theme-colors";
 
 interface ChordFrequencyProps {
   data: { chord: string; count: number }[];
 }
 
 export function ChordFrequency({ data }: ChordFrequencyProps) {
+  const { chart1 } = useThemeColors();
+
   return (
     <Card>
       <CardHeader>
@@ -20,7 +23,7 @@ export function ChordFrequency({ data }: ChordFrequencyProps) {
               <XAxis type="number" fontSize={11} allowDecimals={false} />
               <YAxis type="category" dataKey="chord" fontSize={11} width={60} />
               <Tooltip />
-              <Bar dataKey="count" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="count" fill={chart1} radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import WaveSurfer from "wavesurfer.js";
 import { Button } from "@/components/ui/button";
 import { Play, Pause, SkipBack, SkipForward, AlertCircle, Flag, Sparkles } from "lucide-react";
+import { useThemeColors } from "@/lib/use-theme-colors";
 
 export interface WaveformPlayerHandle {
   seekTo: (time: number) => void;
@@ -34,6 +35,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     const containerRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const themeColors = useThemeColors();
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -68,9 +70,9 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
         const ws = WaveSurfer.create({
           container: node,
-          waveColor: "hsl(var(--muted-foreground) / 0.3)",
-          progressColor: "hsl(var(--primary))",
-          cursorColor: "hsl(var(--primary))",
+          waveColor: "#9999994d",
+          progressColor: "#6366f1",
+          cursorColor: "#6366f1",
           barWidth: 2,
           barGap: 1,
           barRadius: 2,
@@ -101,6 +103,10 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
         ws.on("finish", () => setIsPlaying(false));
 
         ws.on("error", (err: unknown) => {
+          // Ignore abort errors (caused by cleanup during re-renders)
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          if (typeof err === "string" && err.includes("aborted")) return;
+
           const errObj = err as Record<string, unknown> | string | Error;
           let message: string;
           if (typeof errObj === "string") {
@@ -120,6 +126,17 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
       },
       [audioUrl, onTimeUpdate]
     );
+
+    // Update waveform colors when theme changes (without recreating WaveSurfer)
+    useEffect(() => {
+      if (wavesurferRef.current) {
+        wavesurferRef.current.setOptions({
+          waveColor: themeColors.mutedForeground + "4d",
+          progressColor: themeColors.primary,
+          cursorColor: themeColors.primary,
+        });
+      }
+    }, [themeColors]);
 
     // Stop audio on component unmount
     useEffect(() => {
@@ -170,6 +187,18 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
             ref={initWaveSurfer}
             className="rounded-lg border bg-card p-3"
           />
+          {/* Loading skeleton */}
+          {!isReady && !error && (
+            <div className="absolute inset-0 flex items-end gap-[3px] rounded-lg border bg-card p-3">
+              {[30,42,55,38,60,48,35,52,65,40,28,50,62,45,33,55,68,43,30,48,58,36,25,45,60,50,38,55,70,42,28,52,63,47,35,57,44,30,50,62,40,27,48,58,37,53,42,32].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-full bg-muted-foreground/10 animate-pulse"
+                  style={{ height: `${h}%` }}
+                />
+              ))}
+            </div>
+          )}
           {/* Marker indicators overlay */}
           {isReady && duration > 0 && markers.length > 0 && (
             <div className="absolute inset-x-3 top-0 h-full pointer-events-none">

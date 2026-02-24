@@ -25,7 +25,7 @@ export function SuggestedPrompts({ onSelect }: SuggestedPromptsProps) {
             key={prompt}
             variant="outline"
             size="sm"
-            className="text-xs"
+            className="text-xs hover:border-primary/30"
             onClick={() => onSelect(prompt)}
           >
             {prompt}

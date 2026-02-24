@@ -54,7 +54,7 @@ export function InsightsChat({ analyses }: InsightsChatProps) {
                   key={prompt}
                   variant="outline"
                   size="sm"
-                  className="text-xs"
+                  className="text-xs hover:border-primary/30"
                   onClick={() => append({ role: "user", content: prompt })}
                 >
                   {prompt}
@@ -73,7 +73,11 @@ export function InsightsChat({ analyses }: InsightsChatProps) {
             ))}
             {isLoading && messages[messages.length - 1]?.role === "user" && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="h-2 w-2 animate-pulse rounded-full bg-primary" />
+                <div className="flex items-end gap-0.5 h-4">
+                  <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out infinite", height: "100%" }} />
+                  <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out 0.2s infinite", height: "100%" }} />
+                  <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out 0.4s infinite", height: "100%" }} />
+                </div>
                 Thinking...
               </div>
             )}

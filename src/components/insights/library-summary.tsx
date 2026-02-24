@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Sparkles, RefreshCw, Loader2, Layers, Star, Lightbulb,
+  Sparkles, RefreshCw, Layers, Star, Lightbulb,
   ChevronDown, ChevronUp,
 } from "lucide-react";
 
@@ -94,7 +94,11 @@ export function LibrarySummaryPanel({ analyses }: LibrarySummaryProps) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center gap-3 py-12">
-          <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          <div className="flex items-end gap-0.5 h-5">
+            <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out infinite", height: "100%" }} />
+            <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out 0.2s infinite", height: "100%" }} />
+            <div className="w-1 bg-primary rounded-full" style={{ animation: "waveform-bar 0.8s ease-in-out 0.4s infinite", height: "100%" }} />
+          </div>
           <p className="text-sm text-muted-foreground">Analyzing your library...</p>
         </CardContent>
       </Card>

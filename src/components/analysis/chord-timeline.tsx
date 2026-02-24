@@ -7,14 +7,14 @@ interface ChordTimelineProps {
 }
 
 const CHORD_COLORS = [
-  "bg-blue-500/20 text-blue-700 dark:text-blue-300",
-  "bg-purple-500/20 text-purple-700 dark:text-purple-300",
-  "bg-green-500/20 text-green-700 dark:text-green-300",
-  "bg-orange-500/20 text-orange-700 dark:text-orange-300",
-  "bg-pink-500/20 text-pink-700 dark:text-pink-300",
-  "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300",
-  "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300",
-  "bg-red-500/20 text-red-700 dark:text-red-300",
+  "bg-primary/20 text-primary",
+  "bg-primary/15 text-primary",
+  "bg-primary/25 text-primary",
+  "bg-primary/10 text-primary",
+  "bg-primary/30 text-primary",
+  "bg-primary/18 text-primary",
+  "bg-primary/12 text-primary",
+  "bg-primary/22 text-primary",
 ];
 
 export function ChordTimeline({ chords, currentTime, duration }: ChordTimelineProps) {

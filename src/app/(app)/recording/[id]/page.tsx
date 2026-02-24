@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { RecordingDetail } from "@/components/recordings/recording-detail";
-import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar } from "lucide-react";
+import { EditableDate } from "@/components/recordings/editable-date";
+import { Clock } from "lucide-react";
 
 function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -49,13 +49,11 @@ export default async function RecordingPage({
           <p className="mt-1 text-sm text-muted-foreground">{recording.description}</p>
         )}
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" />
-            {recording.recorded_at
-              ? `Recorded ${new Date(recording.recorded_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
-              : new Date(recording.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
-            }
-          </span>
+          <EditableDate
+            recordingId={recording.id}
+            recordedAt={recording.recorded_at}
+            createdAt={recording.created_at}
+          />
           {recording.duration && (
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
@@ -63,7 +61,9 @@ export default async function RecordingPage({
             </span>
           )}
           {analysis && analysis.status === "completed" && (
-            <Badge variant="secondary">Analyzed</Badge>
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              Analyzed
+            </span>
           )}
         </div>
       </div>

@@ -268,6 +268,14 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
           if (err instanceof DOMException && err.name === "AbortError") return;
           if (typeof err === "string" && err.includes("aborted")) return;
 
+          // Ignore fetch failures (CORS/signed URL) — audio can still play via media element
+          const errStr = err instanceof Error ? err.message : typeof err === "string" ? err : "";
+          if (errStr.includes("Failed to fetch") || errStr.includes("403") || errStr.includes("400")) {
+            console.warn("WaveSurfer fetch failed (audio still playable):", errStr);
+            if (!isReady) setIsReady(true);
+            return;
+          }
+
           let message: string;
           if (typeof err === "string") {
             message = err;
@@ -302,13 +310,15 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (hasPeaks) {
-          // Peaks path: just set the src so playback is ready. No re-render needed.
-          audio.src = url;
-        } else {
-          // No-peaks path: load audio so WaveSurfer can decode and render waveform
-          audio.src = url;
-          wavesurferRef.current?.load(url);
+        audio.src = url;
+
+        if (!hasPeaks && wavesurferRef.current) {
+          // No-peaks path: load audio so WaveSurfer can decode and render waveform.
+          // If fetch fails (CORS/signed URL issues), fall back to playable-only mode.
+          wavesurferRef.current.load(url).catch(() => {
+            if (cancelledRef.current) return;
+            setIsReady(true);
+          });
         }
       });
 

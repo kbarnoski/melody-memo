@@ -69,7 +69,15 @@ export default async function RecordingPage({
       </div>
 
       <RecordingDetail
-        recording={{ ...recording, audio_url: audioUrl, description: recording.description ?? null, file_name: recording.file_name, share_token: recording.share_token ?? null }}
+        recording={{
+          ...recording,
+          audio_url: audioUrl,
+          description: recording.description ?? null,
+          file_name: recording.file_name,
+          share_token: recording.share_token ?? null,
+          waveform_peaks: recording.waveform_peaks ?? null,
+          audio_codec: recording.audio_codec ?? null,
+        }}
         analysis={analysis}
         initialMessages={messages ?? []}
       />

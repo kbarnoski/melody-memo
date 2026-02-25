@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Upload, X, FileAudio, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { getMp4CreationDate } from "@/lib/audio/mp4-creation-date";
+import { detectAudioCodec } from "@/lib/audio/detect-codec";
 
 interface UploadingFile {
   file: File;
@@ -139,6 +140,9 @@ export default function UploadPage() {
           ? new Date(file.lastModified).toISOString()
           : null;
 
+      // Detect audio codec from file container
+      const audioCodec = await detectAudioCodec(file);
+
       const { error: dbError } = await supabase.from("recordings").insert({
         user_id: user.id,
         title,
@@ -148,6 +152,7 @@ export default function UploadPage() {
         file_size: file.size,
         recorded_at: recordedAt,
         description: files[i].description || null,
+        audio_codec: audioCodec,
       }).select("id").single();
 
       if (dbError) {

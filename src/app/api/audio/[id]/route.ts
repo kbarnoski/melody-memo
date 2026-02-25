@@ -62,15 +62,24 @@ async function transcodeToAAC(inputBuffer: ArrayBuffer): Promise<Buffer> {
   }
 }
 
+interface RecordingRow {
+  file_name: string;
+  aac_file_name: string | null;
+  audio_codec: string | null;
+  waveform_peaks: number[][] | null;
+}
+
+const RECORDING_COLUMNS = "file_name, aac_file_name, audio_codec, waveform_peaks";
+
 async function resolveRecording(id: string) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("recordings")
-    .select("file_name")
+    .select(RECORDING_COLUMNS)
     .eq("id", id)
     .single();
 
-  if (data) return { fileName: data.file_name, client: supabase };
+  if (data) return { recording: data as RecordingRow, client: supabase, owned: true };
 
   // Fallback for shared recordings
   const anonClient = createAnonClient(
@@ -79,12 +88,12 @@ async function resolveRecording(id: string) {
   );
   const { data: shared } = await anonClient
     .from("recordings")
-    .select("file_name")
+    .select(RECORDING_COLUMNS)
     .eq("id", id)
     .not("share_token", "is", null)
     .single();
 
-  if (shared) return { fileName: shared.file_name, client: anonClient };
+  if (shared) return { recording: shared as RecordingRow, client: anonClient, owned: false };
   return null;
 }
 
@@ -101,27 +110,32 @@ export async function GET(
     return NextResponse.json({ error: "Recording not found" }, { status: 404 });
   }
 
-  const { fileName, client } = result;
+  const { recording, client } = result;
 
-  // First try: signed URL (fast, no proxy, works for non-ALAC)
   // Check query param to know if client needs transcoded version
   const needsTranscode = request.nextUrl.searchParams.get("transcode") === "1";
 
   if (!needsTranscode) {
-    // Return signed URL — client will try this first, fall back to ?transcode=1 if ALAC
+    // If a persisted AAC transcode exists, serve that instead of the original
+    const fileToSign = recording.aac_file_name ?? recording.file_name;
+
     const { data: signedData } = await client.storage
       .from("recordings")
-      .createSignedUrl(fileName, 3600);
+      .createSignedUrl(fileToSign, 3600);
 
     if (signedData?.signedUrl) {
-      return NextResponse.json({ url: signedData.signedUrl });
+      return NextResponse.json({
+        url: signedData.signedUrl,
+        codec: recording.aac_file_name ? "aac" : (recording.audio_codec ?? null),
+        hasAac: !!recording.aac_file_name,
+      });
     }
   }
 
   // Transcode path: download, detect ALAC, transcode if needed, stream back
   const { data: fileData, error: dlError } = await client.storage
     .from("recordings")
-    .download(fileName);
+    .download(recording.file_name);
 
   if (dlError || !fileData) {
     return NextResponse.json({ error: `Download failed: ${dlError?.message}` }, { status: 500 });
@@ -137,6 +151,30 @@ export async function GET(
         transcoded.byteOffset,
         transcoded.byteOffset + transcoded.byteLength
       ) as ArrayBuffer;
+
+      // Step 2: Persist the AAC transcode in background (don't block the response)
+      const aacFileName = recording.file_name.replace(/\.[^/.]+$/, "") + "_aac.m4a";
+      const supabase = await createClient();
+      supabase.storage
+        .from("recordings")
+        .upload(aacFileName, Buffer.from(arrayBuffer), {
+          contentType: "audio/mp4",
+          upsert: true,
+        })
+        .then(({ error: uploadErr }) => {
+          if (uploadErr) {
+            console.error("[AUDIO] Failed to persist AAC:", uploadErr.message);
+            return;
+          }
+          supabase
+            .from("recordings")
+            .update({ aac_file_name: aacFileName })
+            .eq("id", id)
+            .then(({ error: dbErr }) => {
+              if (dbErr) console.error("[AUDIO] Failed to save aac_file_name:", dbErr.message);
+              else console.log("[AUDIO] Persisted AAC transcode:", aacFileName);
+            });
+        });
     } catch (err) {
       console.error("[AUDIO] Transcoding failed:", err);
       // Return the raw file anyway — Safari can play ALAC
@@ -170,4 +208,40 @@ export async function GET(
       "Cache-Control": "public, max-age=3600",
     },
   });
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  // Verify the user owns this recording
+  const { data: recording } = await supabase
+    .from("recordings")
+    .select("id")
+    .eq("id", id)
+    .single();
+
+  if (!recording) {
+    return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+  }
+
+  const body = await request.json();
+
+  // Save waveform peaks
+  if (body.waveform_peaks) {
+    const { error } = await supabase
+      .from("recordings")
+      .update({ waveform_peaks: body.waveform_peaks })
+      .eq("id", id);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  return NextResponse.json({ error: "No valid field to update" }, { status: 400 });
 }

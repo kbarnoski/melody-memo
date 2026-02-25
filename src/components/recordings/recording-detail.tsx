@@ -46,6 +46,8 @@ interface RecordingDetailProps {
     description: string | null;
     file_name: string;
     share_token: string | null;
+    waveform_peaks: number[][] | null;
+    audio_codec: string | null;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis: any | null;
@@ -228,6 +230,9 @@ export function RecordingDetail({
       <WaveformPlayer
         ref={playerRef}
         audioUrl={recording.audio_url}
+        recordingId={recording.id}
+        peaks={recording.waveform_peaks}
+        codec={recording.audio_codec}
         onTimeUpdate={setCurrentTime}
         markers={markers}
         onVisualizerOpen={() => setShowVisualizer(true)}

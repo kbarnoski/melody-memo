@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,9 +94,9 @@ export function RecordingCard({
   }
 
   return (
+    <Link href={`/recording/${id}`} className="block">
     <Card
-      className="transition-all duration-200 hover:bg-accent/50 hover:shadow-md dark:hover:shadow-primary/5 cursor-pointer"
-      onClick={() => router.push(`/recording/${id}`)}
+      className="transition-all duration-200 hover:bg-accent hover:shadow-md dark:hover:shadow-primary/10 dark:hover:border-primary/30 cursor-pointer"
     >
       <CardContent className="flex items-center gap-4 py-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
@@ -178,5 +179,6 @@ export function RecordingCard({
         </AlertDialog>
       </CardContent>
     </Card>
+    </Link>
   );
 }

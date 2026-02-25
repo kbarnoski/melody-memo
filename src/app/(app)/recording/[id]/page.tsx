@@ -18,28 +18,25 @@ export default async function RecordingPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: recording } = await supabase
-    .from("recordings")
-    .select("*")
-    .eq("id", id)
-    .single();
+  // Run all queries in parallel to eliminate waterfall
+  const [recordingResult, analysisResult, messagesResult] = await Promise.all([
+    supabase.from("recordings").select("*").eq("id", id).single(),
+    supabase.from("analyses").select("*").eq("recording_id", id).single(),
+    supabase
+      .from("chat_messages")
+      .select("*")
+      .eq("recording_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
 
+  const recording = recordingResult.data;
   if (!recording) notFound();
 
   // Use proxy API route — it detects ALAC and transcodes to AAC for Chrome
   const audioUrl = `/api/audio/${id}`;
 
-  const { data: analysis } = await supabase
-    .from("analyses")
-    .select("*")
-    .eq("recording_id", id)
-    .single();
-
-  const { data: messages } = await supabase
-    .from("chat_messages")
-    .select("*")
-    .eq("recording_id", id)
-    .order("created_at", { ascending: true });
+  const analysis = analysisResult.data;
+  const messages = messagesResult.data;
 
   return (
     <div className="space-y-6">

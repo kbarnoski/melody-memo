@@ -230,11 +230,16 @@ export async function PATCH(
 
   const body = await request.json();
 
-  // Save waveform peaks
+  // Save waveform peaks (and optionally duration)
   if (body.waveform_peaks) {
+    const updates: Record<string, unknown> = { waveform_peaks: body.waveform_peaks };
+    if (typeof body.duration === "number" && body.duration > 0) {
+      updates.duration = body.duration;
+    }
+
     const { error } = await supabase
       .from("recordings")
-      .update({ waveform_peaks: body.waveform_peaks })
+      .update(updates)
       .eq("id", id);
 
     if (error) {

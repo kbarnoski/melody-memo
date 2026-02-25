@@ -232,7 +232,7 @@ export function RecordingDetail({
         audioUrl={recording.audio_url}
         recordingId={recording.id}
         peaks={recording.waveform_peaks}
-        codec={recording.audio_codec}
+        duration={recording.duration}
         onTimeUpdate={setCurrentTime}
         markers={markers}
         onVisualizerOpen={() => setShowVisualizer(true)}

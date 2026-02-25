@@ -21,7 +21,7 @@ interface WaveformPlayerProps {
   audioUrl: string;
   recordingId?: string;
   peaks?: number[][] | null;
-  codec?: string | null;
+  duration?: number | null;
   onTimeUpdate?: (currentTime: number) => void;
   markers?: MarkerDot[];
   onVisualizerOpen?: () => void;
@@ -40,7 +40,7 @@ function isChromium(): boolean {
 }
 
 export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerProps>(
-  function WaveformPlayer({ audioUrl, recordingId, peaks, codec, onTimeUpdate, markers = [], onVisualizerOpen }, ref) {
+  function WaveformPlayer({ audioUrl, recordingId, peaks, duration: propDuration, onTimeUpdate, markers = [], onVisualizerOpen }, ref) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -52,97 +52,73 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     const [error, setError] = useState<string | null>(null);
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
     const [loadingStatus, setLoadingStatus] = useState("Loading...");
-    const hasPeaks = peaks && peaks.length > 0;
+    const hasPeaks = !!(peaks && peaks.length > 0 && propDuration);
     // Track whether we've loaded audio (deferred when peaks exist)
     const [audioLoaded, setAudioLoaded] = useState(false);
     const peaksSavedRef = useRef(false);
 
-    // Resolve audio URL: use sessionStorage cache, then API with codec-aware logic
+    // Resolve the audio URL (used by both the normal path and deferred play)
+    const resolveAudioUrl = useCallback(async (): Promise<string> => {
+      // Check sessionStorage first
+      if (recordingId) {
+        const cached = sessionStorage.getItem(`audio-url-${recordingId}`);
+        if (cached) return cached;
+      }
+
+      if (!audioUrl.startsWith("/api/")) return audioUrl;
+
+      try {
+        const res = await fetch(audioUrl);
+        const data = await res.json();
+
+        if (data.url) {
+          if (data.hasAac || (data.codec && data.codec !== "alac")) {
+            if (recordingId) sessionStorage.setItem(`audio-url-${recordingId}`, data.url);
+            return data.url;
+          }
+          if (data.codec === "alac" && isChromium()) {
+            return audioUrl + "?transcode=1";
+          }
+          // Unknown codec — test playability
+          const testAudio = new Audio();
+          const canPlay = await new Promise<boolean>((resolve) => {
+            testAudio.preload = "metadata";
+            testAudio.onloadedmetadata = () => resolve(true);
+            testAudio.onerror = () => resolve(false);
+            testAudio.src = data.url;
+            setTimeout(() => resolve(false), 5000);
+          });
+          if (canPlay) {
+            if (recordingId) sessionStorage.setItem(`audio-url-${recordingId}`, data.url);
+            return data.url;
+          }
+        }
+      } catch { /* fall through */ }
+
+      return audioUrl + "?transcode=1";
+    }, [audioUrl, recordingId]);
+
+    // Resolve audio URL (skip when we have peaks — defer until play)
     useEffect(() => {
-      // If we have peaks, we can render the waveform immediately without resolving a URL
       if (hasPeaks) return;
 
       let cancelled = false;
-      async function resolve() {
-        try {
-          // Step 4: Check sessionStorage cache first
-          if (recordingId) {
-            const cached = sessionStorage.getItem(`audio-url-${recordingId}`);
-            if (cached) {
-              if (!cancelled) {
-                setLoadingStatus("Loading waveform...");
-                setResolvedUrl(cached);
-              }
-              return;
-            }
-          }
+      setLoadingStatus("Fetching audio...");
 
-          setLoadingStatus("Fetching audio...");
-
-          const res = await fetch(audioUrl);
-          const data = await res.json();
-          if (cancelled) return;
-
-          if (data.url) {
-            // Step 3: If we know the codec, skip the format probe
-            if (data.hasAac || (data.codec && data.codec !== "alac")) {
-              // AAC or known-playable codec — use directly
-              setLoadingStatus("Loading waveform...");
-              setResolvedUrl(data.url);
-              if (recordingId) sessionStorage.setItem(`audio-url-${recordingId}`, data.url);
-              return;
-            }
-
-            if (data.codec === "alac" && isChromium()) {
-              // ALAC on Chrome — skip probe, go straight to transcode
-              if (!cancelled) {
-                setLoadingStatus("Transcoding audio...");
-                setResolvedUrl(audioUrl + "?transcode=1");
-              }
-              return;
-            }
-
-            // Unknown codec or Safari — test if browser can play it
-            setLoadingStatus("Checking format...");
-            const testAudio = new Audio();
-            const canPlay = await new Promise<boolean>((resolve) => {
-              testAudio.preload = "metadata";
-              testAudio.onloadedmetadata = () => { resolve(true); };
-              testAudio.onerror = () => { resolve(false); };
-              testAudio.src = data.url;
-              setTimeout(() => resolve(false), 5000);
-            });
-
-            if (cancelled) return;
-
-            if (canPlay) {
-              setLoadingStatus("Loading waveform...");
-              setResolvedUrl(data.url);
-              if (recordingId) sessionStorage.setItem(`audio-url-${recordingId}`, data.url);
-              return;
-            }
-          }
-
-          // Fall back to server-side transcoding (for ALAC on Chrome)
-          if (!cancelled) {
-            setLoadingStatus("Transcoding audio...");
-            setResolvedUrl(audioUrl + "?transcode=1");
-          }
-        } catch {
-          if (!cancelled) {
-            setLoadingStatus("Transcoding audio...");
-            setResolvedUrl(audioUrl + "?transcode=1");
-          }
-        }
-      }
-
-      if (audioUrl.startsWith("/api/")) {
-        resolve();
-      } else {
+      if (!audioUrl.startsWith("/api/")) {
         setResolvedUrl(audioUrl);
+        return;
       }
+
+      resolveAudioUrl().then((url) => {
+        if (!cancelled) {
+          setLoadingStatus("Loading waveform...");
+          setResolvedUrl(url);
+        }
+      });
+
       return () => { cancelled = true; };
-    }, [audioUrl, recordingId, hasPeaks, codec]);
+    }, [audioUrl, hasPeaks, resolveAudioUrl]);
 
     useImperativeHandle(ref, () => ({
       seekTo(time: number) {
@@ -155,7 +131,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
       },
     }));
 
-    // Save peaks to the server after first WaveSurfer render
+    // Save peaks and duration to the server after first WaveSurfer render
     const savePeaks = useCallback((ws: WaveSurfer) => {
       if (peaksSavedRef.current || !recordingId || !audioUrl.startsWith("/api/")) return;
       peaksSavedRef.current = true;
@@ -163,82 +139,21 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
       try {
         const exported = ws.exportPeaks({ maxLength: 1000, precision: 3 });
         if (exported && exported.length > 0) {
+          const wsDuration = ws.getDuration();
           fetch(`/api/audio/${recordingId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ waveform_peaks: exported }),
+            body: JSON.stringify({
+              waveform_peaks: exported,
+              // Also save duration if it wasn't detected at upload time
+              ...(wsDuration && !propDuration ? { duration: wsDuration } : {}),
+            }),
           }).catch((err) => console.error("[PEAKS] Failed to save:", err));
         }
       } catch (err) {
         console.error("[PEAKS] Failed to export:", err);
       }
-    }, [recordingId, audioUrl]);
-
-    // Load audio for playback (deferred when peaks exist)
-    const loadAudioForPlayback = useCallback(async () => {
-      if (audioLoaded || !wavesurferRef.current) return;
-      setAudioLoaded(true);
-
-      // Resolve the URL if we haven't yet (peaks path skipped URL resolution)
-      let url = resolvedUrl;
-      if (!url && audioUrl.startsWith("/api/")) {
-        setLoadingStatus("Fetching audio...");
-        try {
-          // Check sessionStorage first
-          if (recordingId) {
-            const cached = sessionStorage.getItem(`audio-url-${recordingId}`);
-            if (cached) { url = cached; }
-          }
-
-          if (!url) {
-            const res = await fetch(audioUrl);
-            const data = await res.json();
-
-            if (data.url) {
-              if (data.hasAac || (data.codec && data.codec !== "alac")) {
-                url = data.url;
-              } else if (data.codec === "alac" && isChromium()) {
-                url = audioUrl + "?transcode=1";
-              } else {
-                // Test playability
-                const testAudio = new Audio();
-                const canPlay = await new Promise<boolean>((resolve) => {
-                  testAudio.preload = "metadata";
-                  testAudio.onloadedmetadata = () => resolve(true);
-                  testAudio.onerror = () => resolve(false);
-                  testAudio.src = data.url;
-                  setTimeout(() => resolve(false), 5000);
-                });
-                url = canPlay ? data.url : audioUrl + "?transcode=1";
-              }
-
-              if (url && recordingId && !url.includes("?transcode=1")) {
-                sessionStorage.setItem(`audio-url-${recordingId}`, url);
-              }
-            } else {
-              url = audioUrl + "?transcode=1";
-            }
-          }
-        } catch {
-          url = audioUrl + "?transcode=1";
-        }
-      } else if (!url) {
-        url = audioUrl;
-      }
-
-      setResolvedUrl(url);
-      setLoadingStatus("Loading audio...");
-
-      // Load the audio into the existing WaveSurfer instance
-      if (wavesurferRef.current && url) {
-        const audio = new Audio();
-        audio.crossOrigin = "anonymous";
-        audio.src = url;
-        audioRef.current = audio;
-        wavesurferRef.current.setOptions({ media: audio });
-        wavesurferRef.current.load(url);
-      }
-    }, [audioLoaded, resolvedUrl, audioUrl, recordingId]);
+    }, [recordingId, audioUrl, propDuration]);
 
     const initWaveSurfer = useCallback(
       (node: HTMLDivElement | null) => {
@@ -270,7 +185,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
           barGap: 1,
           barRadius: 2,
           height: 80,
-          ...(hasPeaks ? { peaks: peaks as Array<number[]> } : {}),
+          ...(hasPeaks ? { peaks: peaks as Array<number[]>, duration: propDuration! } : {}),
           ...(audio ? { media: audio } : {}),
         });
 
@@ -287,8 +202,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
         // For peaks-only mode, the waveform renders synchronously
         if (hasPeaks) {
-          // WaveSurfer with peaks fires "ready" synchronously or in next tick
-          // But we also mark as ready here as a safety net
+          setDuration(propDuration!);
           setIsReady(true);
           setError(null);
         }
@@ -331,7 +245,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
 
         wavesurferRef.current = ws;
       },
-      [resolvedUrl, hasPeaks, peaks, onTimeUpdate, savePeaks]
+      [resolvedUrl, hasPeaks, peaks, propDuration, onTimeUpdate, savePeaks]
     );
 
     // Update waveform colors when theme changes (without recreating WaveSurfer)
@@ -368,10 +282,62 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
     }, [pathname]);
 
     async function togglePlay() {
-      // If we have peaks but haven't loaded audio yet, load it now
+      // If we have peaks but haven't loaded audio yet, resolve URL and recreate with audio
       if (hasPeaks && !audioLoaded) {
-        await loadAudioForPlayback();
-        // Wait a tick for the audio to be ready, then play
+        setAudioLoaded(true);
+        setLoadingStatus("Loading audio...");
+
+        const url = await resolveAudioUrl();
+        setResolvedUrl(url);
+
+        // Destroy peaks-only WaveSurfer and recreate with audio
+        if (wavesurferRef.current && containerRef.current) {
+          wavesurferRef.current.destroy();
+
+          const audio = new Audio();
+          audio.crossOrigin = "anonymous";
+          audio.src = url;
+          audioRef.current = audio;
+
+          const ws = WaveSurfer.create({
+            container: containerRef.current,
+            waveColor: themeColors.mutedForeground + "4d",
+            progressColor: themeColors.primary,
+            cursorColor: themeColors.primary,
+            barWidth: 2,
+            barGap: 1,
+            barRadius: 2,
+            height: 80,
+            media: audio,
+          });
+
+          ws.on("ready", () => {
+            setDuration(ws.getDuration());
+            setIsReady(true);
+            ws.play();
+          });
+          ws.on("audioprocess", () => {
+            const time = ws.getCurrentTime();
+            setCurrentTime(time);
+            onTimeUpdate?.(time);
+          });
+          ws.on("seeking", () => {
+            const time = ws.getCurrentTime();
+            setCurrentTime(time);
+            onTimeUpdate?.(time);
+          });
+          ws.on("play", () => setIsPlaying(true));
+          ws.on("pause", () => setIsPlaying(false));
+          ws.on("finish", () => setIsPlaying(false));
+          ws.on("error", (err: unknown) => {
+            if (err instanceof DOMException && err.name === "AbortError") return;
+            if (typeof err === "string" && err.includes("aborted")) return;
+            console.error("WaveSurfer error:", err);
+            setError(typeof err === "string" ? err : err instanceof Error ? err.message : "Unable to load audio file.");
+          });
+
+          wavesurferRef.current = ws;
+        }
         return;
       }
       wavesurferRef.current?.playPause();

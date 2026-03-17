@@ -30,7 +30,7 @@ void main() {
   // arm index n: log(r) - logPhi * (theta + 2*pi*n) / (pi/2) = 0
   // => n = (log(r) * (pi/2) / logPhi - theta) / (2*pi)
   float spiralPhase = (logR * 1.5708 / logPhi - theta) / 6.28318;
-  float nearestArm  = round(spiralPhase);
+  float nearestArm  = floor(spiralPhase + 0.5);
   float distToArm   = abs(spiralPhase - nearestArm);
 
   // Arms get thinner as we approach center (smaller r => infinite arms)
@@ -62,8 +62,7 @@ void main() {
   // --- Fibonacci dots along spiral arms ---
   // Distribute points at golden-ratio angles (sunflower phyllotaxis),
   // placed on the spiral at those radii.
-  int numDots = 80;
-  for (int i = 1; i <= numDots; i++) {
+  for (int i = 1; i <= 80; i++) {
     float fi   = float(i);
     // Golden angle: 2*pi*(1 - 1/phi) = 2.39996 rad
     float dotTheta = fi * 2.39996 - t * 0.4;

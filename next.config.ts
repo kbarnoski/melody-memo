@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/visualizer", destination: "/room", permanent: true },
+      { source: "/visualizer/installation", destination: "/room/installation", permanent: true },
+    ];
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

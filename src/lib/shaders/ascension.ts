@@ -65,9 +65,8 @@ void main() {
 
   // 8 parallax layers from deep (small/fast) to near (large/slow)
   // Layer speeds and sizes create strong parallax depth illusion
-  int N = 8;
-  for (int i = 0; i < N; i++) {
-    float fi = float(i) / float(N - 1);          // 0 = deepest, 1 = nearest
+  for (int i = 0; i < 8; i++) {
+    float fi = float(i) / 7.0;          // 0 = deepest, 1 = nearest
     float depth = fi;
     float speed = mix(1.2, 0.2, depth);          // far = fast scroll (parallax), near = slow
     float size = mix(0.18, 0.55, depth);          // far = tiny, near = large

@@ -26,10 +26,10 @@ void main() {
 
   // Draw phyllotaxis points: n-th point at (sqrt(n)*C, n*goldenAngle)
   // We draw many dots; they naturally recede in visual density toward center
-  int numPoints = 200;
+  // 200 points
   float spacing = 0.095 + u_bass * 0.01; // base scale of pattern
 
-  for (int i = 1; i <= numPoints; i++) {
+  for (int i = 1; i <= 200; i++) {
     float fi = float(i);
 
     // Polar coordinates in phyllotaxis
@@ -85,12 +85,12 @@ void main() {
 
   // 13 arms
   float armPhase13 = fract((theta / goldenAngle - log(r / spacing) / goldenAngle * 13.0) / 13.0);
-  float arm13Dist  = abs(armPhase13 - round(armPhase13));
+  float arm13Dist  = abs(armPhase13 - floor(armPhase13 + 0.5));
   float arm13Glow  = smoothstep(0.06, 0.0, arm13Dist) * smoothstep(1.4, 0.1, r);
 
   // 21 arms
   float armPhase21 = fract((theta / goldenAngle - log(r / spacing) / goldenAngle * 21.0) / 21.0);
-  float arm21Dist  = abs(armPhase21 - round(armPhase21));
+  float arm21Dist  = abs(armPhase21 - floor(armPhase21 + 0.5));
   float arm21Glow  = smoothstep(0.045, 0.0, arm21Dist) * smoothstep(1.4, 0.1, r);
 
   vec3 armCol = palette(

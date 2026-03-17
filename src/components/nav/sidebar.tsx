@@ -27,7 +27,6 @@ const navItems = [
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },
-  { href: "/visualizer", label: "The Room", icon: Disc3 },
 ];
 
 export function Sidebar() {
@@ -116,6 +115,18 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      <div className="px-3 pb-2">
+        <Link
+          href="/room"
+          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all
+            bg-primary/5 border border-primary/10 text-primary/80 hover:text-primary
+            hover:bg-primary/10 hover:border-primary/20"
+        >
+          <Disc3 className="h-4 w-4" />
+          Enter The Room
+        </Link>
+      </div>
 
       <div className="border-t px-2 py-2">
         <div className="flex items-center gap-1">

@@ -715,6 +715,93 @@ export const REALMS: Realm[] = [
     poetryImagery:
       "turning leaves, beautiful decay, harvest moon, woodsmoke, grateful release, the ache of impermanence, fog through bare branches, last warm light",
   },
+  {
+    id: "spirit",
+    name: "The Spirit",
+    subtitle: "the infinite inner landscape",
+    visualVocabulary: {
+      environments: [
+        "an infinite cathedral made of starlight, where every window opens onto a different galaxy, and the floor is still water reflecting everything",
+        "a forest that exists between dimensions — trees made of sacred geometry, roots that are rivers of light, canopy that is the night sky itself",
+        "the space between thoughts, where time has never existed, vast and warm and impossibly gentle, every color ever imagined living here simultaneously",
+        "a mountain that rises forever, each altitude a different emotion, clouds made of memory, the summit always just above you, always close enough to feel",
+      ],
+      entities: [
+        "a figure made entirely of light, standing at the edge of an infinite ocean, their reflection going deeper than the water",
+        "thousands of luminous threads connecting every living thing, visible for one moment, each one vibrating with a different name",
+        "a spiral of golden particles ascending through darkness, each particle a prayer someone once whispered and thought no one heard",
+        "an ancient tree with roots in the earth and branches in the stars, leaves that are tiny universes, bark inscribed with every language",
+      ],
+      textures: [
+        "light passing through crystal and separating into every feeling that has ever been felt",
+        "the surface of still water at the exact moment before a raindrop lands, holding all possibility",
+        "smoke from sacred fires dissolving into constellations, each star a different moment of grace",
+        "veins of gold running through black stone, the precious hidden inside the dark, always there, always glowing",
+      ],
+      atmospheres: [
+        "the feeling of being held by something too large to name, warm and infinite and unafraid",
+        "awe so deep it becomes silence, the kind that exists in the presence of the genuinely sacred",
+        "joy and grief existing in the same breath, the bittersweet truth that love is always close to loss",
+        "the absolute peace that comes after surrendering everything, when there is nothing left to carry and nothing left to fear",
+      ],
+    },
+    shaderModes: [
+      "astral", "sacred", "ethereal", "mandala", "dissolution",
+      "aurora", "nebula", "stardust", "mycelium", "fibonacci", "ascension",
+    ],
+    palette: {
+      primary: "#0a0814",
+      secondary: "#140e24",
+      accent: "#a080d0",
+      glow: "#c0a0f0",
+    },
+    defaultVoice: "ballad",
+    poetryMood: "transcendent",
+    poetryImagery:
+      "infinite cathedrals of starlight, sacred geometry made of prayer, the space between thoughts, rivers of light beneath ancient trees, golden threads connecting all living things, the mountain that rises forever, still water reflecting galaxies, smoke becoming constellations, the warmth of being held by the infinite",
+  },
+  {
+    id: "pain",
+    name: "Pain",
+    subtitle: "the place beneath all places",
+    visualVocabulary: {
+      environments: [
+        "empty apartment at 4am, one light on, the city gone silent, walls closing in imperceptibly",
+        "frozen lake at night under no moon, the ice cracking somewhere far away, absolute solitude stretching to every horizon",
+        "hospital corridor that never ends, fluorescent lights flickering, every door locked, footsteps echoing from nowhere",
+        "abandoned playground in winter rain, swings moving by themselves, the sound of a child who is no longer there",
+      ],
+      entities: [
+        "a figure sitting alone on a bed in an empty room, head in hands, completely still",
+        "shadow of a person standing at a window looking at nothing, the glass fogged from their breathing",
+        "hands reaching upward from dark water, fingers splayed, slowly sinking without struggle",
+        "a single chair in an enormous empty room, the person who sat there gone forever",
+      ],
+      textures: [
+        "ice forming over a photograph of someone who is gone",
+        "tears freezing before they fall in air too cold for grief",
+        "rust eating through metal that once held something precious",
+        "condensation on a cold window, a finger-drawn word already fading",
+      ],
+      atmospheres: [
+        "the silence after the last person leaves and you know they are not coming back",
+        "the weight of grief so heavy breathing takes deliberate effort",
+        "cold so deep it has stopped being temperature and become a state of being",
+        "loneliness so complete it has replaced the blood in your veins",
+      ],
+    },
+    shaderModes: ["void", "phantom", "obsidian", "umbra", "chasm", "crypt"],
+    palette: {
+      primary: "#020204",
+      secondary: "#0a0810",
+      accent: "#4a5070",
+      glow: "#2a3050",
+    },
+    defaultVoice: "onyx",
+    poetryMood: "melancholic",
+    poetryImagery:
+      "empty rooms, frozen tears, 4am silence, hospital corridors, abandoned places, the weight of absence, cold that replaces blood, grief without bottom, loneliness as geography, hands letting go",
+  },
 ];
 
 export function getRealm(id: string): Realm | undefined {

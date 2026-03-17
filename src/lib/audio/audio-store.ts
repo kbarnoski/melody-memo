@@ -5,6 +5,7 @@ import type { Realm } from "@/lib/journeys/types";
 import { getJourney } from "@/lib/journeys/journeys";
 import { getRealm } from "@/lib/journeys/realms";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { MODE_META } from "@/lib/shaders";
 
 export interface Track {
   id: string;
@@ -51,6 +52,9 @@ interface AudioState {
   aiImageEnabled: boolean;
   ambientEnabled: boolean;
 
+  // Language
+  language: string;
+
   // Internal — tells AudioProvider to skip reloading (WaveSurfer already loaded)
   _skipLoad: boolean;
 
@@ -79,6 +83,7 @@ interface AudioState {
   setInstallationMode: (enabled: boolean) => void;
   setVizModeSequence: (sequence: string[] | null) => void;
   cycleVizMode: () => void;
+  cycleVizModePrev: () => void;
 
   // Journey actions
   startJourney: (journeyId: string) => void;
@@ -86,6 +91,7 @@ interface AudioState {
   setJourneyPhase: (phase: JourneyPhaseId) => void;
   setAiImageEnabled: (enabled: boolean) => void;
   setAmbientEnabled: (enabled: boolean) => void;
+  setLanguage: (lang: string) => void;
 }
 
 export const useAudioStore = create<AudioState>()((set, get) => ({
@@ -111,11 +117,13 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   journeyProgress: 0,
   aiImageEnabled: true,
   ambientEnabled: true,
+  language: "en",
   _skipLoad: false,
 
   play: (track, startTime, skipLoad) => {
     const current = get().currentTrack;
-    if (current?.id === track.id && get().isPlaying) return; // already playing this track
+    // Skip only if same track is already playing and no explicit startTime
+    if (current?.id === track.id && get().isPlaying && startTime === undefined) return;
     set({
       currentTrack: track,
       isPlaying: true,
@@ -240,16 +248,26 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
         vizModeSequenceIndex: nextIdx,
       });
     } else {
-      // Cycle through all modes
-      const allModes = [
-        "mandala", "cosmos", "neon", "liquid", "sacred", "ethereal",
-        "fractal", "warp", "prismatic", "void", "mycelium", "tesseract",
-        "dissolution", "astral", "orb", "field", "rings", "aurora",
-        "totem", "wormhole", "dreamscape", "visions", "morphic",
-      ];
+      const allModes = MODE_META.map((m) => m.mode as string);
       const currentIdx = allModes.indexOf(get().vizMode);
       const nextIdx = (currentIdx + 1) % allModes.length;
       set({ vizMode: allModes[nextIdx] });
+    }
+  },
+
+  cycleVizModePrev: () => {
+    const { vizModeSequence, vizModeSequenceIndex } = get();
+    if (vizModeSequence && vizModeSequence.length > 0) {
+      const prevIdx = (vizModeSequenceIndex - 1 + vizModeSequence.length) % vizModeSequence.length;
+      set({
+        vizMode: vizModeSequence[prevIdx],
+        vizModeSequenceIndex: prevIdx,
+      });
+    } else {
+      const allModes = MODE_META.map((m) => m.mode as string);
+      const currentIdx = allModes.indexOf(get().vizMode);
+      const prevIdx = (currentIdx - 1 + allModes.length) % allModes.length;
+      set({ vizMode: allModes[prevIdx] });
     }
   },
 
@@ -272,6 +290,8 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
       vizPoetry: true,
       vizWhisper: false,
       vizModeSequence: null, // Journey engine handles mode switching
+      // Ensure playback is active if a track is loaded
+      isPlaying: !!get().currentTrack ? true : get().isPlaying,
     });
   },
 
@@ -283,6 +303,8 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
       activeRealm: null,
       journeyPhase: null,
       journeyProgress: 0,
+      isPlaying: false,
+      vizMode: "orb",
     });
   },
 
@@ -290,4 +312,5 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
 
   setAiImageEnabled: (enabled) => set({ aiImageEnabled: enabled }),
   setAmbientEnabled: (enabled) => set({ ambientEnabled: enabled }),
+  setLanguage: (lang) => set({ language: lang }),
 }));

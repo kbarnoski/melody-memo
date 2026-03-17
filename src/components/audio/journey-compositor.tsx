@@ -13,6 +13,8 @@ interface JourneyCompositorProps {
   aiPrompt?: string;
   /** When true, AI images are the sole visual (no shader underneath) */
   aiOnly?: boolean;
+  /** When false, stop generating new AI images (existing stay visible) */
+  aiGenerating?: boolean;
   children: React.ReactNode;
 }
 
@@ -36,6 +38,7 @@ export function JourneyCompositor({
   aiEnabled,
   aiPrompt,
   aiOnly = false,
+  aiGenerating = true,
   children,
 }: JourneyCompositorProps) {
   const effectivePrompt = frame?.aiPrompt ?? aiPrompt ?? "";
@@ -62,6 +65,7 @@ export function JourneyCompositor({
           audioBass={audioBass}
           enabled={true}
           aiOnly={aiOnly}
+          generating={aiGenerating}
         />
       )}
 

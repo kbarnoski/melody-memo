@@ -50,9 +50,8 @@ void main() {
   vec3 color = vec3(0.0);
 
   // 12 depth layers — layer 0 = nearest (large, slow, bright), 11 = farthest (tiny, fast, dim)
-  int LAYERS = 12;
-  for (int i = 0; i < LAYERS; i++) {
-    float fi = float(i) / float(LAYERS - 1);         // 0=near, 1=far
+  for (int i = 0; i < 12; i++) {
+    float fi = float(i) / 11.0;         // 0=near, 1=far
     float depth = fi;
 
     // Perspective scale: exponential size reduction with depth

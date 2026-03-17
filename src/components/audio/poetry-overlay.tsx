@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import type { Mood } from "@/lib/audio/vibe-detection";
 import { POETRY_THEMES, TYPOGRAPHY_OVERRIDES, TYPOGRAPHY_FONTS_URL, type PoetryTheme, type TypographicVariant } from "@/lib/audio/poetry-themes";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { useAudioStore } from "@/lib/audio/audio-store";
 
 export interface PoetryOverlayProps {
   mood: Mood;
@@ -25,6 +26,8 @@ export interface PoetryOverlayProps {
   realmImagery?: string | null;
   /** Typography theme key — realm ID (journey) or shader category (viz-only) */
   typographyTheme?: string | null;
+  /** When false, no new poetry lines appear (existing lines finish naturally) */
+  isPlaying?: boolean;
 }
 
 interface ActiveLine {
@@ -38,10 +41,14 @@ interface ActiveLine {
   color: string;
 }
 
-const STAGGER_SECONDS = 3;
+const STAGGER_SECONDS = 5;
+const MAX_ACTIVE_LINES = 3;
 const BATCH_SIZE = 5;
 const REFETCH_THRESHOLD = 2;
-const WHISPER_VOICES = ["shimmer", "nova", "fable", "alloy"] as const;
+const WHISPER_VOICES = [
+  "alloy", "ash", "ballad", "coral", "echo", "fable",
+  "nova", "onyx", "shimmer", "sage", "verse", "marin", "cedar",
+] as const;
 
 const HOLD_ANIMATIONS = ["poetry-float-hold", "poetry-drift-hold", "poetry-breathe-hold"];
 const SWISS_EASE = "cubic-bezier(0.23, 1, 0.32, 1)";
@@ -82,8 +89,10 @@ export function PoetryOverlay({
   moodOverride,
   realmImagery,
   typographyTheme,
+  isPlaying,
 }: PoetryOverlayProps) {
   const [activeLines, setActiveLines] = useState<ActiveLine[]>([]);
+  const language = useAudioStore((s) => s.language);
   const effectiveMood = moodOverride ?? mood;
   // Typography override (realm or category) takes priority over mood-based theme
   const theme: PoetryTheme = (typographyTheme ? TYPOGRAPHY_OVERRIDES[typographyTheme] : undefined) ?? POETRY_THEMES[effectiveMood];
@@ -106,14 +115,21 @@ export function PoetryOverlay({
   const sessionLinesRef = useRef<Set<string>>(new Set());
   const lineIdRef = useRef(0);
   const cancelledRef = useRef(false);
+  const activeLinesCountRef = useRef(0);
 
   // Refs that sync from props without causing effect re-runs
   const whisperEnabledRef = useRef(whisperEnabled);
   const liveEnabledRef = useRef(liveEnabled);
   const voiceOverrideRef = useRef(voiceOverride);
   const phaseRef = useRef(phase);
+  const isPlayingRef = useRef(isPlaying);
+  const languageRef = useRef(language);
+  const realmImageryRef = useRef(realmImagery);
 
   // Keep refs in sync
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+  useEffect(() => { languageRef.current = language; }, [language]);
+  useEffect(() => { realmImageryRef.current = realmImagery; }, [realmImagery]);
   useEffect(() => { whisperEnabledRef.current = whisperEnabled; }, [whisperEnabled]);
   useEffect(() => { liveEnabledRef.current = liveEnabled; }, [liveEnabled]);
   useEffect(() => { voiceOverrideRef.current = voiceOverride; }, [voiceOverride]);
@@ -148,6 +164,9 @@ export function PoetryOverlay({
           count: BATCH_SIZE,
           avoid,
           phase: phase ?? undefined,
+          language: languageRef.current,
+          imagery: realmImageryRef.current ?? undefined,
+          vizTheme: typographyTheme ?? undefined,
         }),
       });
 
@@ -166,7 +185,18 @@ export function PoetryOverlay({
     } finally {
       fetchingRef.current = false;
     }
-  }, [mood, moodOverride, keySignature, tempo, summary, phase, realmImagery]);
+  }, [mood, moodOverride, keySignature, tempo, summary, phase, realmImagery, typographyTheme]);
+
+  // When viz theme changes, flush stale buffer and fetch fresh poetry for the new theme.
+  // Existing on-screen lines keep their individual fade-out timers — smooth transition.
+  const prevThemeRef = useRef(typographyTheme);
+  useEffect(() => {
+    if (prevThemeRef.current === typographyTheme) return;
+    prevThemeRef.current = typographyTheme;
+    // Clear buffered lines so the next interval pull gets theme-matched poetry
+    bufferRef.current = [];
+    fetchBatch();
+  }, [typographyTheme, fetchBatch]);
 
   // Initialize Web Audio reverb chain — independent of main loop
   useEffect(() => {
@@ -214,7 +244,7 @@ export function PoetryOverlay({
       const res = await fetch("/api/poetry/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voice, phase: phaseRef.current }),
+        body: JSON.stringify({ text, voice, phase: phaseRef.current, language: languageRef.current }),
       });
 
       if (!res.ok || cancelledRef.current) return;
@@ -270,10 +300,15 @@ export function PoetryOverlay({
     const effectiveInterval = intervalOverride ?? STAGGER_SECONDS;
 
     const interval = setInterval(() => {
+      // Pause poetry generation when audio is paused
+      if (isPlayingRef.current === false) return;
       // When live mode is on, pause AI batch pulls
       if (liveEnabledRef.current) return;
 
       if (bufferRef.current.length === 0) return;
+
+      // Cap max simultaneous active lines to avoid visual overload
+      if (activeLinesCountRef.current >= MAX_ACTIVE_LINES) return;
 
       const lineText = bufferRef.current.shift()!;
       const newLine = createActiveLine(lineText);
@@ -309,7 +344,7 @@ export function PoetryOverlay({
     return () => {
       cancelledRef.current = true;
       clearInterval(interval);
-      setActiveLines([]);
+      // Don't clear activeLines — let existing lines finish their CSS animation naturally
     };
   }, [fetchBatch, theme.sizeRange, theme.animationDuration, theme.variants, theme.animation, createActiveLine, speakLine, intervalOverride]);
 
@@ -338,9 +373,10 @@ export function PoetryOverlay({
     }, newLine.duration * 1000);
   }, [liveText, createActiveLine, speakLine]);
 
-  if (activeLines.length === 0) return null;
+  // Keep ref in sync for non-React reads (interval callback)
+  activeLinesCountRef.current = activeLines.length;
 
-  const isGlitch = theme.animation === "poetry-glitch";
+  if (activeLines.length === 0) return null;
 
   return (
     <div
@@ -360,12 +396,10 @@ export function PoetryOverlay({
         const holdAnimation = pickRandom(HOLD_ANIMATIONS);
 
         // Single whole-line animation: lifecycle + gentle drift
-        const outerAnimation = isGlitch
-          ? `poetry-glitch ${line.duration}s ease-in-out forwards`
-          : [
-              `poetry-line-lifecycle ${line.duration}s ${SWISS_EASE} forwards`,
-              `${holdAnimation} ${line.duration}s ease-in-out infinite`,
-            ].join(", ");
+        const outerAnimation = [
+          `poetry-line-lifecycle ${line.duration}s ${SWISS_EASE} forwards`,
+          `${holdAnimation} ${line.duration}s ease-in-out infinite`,
+        ].join(", ");
 
         return (
           <span

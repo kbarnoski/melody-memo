@@ -73,7 +73,7 @@ class RealtimeImageService {
         proxyUrl: "/api/ai-image/token",
       });
 
-      this.connection = fal.realtime.connect("fal-ai/fast-lcm-diffusion", {
+      this.connection = fal.realtime.connect("fal-ai/flux/schnell", {
         connectionKey: "resonance-journey",
         clientOnly: true,
         onResult: (result: unknown) => {
@@ -156,9 +156,12 @@ class RealtimeImageService {
     this.restInFlight = true;
 
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45000);
       const res = await fetch("/api/ai-image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           prompt: options.prompt,
           denoisingStrength: options.denoisingStrength,
@@ -167,6 +170,7 @@ class RealtimeImageService {
           height: options.height ?? 768,
         }),
       });
+      clearTimeout(timeout);
 
       if (!res.ok) return null;
 

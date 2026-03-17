@@ -13,7 +13,7 @@ import { useAudioStore } from "@/lib/audio/audio-store";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
 import { getAudioEngine, getAnalyserNode, ensureResumed } from "@/lib/audio/audio-engine";
 import { useInstallationMode } from "@/lib/audio/use-installation-mode";
-import { useJourney } from "@/lib/journeys/use-journey";
+import { useJourney, usePhaseChange } from "@/lib/journeys/use-journey";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { Mic, ArrowLeft } from "lucide-react";
 
@@ -84,6 +84,30 @@ export function VisualizerClient({
   const { frame: journeyFrame, active: journeyActive, phase: journeyPhase } = useJourney();
   const audioFeaturesRef = useRef({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
 
+  // Journey guidance phrases
+  const [guidancePhrase, setGuidancePhrase] = useState<string | null>(null);
+  const [guidancePhaseId, setGuidancePhaseId] = useState<string | null>(null);
+
+  usePhaseChange((phase, guidance) => {
+    setGuidancePhaseId(phase);
+    setGuidancePhrase(guidance);
+  });
+
+  // Set initial guidance when journey starts (engine skips first callback)
+  useEffect(() => {
+    if (journeyActive && activeJourney && !guidancePhrase) {
+      const firstPhase = activeJourney.phases[0];
+      if (firstPhase?.guidancePhrases?.length) {
+        setGuidancePhaseId(firstPhase.id);
+        setGuidancePhrase(firstPhase.guidancePhrases[0]);
+      }
+    }
+    if (!journeyActive) {
+      setGuidancePhrase(null);
+      setGuidancePhaseId(null);
+    }
+  }, [journeyActive, activeJourney, guidancePhrase]);
+
   // Detect AI-only viz mode
   const storeVizMode = useAudioStore((s) => s.vizMode);
   const isAiOnlyMode = MODES_AI.has(storeVizMode);
@@ -153,7 +177,7 @@ export function VisualizerClient({
   }, [analyser, dataArray, journeyActive]);
 
   // UI state
-  const [hudVisible, setHudVisible] = useState(true);
+  const [hudVisible, setHudVisible] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -210,6 +234,7 @@ export function VisualizerClient({
   const closeRoom = useAudioStore((s) => s.closeRoom);
   useEffect(() => {
     openRoom();
+    localStorage.setItem("resonance-last-experience", "room");
     return () => closeRoom();
   }, [openRoom, closeRoom]);
 
@@ -248,9 +273,9 @@ export function VisualizerClient({
     } catch {
       // SSR guard
     }
-  }, [currentTrack]);
+  }, []);
 
-  // If opened via direct URL (/visualizer?recording=X) and this track isn't already
+  // If opened via direct URL (/room?recording=X) and this track isn't already
   // loaded in the global store, start it. If the store already has this track
   // (pre-loaded from recording detail), don't interfere — it carries the position.
   useEffect(() => {
@@ -282,14 +307,7 @@ export function VisualizerClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
-  // Auto-open library when no track is loaded so users see featured content
-  useEffect(() => {
-    if (recording || useAudioStore.getState().currentTrack) return;
-    // Small delay to let the UI settle
-    const t = setTimeout(() => setLibraryOpen(true), 500);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only on mount
+  // Don't auto-open library — let the welcome screen guide the user
 
   // Check for speech API
   useEffect(() => {
@@ -363,6 +381,11 @@ export function VisualizerClient({
     };
   }, [liveEnabled, analyser]);
 
+  const handleStudy = useCallback(() => {
+    const track = useAudioStore.getState().currentTrack;
+    if (track) router.push(`/recording/${track.id}`);
+  }, [router]);
+
   const handleExit = useCallback(() => {
     const track = useAudioStore.getState().currentTrack;
     if (track) {
@@ -408,11 +431,25 @@ export function VisualizerClient({
           break;
         case "ArrowLeft":
           e.preventDefault();
-          seekBy(-10);
+          useAudioStore.getState().cycleVizModePrev();
           break;
         case "ArrowRight":
           e.preventDefault();
+          useAudioStore.getState().cycleVizMode();
+          break;
+        case "ArrowUp":
+          e.preventDefault();
           seekBy(10);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          seekBy(-10);
+          break;
+        case "p":
+          useAudioStore.getState().setVizPoetry(!useAudioStore.getState().vizPoetry);
+          break;
+        case "v":
+          useAudioStore.getState().setVizWhisper(!useAudioStore.getState().vizWhisper);
           break;
       }
     }
@@ -426,7 +463,8 @@ export function VisualizerClient({
 
   if (!analyser || !dataArray) return null;
 
-  const showViz = !!(currentTrack || journeyActive || isAiOnlyMode);
+  // Always show viz — ambient orb runs on the welcome screen
+  const showViz = true;
 
   return (
     <div
@@ -442,6 +480,7 @@ export function VisualizerClient({
         aiEnabled={(journeyActive && aiImageEnabled) || isAiOnlyMode}
         aiPrompt={aiPrompt}
         aiOnly={isAiOnlyMode}
+        aiGenerating={isPlaying}
       >
         {/* Shader layer */}
         <VisualizerCore
@@ -457,13 +496,13 @@ export function VisualizerClient({
           showLiveButton={hasSpeechApi}
           hudVisible={hudVisible}
           onHudToggle={() => setHudVisible((v) => !v)}
-          showHudButton={showHud}
+          showHudButton={showHud && !journeyActive}
           libraryOpen={libraryOpen}
           onLibraryToggle={() => setLibraryOpen((v) => !v)}
           showLibraryButton={true}
           sectionFlash={sectionFlash}
           tonnetzVisible={tonnetzVisible}
-          onTonnetzToggle={() => setTonnetzVisible((v) => !v)}
+          onTonnetzToggle={journeyActive ? undefined : () => setTonnetzVisible((v) => !v)}
           onShareRoom={handleShareRoom}
           onJourneyToggle={() => setJourneyOpen((v) => !v)}
           showJourneyButton={true}
@@ -477,9 +516,15 @@ export function VisualizerClient({
           journeyPoetryMood={journeyFrame?.poetryMood}
           journeyRealmImagery={activeRealm?.poetryImagery}
           journeyRealmId={activeRealm?.id}
+          journeyActive={journeyActive}
+          onStopJourney={() => {
+            useAudioStore.getState().stopJourney();
+            setJourneyOpen(true);
+          }}
+          onStudy={currentTrack ? handleStudy : undefined}
         >
-          {/* Analysis HUD — top layer */}
-          {hudVisible && showHud && (
+          {/* Analysis HUD — top layer (hidden during journeys) */}
+          {hudVisible && showHud && !journeyActive && (
             <AnalysisHUD
               analysis={activeAnalysis}
               currentTime={currentTime}
@@ -488,7 +533,7 @@ export function VisualizerClient({
             />
           )}
 
-          {tonnetzVisible && activeAnalysis?.notes && activeAnalysis?.chords && (
+          {tonnetzVisible && !journeyActive && activeAnalysis?.notes && activeAnalysis?.chords && (
             <TonnetzOverlay
               notes={activeAnalysis.notes}
               chords={activeAnalysis.chords}
@@ -498,45 +543,56 @@ export function VisualizerClient({
         </VisualizerCore>
       </JourneyCompositor>}
 
+      {/* Dark scrim over ambient viz — fades out when track starts */}
+      <div
+        className="absolute inset-0 transition-opacity duration-1000"
+        style={{
+          zIndex: 5,
+          backgroundColor: "rgba(0,0,0,0.75)",
+          opacity: (!currentTrack && !journeyActive && !installationMode) ? 1 : 0,
+          pointerEvents: "none",
+        }}
+      />
+
       {/* Welcome overlay — shown when no track and no journey */}
       {!currentTrack && !journeyActive && !installationMode && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center"
           style={{ zIndex: 6, pointerEvents: "none" }}
         >
-          <div className="text-center max-w-md px-8" style={{ pointerEvents: "auto" }}>
+          <div className="text-center max-w-lg px-8" style={{ pointerEvents: "auto" }}>
             <h1
-              className="text-white/80 mb-3"
+              className="text-white/90 mb-4"
               style={{
                 fontFamily: "var(--font-geist-sans)",
                 fontWeight: 100,
-                fontSize: "2.4rem",
-                letterSpacing: "-0.02em",
+                fontSize: "3.2rem",
+                letterSpacing: "-0.03em",
                 lineHeight: 1.1,
               }}
             >
               The Room
             </h1>
             <p
-              className="text-white/30 mb-8"
+              className="text-white/50 mb-10"
               style={{
                 fontFamily: "var(--font-geist-mono)",
-                fontSize: "0.8rem",
-                lineHeight: 1.6,
+                fontSize: "0.95rem",
+                lineHeight: 1.7,
               }}
             >
               An immersive space for your music. Play a track
               from your library, or start a journey to experience
               AI-driven visuals, ambient soundscapes, and poetry.
             </p>
-            <div className="flex items-center justify-center gap-3">
+            <div className="flex items-center justify-center gap-4">
               <button
                 onClick={() => setLibraryOpen(true)}
-                className="px-5 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-6 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                 style={{
                   fontFamily: "var(--font-geist-mono)",
-                  fontSize: "0.8rem",
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontSize: "0.9rem",
+                  border: "1px solid rgba(255,255,255,0.20)",
                   backgroundColor: "rgba(255,255,255,0.05)",
                 }}
               >
@@ -544,11 +600,11 @@ export function VisualizerClient({
               </button>
               <button
                 onClick={() => setJourneyOpen(true)}
-                className="px-5 py-2.5 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-6 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
                 style={{
                   fontFamily: "var(--font-geist-mono)",
-                  fontSize: "0.8rem",
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontSize: "0.9rem",
+                  border: "1px solid rgba(255,255,255,0.20)",
                   backgroundColor: "rgba(255,255,255,0.05)",
                 }}
               >
@@ -556,25 +612,26 @@ export function VisualizerClient({
               </button>
             </div>
             <div
-              className="mt-10 flex flex-col gap-2 text-left"
+              className="mt-12 grid gap-2"
               style={{
                 fontFamily: "var(--font-geist-mono)",
-                fontSize: "0.65rem",
-                color: "rgba(255,255,255,0.2)",
+                fontSize: "0.85rem",
+                color: "rgba(255,255,255,0.35)",
+                gridTemplateColumns: "auto 1fr",
+                columnGap: "1rem",
+                rowGap: "0.5rem",
               }}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-white/30 w-16 text-right">space</span>
-                <span>Play / Pause</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-white/30 w-16 text-right">l</span>
-                <span>Open Library</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-white/30 w-16 text-right">h</span>
-                <span>Analysis HUD</span>
-              </div>
+              <span className="text-white/50 text-right">space</span>
+              <span>Play / Pause</span>
+              <span className="text-white/50 text-right">l</span>
+              <span>Library</span>
+              <span className="text-white/50 text-right">&larr; &rarr;</span>
+              <span>Change Viz</span>
+              <span className="text-white/50 text-right">p</span>
+              <span>Poetry</span>
+              <span className="text-white/50 text-right">v</span>
+              <span>Voice</span>
             </div>
           </div>
           {/* Back button */}
@@ -593,6 +650,8 @@ export function VisualizerClient({
         <JourneyPhaseIndicator
           journey={activeJourney}
           currentPhase={journeyPhase}
+          guidancePhrase={guidancePhrase}
+          guidancePhaseId={guidancePhaseId}
         />
       )}
 
@@ -606,34 +665,6 @@ export function VisualizerClient({
           <span className="text-white/40 text-xs" style={{ fontFamily: "var(--font-geist-mono)" }}>
             Listening
           </span>
-        </div>
-      )}
-
-      {/* Empty state — no track loaded */}
-      {!currentTrack && !libraryOpen && !installationMode && (
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
-          style={{ zIndex: 15 }}
-        >
-          <div className="text-center">
-            <p
-              className="text-white/20 mb-2"
-              style={{
-                fontSize: "1.25rem",
-                fontFamily: "var(--font-geist-sans)",
-                fontWeight: 200,
-                letterSpacing: "-0.01em",
-              }}
-            >
-              The Room
-            </p>
-            <p
-              className="text-white/10"
-              style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)" }}
-            >
-              Press L to open your library
-            </p>
-          </div>
         </div>
       )}
 

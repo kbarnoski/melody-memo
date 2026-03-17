@@ -53,12 +53,11 @@ void main() {
 
   // Outgoing rainbow rays: 7 spectral bands fanning out below prism
   // Each ray has a different exit angle (dispersion)
-  int numRays = 14;
   float spreadBase  = 0.38 + u_bass * 0.08;
   float rayOriginY  = prismCenter.y - prismSize * 0.85;
 
-  for (int r = 0; r < numRays; r++) {
-    float fr = float(r) / float(numRays - 1); // 0..1 across spectrum
+  for (int r = 0; r < 14; r++) {
+    float fr = float(r) / 13.0; // 0..1 across spectrum
 
     // Exit angle: spread fan downward
     float exitAngle = -1.5708 + (fr - 0.5) * spreadBase;

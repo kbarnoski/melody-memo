@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { X, Type, AudioLines, ArrowLeft, Activity, Library, Hexagon, Share2, ChevronUp, Compass, Pause, Play, SkipBack, SkipForward } from "lucide-react";
+import { X, Type, AudioLines, ArrowLeft, Activity, Library, Hexagon, Share2, ChevronUp, Compass, Pause, Play, SkipBack, SkipForward, RotateCcw, BookOpen, Globe } from "lucide-react";
 import { getAudioEngine, ensureResumed } from "@/lib/audio/audio-engine";
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
@@ -56,6 +56,12 @@ export interface VisualizerCoreProps {
   journeyRealmImagery?: string | null;
   /** Journey realm ID for typography theming */
   journeyRealmId?: string | null;
+  /** When true, simplify controls to journey-only actions */
+  journeyActive?: boolean;
+  /** Callback to stop the active journey */
+  onStopJourney?: () => void;
+  /** Callback to navigate to the track's studio detail page */
+  onStudy?: () => void;
 }
 
 interface VisualizerProps {
@@ -73,6 +79,21 @@ const audioNodeCache = new WeakMap<
 // ─── Shader code now lives in src/lib/shaders/ ───
 
 // Inline shader code removed — now imported from src/lib/shaders/
+
+const LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "it", label: "Italiano" },
+  { code: "pt", label: "Português" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "zh", label: "中文" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "ar", label: "العربية" },
+  { code: "ru", label: "Русский" },
+] as const;
 
 const VERTEX_SHADER = `
 attribute vec2 a_position;
@@ -261,6 +282,9 @@ export function VisualizerCore({
   journeyPoetryMood,
   journeyRealmImagery,
   journeyRealmId,
+  journeyActive,
+  onStopJourney,
+  onStudy,
 }: VisualizerCoreProps) {
   // Viz settings from store — persist across open/close
   const storeMode = useAudioStore((s) => s.vizMode) as VisualizerMode;
@@ -309,30 +333,52 @@ export function VisualizerCore({
     storeSeek(newTime);
   }, [showTransport, duration, storeSeek]);
 
+  const language = useAudioStore((s) => s.language);
+  const setLanguage = useAudioStore((s) => s.setLanguage);
+
   const [vibe, setVibe] = useState<Mood | null>(defaultMood ?? null);
   const [modePaletteOpen, setModePaletteOpen] = useState(false);
+  const [langPickerOpen, setLangPickerOpen] = useState(false);
 
-  // Fade-to-black transition when viz mode changes
-  const [fadeActive, setFadeActive] = useState(false);
+  // Smooth dual-shader crossfade when viz mode changes
+  // Uses refs + direct DOM manipulation to avoid 60fps React re-renders
   const [renderMode, setRenderMode] = useState<VisualizerMode>(mode);
+  const [prevRenderMode, setPrevRenderMode] = useState<VisualizerMode | null>(null);
+  const crossfadeRef = useRef<number>(0);
   const prevModeRef = useRef(mode);
+  const prevLayerRef = useRef<HTMLDivElement>(null);
+  const nextLayerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (mode !== prevModeRef.current) {
-      setFadeActive(true);
-      // Switch actual mode at midpoint (1s in)
-      const switchTimer = setTimeout(() => {
-        setRenderMode(mode);
-      }, 1000);
-      // Clear fade after full duration (2s)
-      const clearTimer = setTimeout(() => {
-        setFadeActive(false);
-      }, 2000);
+      setPrevRenderMode(prevModeRef.current);
+      setRenderMode(mode);
       prevModeRef.current = mode;
-      return () => {
-        clearTimeout(switchTimer);
-        clearTimeout(clearTimer);
+
+      // Reset layer opacities immediately
+      if (prevLayerRef.current) prevLayerRef.current.style.opacity = "1";
+      if (nextLayerRef.current) nextLayerRef.current.style.opacity = "0";
+
+      let progress = 0;
+      const animate = () => {
+        progress = Math.min(1, progress + 0.008); // ~125 frames (~2s at 60fps)
+        // Ease-in-out for smoother feel
+        const eased = progress < 0.5
+          ? 2 * progress * progress
+          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        if (prevLayerRef.current) prevLayerRef.current.style.opacity = String(1 - eased);
+        if (nextLayerRef.current) nextLayerRef.current.style.opacity = String(eased);
+
+        if (progress < 1) {
+          crossfadeRef.current = requestAnimationFrame(animate);
+        } else {
+          setPrevRenderMode(null);
+        }
       };
+      crossfadeRef.current = requestAnimationFrame(animate);
+
+      return () => cancelAnimationFrame(crossfadeRef.current);
     }
   }, [mode]);
 
@@ -348,46 +394,41 @@ export function VisualizerCore({
     setVibe(result.mood);
   }, [analysis]);
 
-  const is3D = MODES_3D.has(renderMode);
-  const isAI = MODES_AI.has(renderMode);
+  const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>) => {
+    const layerIs3D = MODES_3D.has(layerMode);
+    const layerIsAI = MODES_AI.has(layerMode);
+
+    const wrapStyle: React.CSSProperties = {
+      position: "absolute",
+      inset: 0,
+      zIndex,
+      pointerEvents: "none",
+    };
+
+    if (layerIsAI) {
+      return <div key={layerMode} ref={ref} style={{ ...wrapStyle, backgroundColor: "#000" }} />;
+    }
+    if (layerIs3D) {
+      return (
+        <div key={layerMode} ref={ref} style={wrapStyle}>
+          <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />
+        </div>
+      );
+    }
+    return (
+      <div key={layerMode} ref={ref} style={wrapStyle}>
+        <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} />
+      </div>
+    );
+  };
 
   return (
     <>
-      {isAI ? (
-        /* AI-only mode: dark canvas background, no shader — AI image layer handles visuals */
-        <div className="absolute inset-0 bg-black" />
-      ) : is3D ? (
-        <Visualizer3D
-          analyser={analyser}
-          dataArray={dataArray}
-          mode={renderMode as Visualizer3DMode}
-        />
-      ) : (
-        <ShaderVisualizer
-          analyser={analyser}
-          dataArray={dataArray}
-          fragShader={SHADERS[renderMode]!}
-        />
-      )}
+      {/* Previous shader (fading out) */}
+      {prevRenderMode && renderShaderLayer(prevRenderMode, 0, prevLayerRef)}
 
-      {/* Fade-to-black transition overlay */}
-      {fadeActive && (
-        <div
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            backgroundColor: "#000",
-            animation: "vizFadeTransition 2s ease-in-out forwards",
-          }}
-        />
-      )}
-      <style>{`
-        @keyframes vizFadeTransition {
-          0% { opacity: 0; }
-          40% { opacity: 1; }
-          60% { opacity: 1; }
-          100% { opacity: 0; }
-        }
-      `}</style>
+      {/* Current shader (fading in, or full opacity when no crossfade) */}
+      {renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined)}
 
       {poetryEnabled && (
         <PoetryOverlay
@@ -404,6 +445,7 @@ export function VisualizerCore({
           moodOverride={journeyPoetryMood}
           realmImagery={journeyRealmImagery}
           typographyTheme={typographyTheme}
+          isPlaying={isPlaying}
         />
       )}
 
@@ -501,92 +543,119 @@ export function VisualizerCore({
           }}
         >
           <div className="flex items-center gap-1.5">
-            {/* Mode picker */}
-            <button
-              onClick={() => setModePaletteOpen((v) => !v)}
-              className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-all ${
-                modePaletteOpen ? "bg-white/15 text-white" : "bg-black/40 text-white/70 hover:bg-white/10 hover:text-white"
-              }`}
-              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-            >
-              <span style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-mono)" }}>
-                {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
-              </span>
-              <ChevronUp className={`h-3.5 w-3.5 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
-            </button>
+            {journeyActive ? (
+              <>
+                {/* Journey-only controls */}
+                <button
+                  onClick={onStopJourney}
+                  className="flex items-center gap-2 rounded-lg px-3.5 py-2 bg-black/40 text-white/70 hover:bg-white/10 hover:text-white transition-all"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.8rem", fontFamily: "var(--font-geist-mono)" }}
+                >
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Stop Journey
+                </button>
 
-            <div className="w-px h-5 bg-white/10 mx-1" />
+                <div className="w-px h-5 bg-white/10 mx-1" />
 
-            {/* Toggle buttons — icon only */}
-            <button
-              onClick={() => { if (poetryEnabled) setWhisperEnabled(false); setPoetryEnabled(!poetryEnabled); }}
-              className={`p-2.5 rounded-lg transition-colors ${poetryEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-              title="Poetry"
-            >
-              <Type className="h-4 w-4" />
-            </button>
-            {poetryEnabled && (
-              <button
-                onClick={() => setWhisperEnabled(!whisperEnabled)}
-                className={`p-2.5 rounded-lg transition-colors ${whisperEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-                title="Whisper"
-              >
-                <AudioLines className="h-4 w-4" />
-              </button>
-            )}
-            {showLiveButton && onLiveToggle && (
-              <button
-                onClick={onLiveToggle}
-                className={`p-2.5 rounded-lg transition-colors ${liveEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-                title="Live"
-              >
-                <AudioLines className="h-4 w-4" />
-              </button>
-            )}
-            {showHudButton && onHudToggle && (
-              <button
-                onClick={onHudToggle}
-                className={`p-2.5 rounded-lg transition-colors ${hudVisible ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-                title="HUD"
-              >
-                <Activity className="h-4 w-4" />
-              </button>
-            )}
-            {showLibraryButton && onLibraryToggle && (
-              <button
-                onClick={onLibraryToggle}
-                className={`p-2.5 rounded-lg transition-colors ${libraryOpen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-                title="Library"
-              >
-                <Library className="h-4 w-4" />
-              </button>
-            )}
-            {onTonnetzToggle && (
-              <button
-                onClick={onTonnetzToggle}
-                className={`p-2.5 rounded-lg transition-colors ${tonnetzVisible ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-                title="Tonnetz"
-              >
-                <Hexagon className="h-4 w-4" />
-              </button>
-            )}
-            {showJourneyButton && onJourneyToggle && (
-              <button
-                onClick={onJourneyToggle}
-                className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
-                title="Journeys"
-              >
-                <Compass className="h-4 w-4" />
-              </button>
-            )}
-            {onShareRoom && (
-              <button
-                onClick={onShareRoom}
-                className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
-                title="Share Room"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
+                <button
+                  onClick={() => setWhisperEnabled(!whisperEnabled)}
+                  className={`p-2.5 rounded-lg transition-colors ${whisperEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                  title="Whisper"
+                >
+                  <AudioLines className="h-4 w-4" />
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Full controls */}
+                {/* Mode picker */}
+                <button
+                  onClick={() => setModePaletteOpen((v) => !v)}
+                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-all ${
+                    modePaletteOpen ? "bg-white/15 text-white" : "bg-black/40 text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  <span style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-mono)" }}>
+                    {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
+                  </span>
+                  <ChevronUp className={`h-3.5 w-3.5 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                <div className="w-px h-5 bg-white/10 mx-1" />
+
+                {/* Toggle buttons — icon only */}
+                <button
+                  onClick={() => { if (poetryEnabled) setWhisperEnabled(false); setPoetryEnabled(!poetryEnabled); }}
+                  className={`p-2.5 rounded-lg transition-colors ${poetryEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                  title="Poetry"
+                >
+                  <Type className="h-4 w-4" />
+                </button>
+                {poetryEnabled && (
+                  <button
+                    onClick={() => setWhisperEnabled(!whisperEnabled)}
+                    className={`p-2.5 rounded-lg transition-colors ${whisperEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                    title="Whisper"
+                  >
+                    <AudioLines className="h-4 w-4" />
+                  </button>
+                )}
+                {showLiveButton && onLiveToggle && (
+                  <button
+                    onClick={onLiveToggle}
+                    className={`p-2.5 rounded-lg transition-colors ${liveEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                    title="Live"
+                  >
+                    <AudioLines className="h-4 w-4" />
+                  </button>
+                )}
+                {showHudButton && onHudToggle && (
+                  <button
+                    onClick={onHudToggle}
+                    className={`p-2.5 rounded-lg transition-colors ${hudVisible ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                    title="HUD"
+                  >
+                    <Activity className="h-4 w-4" />
+                  </button>
+                )}
+                {showLibraryButton && onLibraryToggle && (
+                  <button
+                    onClick={onLibraryToggle}
+                    className={`p-2.5 rounded-lg transition-colors ${libraryOpen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                    title="Library"
+                  >
+                    <Library className="h-4 w-4" />
+                  </button>
+                )}
+                {onTonnetzToggle && (
+                  <button
+                    onClick={onTonnetzToggle}
+                    className={`p-2.5 rounded-lg transition-colors ${tonnetzVisible ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                    title="Tonnetz"
+                  >
+                    <Hexagon className="h-4 w-4" />
+                  </button>
+                )}
+                {showJourneyButton && onJourneyToggle && (
+                  <button
+                    onClick={onJourneyToggle}
+                    className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                    title="Journeys"
+                  >
+                    <Compass className="h-4 w-4" />
+                  </button>
+                )}
+                {onShareRoom && (
+                  <button
+                    onClick={onShareRoom}
+                    className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                    title="Share Room"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                )}
+              </>
             )}
           </div>
 
@@ -635,17 +704,65 @@ export function VisualizerCore({
             </div>
           )}
 
-          <button
-            onClick={onExit}
-            className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
-            title={exitLabel === "back" ? "Back" : "Close"}
-          >
-            {exitLabel === "back" ? (
-              <ArrowLeft className="h-4 w-4" />
-            ) : (
-              <X className="h-4 w-4" />
+          <div className="flex items-center gap-1 relative">
+            {/* Language picker */}
+            <button
+              onClick={() => setLangPickerOpen((v) => !v)}
+              className={`p-2.5 rounded-lg transition-colors ${langPickerOpen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+              title="Language"
+            >
+              <Globe className="h-4 w-4" />
+            </button>
+            {langPickerOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setLangPickerOpen(false)} />
+                <div
+                  className="absolute bottom-12 right-0 z-40 py-2 rounded-xl overflow-hidden min-w-[140px]"
+                  style={{
+                    backdropFilter: "blur(24px) saturate(1.3)",
+                    WebkitBackdropFilter: "blur(24px) saturate(1.3)",
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => { setLanguage(lang.code); setLangPickerOpen(false); }}
+                      className={`w-full text-left px-4 py-1.5 transition-colors ${
+                        language === lang.code
+                          ? "text-white bg-white/10"
+                          : "text-white/60 hover:text-white hover:bg-white/5"
+                      }`}
+                      style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
-          </button>
+            {onStudy && !journeyActive && (
+              <button
+                onClick={onStudy}
+                className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                title="Study This Track"
+              >
+                <BookOpen className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              onClick={onExit}
+              className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+              title={exitLabel === "back" ? "Back" : "Close"}
+            >
+              {exitLabel === "back" ? (
+                <ArrowLeft className="h-4 w-4" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
       </div>}
     </>

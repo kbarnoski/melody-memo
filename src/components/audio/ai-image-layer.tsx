@@ -15,6 +15,8 @@ interface AiImageLayerProps {
   enabled: boolean;
   /** When true, AI images are the sole visual — full opacity, no blend */
   aiOnly?: boolean;
+  /** When false, stop generating new images (existing images stay visible) */
+  generating?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function AiImageLayer({
   audioBass,
   enabled,
   aiOnly = false,
+  generating = true,
 }: AiImageLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const prevImageRef = useRef<HTMLImageElement | null>(null);
@@ -48,8 +51,14 @@ export function AiImageLayer({
   const denoisingRef = useRef(denoisingStrength);
   const targetFpsRef = useRef(targetFps);
   const audioRef = useRef({ amplitude: audioAmplitude, bass: audioBass });
+  const generatingRef = useRef(generating);
 
+  useEffect(() => { generatingRef.current = generating; }, [generating]);
   useEffect(() => { promptRef.current = prompt; }, [prompt]);
+  // When prompt changes (mode/realm switch), trigger immediate generation
+  useEffect(() => {
+    lastGenTimeRef.current = 0;
+  }, [prompt]);
   useEffect(() => { denoisingRef.current = denoisingStrength; }, [denoisingStrength]);
   useEffect(() => { targetFpsRef.current = targetFps; }, [targetFps]);
   useEffect(() => { audioRef.current = { amplitude: audioAmplitude, bass: audioBass }; }, [audioAmplitude, audioBass]);
@@ -98,6 +107,7 @@ export function AiImageLayer({
     let genCount = 0;
 
     const generateFrame = () => {
+      if (!generatingRef.current) return; // Stop generating when paused/ended
       const currentPrompt = promptRef.current;
       const currentDenoising = denoisingRef.current;
       const audio = audioRef.current;
@@ -105,8 +115,8 @@ export function AiImageLayer({
       if (service.isCapped()) return;
 
       const now = performance.now();
-      // Generate every ~25 seconds for cinematic pacing
-      const intervalMs = 25000;
+      // Generate every ~30 seconds for cinematic pacing
+      const intervalMs = 30000;
       if (genCount > 0 && now - lastGenTimeRef.current < intervalMs) return;
       lastGenTimeRef.current = now;
 
@@ -169,7 +179,7 @@ export function AiImageLayer({
 
       // Very slow dissolve — viewer should barely notice the transition
       if (blendRef.current < 1) {
-        blendRef.current = Math.min(1, blendRef.current + 0.002); // ~500 frames (~8s) to dissolve
+        blendRef.current = Math.min(1, blendRef.current + 0.0033); // ~300 frames (~5s) to dissolve
       }
 
       if (prev && prev.complete) {

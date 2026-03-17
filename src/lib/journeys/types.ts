@@ -48,7 +48,7 @@ export interface JourneyPhase {
   /** Post-processing: vignette darkness 0-1 */
   vignette: number;
   /** TTS voice for this phase */
-  voice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx";
+  voice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx" | "ash" | "ballad" | "coral" | "sage" | "verse" | "marin" | "cedar";
   /** Poetry mood for text generation */
   poetryMood: Mood;
   /** Spoken at phase boundaries */
@@ -91,7 +91,7 @@ export interface Realm {
     accent: string;
     glow: string;
   };
-  defaultVoice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx";
+  defaultVoice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx" | "ash" | "ballad" | "coral" | "sage" | "verse" | "marin" | "cedar";
   poetryMood: Mood;
   poetryImagery: string;
 }
@@ -121,7 +121,7 @@ export interface JourneyFrame {
   colorTemperature: number;
   vignette: number;
   intensityMultiplier: number;
-  voice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx";
+  voice: "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx" | "ash" | "ballad" | "coral" | "sage" | "verse" | "marin" | "cedar";
   poetryMood: Mood;
   poetryIntervalSeconds: number;
   palette: {

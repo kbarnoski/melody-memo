@@ -63,11 +63,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
           audioElement.load();
         });
       }
-    } else if (audioElement.paused && useAudioStore.getState().isPlaying) {
-      // Same src, but audio is paused and store says play — resume
-      ensureResumed().then(() => {
-        audioElement.play().catch(() => {});
-      });
+    } else {
+      // Same src — check if we need to seek or resume
+      const state = useAudioStore.getState();
+      const needsSeek = Math.abs(audioElement.currentTime - state.currentTime) > 1;
+      if (needsSeek) {
+        audioElement.currentTime = state.currentTime;
+      }
+      if (audioElement.paused && state.isPlaying) {
+        ensureResumed().then(() => {
+          audioElement.play().catch(() => {});
+        });
+      }
     }
 
     const onLoadedMetadata = () => {
@@ -92,22 +99,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
 
     const onEnded = () => {
-      const state = useAudioStore.getState();
-      state.playNext();
-      // Fetch analysis for whatever track is now current (if still playing)
-      const nextTrack = useAudioStore.getState().currentTrack;
-      if (nextTrack && useAudioStore.getState().isPlaying) {
-        state.setAnalysisLoading(true);
-        fetch(`/api/recordings/${nextTrack.id}/analysis`)
-          .then((r) => (r.ok ? r.json() : null))
-          .then((data) => {
-            useAudioStore.getState().setAnalysis(data);
-            useAudioStore.getState().setAnalysisLoading(false);
-          })
-          .catch(() => {
-            useAudioStore.getState().setAnalysis(null);
-            useAudioStore.getState().setAnalysisLoading(false);
-          });
+      const { installationMode } = useAudioStore.getState();
+      if (installationMode) {
+        // Installation mode: auto-advance through queue
+        useAudioStore.getState().playNext();
+      } else {
+        // Normal playback: just stop — keep track loaded, viz keeps running
+        useAudioStore.getState().pause();
       }
     };
 

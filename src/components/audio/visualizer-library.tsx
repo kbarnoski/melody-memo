@@ -139,7 +139,8 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
     }));
     setQueue(tracks, 0);
     if (album.tracks[0]) fetchAnalysis(album.tracks[0].id);
-  }, [setQueue, warmupEngine, fetchAnalysis]);
+    onClose();
+  }, [setQueue, warmupEngine, fetchAnalysis, onClose]);
 
   const handleSelectFeaturedTrack = useCallback((album: FeaturedAlbum, trackIndex: number) => {
     warmupEngine();
@@ -151,7 +152,8 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
     }));
     setQueue(tracks, trackIndex);
     fetchAnalysis(album.tracks[trackIndex].id);
-  }, [setQueue, warmupEngine, fetchAnalysis]);
+    onClose();
+  }, [setQueue, warmupEngine, fetchAnalysis, onClose]);
 
   const handleSelect = useCallback(
     async (rec: RecordingRow, index: number) => {
@@ -159,8 +161,9 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
       const tracks = filtered.map(toTrack);
       setQueue(tracks, index);
       fetchAnalysis(rec.id);
+      onClose();
     },
-    [filtered, toTrack, setQueue, fetchAnalysis, warmupEngine]
+    [filtered, toTrack, setQueue, fetchAnalysis, warmupEngine, onClose]
   );
 
   const handlePlayAll = useCallback(async () => {

@@ -18,7 +18,6 @@ float arcSegment(vec2 p, vec2 a, vec2 b, float thickness, float warp, float seed
 float lightning(vec2 p, vec2 start, vec2 end, float t, float seed) {
   float d = 1e6;
   vec2 dir = end - start;
-  int N = 8;
   for (int i = 0; i < 8; i++) {
     float fi = float(i);
     float f0 = fi / 8.0;

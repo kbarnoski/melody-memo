@@ -81,14 +81,14 @@ void main() {
   vec3 up = cross(fwd, right);
   vec3 rd = normalize(uv.x * right + uv.y * up + 1.5 * fwd);
 
-  // ── Ray march — 28 steps (down from 64), faster step growth ──
+  // ── Ray march — 16 steps, aggressive step growth ──
   vec3 color = vec3(0.0);
   float totalDensity = 0.0;
 
-  float stepSize = 0.15;
+  float stepSize = 0.2;
   float depth = 0.0;
 
-  for (int i = 0; i < 28; i++) {
+  for (int i = 0; i < 16; i++) {
     if (totalDensity > 0.9) break;
 
     vec3 p = ro + rd * depth;
@@ -145,7 +145,7 @@ void main() {
     }
 
     depth += stepSize;
-    stepSize *= 1.06;
+    stepSize *= 1.12;
   }
 
   // ── Stars — visible where nebula is thin ──

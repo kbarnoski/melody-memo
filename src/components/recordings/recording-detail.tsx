@@ -268,7 +268,7 @@ export function RecordingDetail({
             }, currentTime);
           }
           if (analysis) store.setAnalysis(analysis);
-          router.push("/visualizer");
+          router.push("/room");
         }}
       />
 

@@ -1,5 +1,7 @@
 import { fal } from "@fal-ai/client";
 
+const MODEL_ID = "fal-ai/flux/schnell";
+
 const STYLE_SUFFIX =
   "mystical art, luminous, sacred, transcendent, visionary, otherworldly beauty";
 
@@ -14,7 +16,7 @@ export async function POST(request: Request) {
   fal.config({ credentials: process.env.FAL_KEY });
 
   try {
-    const { prompt, denoisingStrength, previousFrame, width, height } =
+    const { prompt, denoisingStrength, width, height } =
       await request.json();
 
     if (!prompt || typeof prompt !== "string") {
@@ -23,28 +25,20 @@ export async function POST(request: Request) {
 
     const imgWidth = Math.min(width ?? 768, 1024);
     const imgHeight = Math.min(height ?? 768, 1024);
-    const strength = Math.max(0.1, Math.min(0.9, denoisingStrength ?? 0.5));
     const fullPrompt = `${prompt}, ${STYLE_SUFFIX}`;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const input: Record<string, any> = {
       prompt: fullPrompt,
       num_inference_steps: 4,
-      guidance_scale: 1.0,
       image_size: { width: imgWidth, height: imgHeight },
       enable_safety_checker: false,
     };
 
-    // img2img: feed previous frame for visual continuity
-    if (previousFrame) {
-      input.image_url = previousFrame;
-      input.strength = strength;
-    }
-
     console.log("[AI Generate] Requesting frame:", fullPrompt.substring(0, 80));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await fal.subscribe("fal-ai/fast-lcm-diffusion", { input } as any);
+    const result = await fal.subscribe(MODEL_ID, { input } as any);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const imageUrl = (result.data as any)?.images?.[0]?.url;
@@ -57,7 +51,7 @@ export async function POST(request: Request) {
 
     return Response.json({
       image: imageUrl,
-      cost: 0.002,
+      cost: 0.003,
     });
   } catch (error) {
     console.error("[AI Generate] Error:", error);

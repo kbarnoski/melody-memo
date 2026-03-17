@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { JourneyPhaseId, Journey } from "@/lib/journeys/types";
-import { PHASE_ORDER } from "@/lib/journeys/phase-interpolation";
 
 interface JourneyPhaseIndicatorProps {
   journey: Journey;
   currentPhase: JourneyPhaseId | null;
+  guidancePhrase?: string | null;
+  guidancePhaseId?: string | null;
 }
 
 const PHASE_LABELS: Record<JourneyPhaseId, string> = {
@@ -19,83 +20,106 @@ const PHASE_LABELS: Record<JourneyPhaseId, string> = {
 };
 
 /**
- * Thin horizontal bar at the top of the viewport during journeys.
- * Shows 6 segments for phases, current phase glows.
- * Phase name fades in briefly on transition.
+ * Centered guidance phrase overlay during journeys.
+ * On phase transition: fades in a guidance phrase, holds 5s, fades out over 2s.
+ * Phase name shown as small monospace label above the phrase.
  */
 export function JourneyPhaseIndicator({
   journey,
   currentPhase,
+  guidancePhrase,
+  guidancePhaseId,
 }: JourneyPhaseIndicatorProps) {
-  const [showLabel, setShowLabel] = useState(false);
-  const [displayPhase, setDisplayPhase] = useState<JourneyPhaseId | null>(null);
+  const [visible, setVisible] = useState(false);
+  const [displayPhrase, setDisplayPhrase] = useState<string | null>(null);
+  const [displayPhaseId, setDisplayPhaseId] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fontLoadedRef = useRef(false);
 
-  // Show phase label briefly on transition
+  // Load Cormorant Garamond via Google Fonts
   useEffect(() => {
-    if (!currentPhase) return;
-    setDisplayPhase(currentPhase);
-    setShowLabel(true);
-    const timer = setTimeout(() => setShowLabel(false), 2500);
-    return () => clearTimeout(timer);
-  }, [currentPhase]);
+    if (fontLoadedRef.current) return;
+    fontLoadedRef.current = true;
+    const id = "journey-guidance-font";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap";
+    document.head.appendChild(link);
+  }, []);
 
-  // Get the realm's accent color from journey's first phase palette
-  const accent = journey.phases[0]?.palette.accent ?? "#fff";
+  // Show guidance phrase on change
+  useEffect(() => {
+    if (!guidancePhrase || !guidancePhaseId) return;
+
+    setDisplayPhrase(guidancePhrase);
+    setDisplayPhaseId(guidancePhaseId);
+    setVisible(true);
+
+    // Clear any existing timer
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    // Hide after 5s (CSS handles the 2s fade-out)
+    timerRef.current = setTimeout(() => {
+      setVisible(false);
+    }, 5000);
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [guidancePhrase, guidancePhaseId]);
+
+  // Get the realm's accent color from current phase palette
+  const currentPhaseData = currentPhase
+    ? journey.phases.find((p) => p.id === currentPhase)
+    : journey.phases[0];
+  const accent = currentPhaseData?.palette.accent ?? "#fff";
 
   return (
     <div
-      className="absolute top-0 left-0 right-0 z-30 pointer-events-none"
-      style={{ padding: "0 24px" }}
+      className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center"
     >
-      {/* Phase segments bar */}
-      <div className="flex gap-[2px] pt-3">
-        {PHASE_ORDER.map((phaseId) => {
-          const phase = journey.phases.find((p) => p.id === phaseId);
-          if (!phase) return null;
-
-          const width = (phase.end - phase.start) * 100;
-          const isCurrent = phaseId === currentPhase;
-          const isPast =
-            currentPhase &&
-            PHASE_ORDER.indexOf(phaseId) <
-              PHASE_ORDER.indexOf(currentPhase);
-
-          return (
-            <div
-              key={phaseId}
-              className="h-[2px] rounded-full transition-all duration-1000"
-              style={{
-                width: `${width}%`,
-                backgroundColor: isCurrent
-                  ? accent
-                  : isPast
-                    ? `${accent}60`
-                    : "rgba(255, 255, 255, 0.1)",
-                boxShadow: isCurrent
-                  ? `0 0 8px ${accent}80, 0 0 2px ${accent}`
-                  : "none",
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Phase label — fades in/out on transition */}
       <div
-        className="flex items-center justify-center mt-2 transition-opacity duration-500"
-        style={{ opacity: showLabel ? 1 : 0 }}
+        className="flex flex-col items-center gap-3 max-w-[80vw] text-center"
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: visible
+            ? "opacity 1.5s cubic-bezier(0.23, 1, 0.32, 1)"
+            : "opacity 2s cubic-bezier(0.23, 1, 0.32, 1)",
+        }}
       >
-        <span
-          className="text-white/40"
-          style={{
-            fontSize: "0.6rem",
-            fontFamily: "var(--font-geist-mono)",
-            letterSpacing: "0.15em",
-            textTransform: "uppercase",
-          }}
-        >
-          {displayPhase ? PHASE_LABELS[displayPhase] : ""}
-        </span>
+        {/* Phase label */}
+        {displayPhaseId && (
+          <span
+            style={{
+              fontSize: "0.6rem",
+              fontFamily: "var(--font-geist-mono)",
+              letterSpacing: "0.2em",
+              textTransform: "uppercase",
+              color: "rgba(255, 255, 255, 0.35)",
+            }}
+          >
+            {PHASE_LABELS[displayPhaseId as JourneyPhaseId] ?? displayPhaseId}
+          </span>
+        )}
+
+        {/* Guidance phrase */}
+        {displayPhrase && (
+          <p
+            style={{
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontWeight: 300,
+              fontSize: "clamp(1.8rem, 4vw, 3.2rem)",
+              lineHeight: 1.2,
+              letterSpacing: "-0.01em",
+              color: "rgba(255, 255, 255, 0.8)",
+              textShadow: `0 0 40px ${accent}40, 0 0 80px ${accent}20`,
+            }}
+          >
+            {displayPhrase}
+          </p>
+        )}
       </div>
     </div>
   );

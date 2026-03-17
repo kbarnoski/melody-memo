@@ -520,7 +520,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
                 size="icon"
                 onClick={onVisualizerOpen}
                 disabled={!isReady}
-                title="Open Visualizer"
+                title="Enter The Room"
               >
                 <Sparkles className="h-4 w-4" />
               </Button>

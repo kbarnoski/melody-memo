@@ -34,7 +34,7 @@ void main() {
   // Helix geometry parameters
   float helixRadius = 0.18;
   float helixPitch  = 0.38; // vertical rise per full turn
-  int   numSegs     = 48;   // segments per strand per pass
+  // 48 segments per strand per pass
 
   // Two strands: strand 0 and strand 1 offset by PI
   for (int strand = 0; strand < 2; strand++) {
@@ -42,13 +42,13 @@ void main() {
 
     float minDist = 999.0;
 
-    for (int i = 0; i < numSegs; i++) {
+    for (int i = 0; i < 48; i++) {
       float fi  = float(i);
       float fi1 = float(i + 1);
 
       // Parameter along the helix
-      float s0 = fi  / float(numSegs);
-      float s1 = fi1 / float(numSegs);
+      float s0 = fi  / 48.0;
+      float s1 = fi1 / 48.0;
 
       // The helix spans many turns in Z; camZ scrolls it forward
       float totalTurns = 6.0;
@@ -70,7 +70,7 @@ void main() {
       float bright = fov / max(avgZ, 0.1);
       bright = clamp(bright, 0.0, 2.5);
 
-      float segIndex = s0 * float(numSegs) + float(strand) * float(numSegs);
+      float segIndex = s0 * 48.0 + float(strand) * 48.0;
 
       // Line thickness varies with depth
       float thick = (0.004 + u_treble * 0.003) * bright * 0.6;
@@ -101,10 +101,9 @@ void main() {
     }
 
     // Rungs: cross-bars connecting the two strands at regular intervals
-    int numRungs = 18;
-    for (int r = 0; r < numRungs; r++) {
+    for (int r = 0; r < 18; r++) {
       float fr = float(r);
-      float rungS = fr / float(numRungs);
+      float rungS = fr / 18.0;
       float totalTurns = 6.0;
       float theta = rungS * totalTurns * 6.28318 + t * rotSpeed;
       float rungZ = rungS * totalTurns * helixPitch - camZ;

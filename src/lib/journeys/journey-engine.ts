@@ -93,6 +93,7 @@ class JourneyEngine {
     if (currentPhase.id !== this.currentPhaseId) {
       const prevPhase = this.currentPhaseId;
       this.currentPhaseId = currentPhase.id;
+      // Each phase already has rotated shaderModes arrays, so start at 0
       this.currentShaderIndex = 0;
       this.currentShaderMode = currentPhase.shaderModes[0] ?? "mandala";
 
@@ -246,8 +247,8 @@ class JourneyEngine {
 
     if (phase.shaderModes.length <= 1) return;
 
-    // Switch shaders every 30-60 seconds within a phase
-    const interval = 30000 + Math.random() * 30000;
+    // Switch shaders every ~30 seconds within a phase (25-35s range)
+    const interval = 25000 + Math.random() * 10000;
 
     this.shaderSwitchTimer = setTimeout(() => {
       if (!this.running) return;

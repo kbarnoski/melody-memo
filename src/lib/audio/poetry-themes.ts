@@ -21,8 +21,11 @@ export interface PoetryTheme {
   seedLines: string[];
 }
 
-// Strong text shadow for readability over ANY viz
-const READABLE_SHADOW = "0 0 12px rgba(0,0,0,0.9), 0 2px 20px rgba(0,0,0,0.7), 0 0 40px rgba(0,0,0,0.4)";
+// Tight dark shadow for readability over any viz — including bright/white washouts.
+// Layer 1: hard, almost no blur for crisp edge definition
+// Layer 2: medium spread for dark halo
+// Layer 3: wider ambient for depth against very bright backgrounds
+const READABLE_SHADOW = "0 1px 2px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.9), 0 0 24px rgba(0,0,0,0.6)";
 
 // ─── Google Fonts URL for typography overrides ───
 // Loaded dynamically by PoetryOverlay when a themed context is active.
@@ -41,7 +44,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.15em", textTransform: "uppercase" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 100, letterSpacing: "0.06em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.85, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(180, 200, 255, 0.85)",
@@ -67,7 +70,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-sans)", fontWeight: 200, letterSpacing: "0.12em", textTransform: "uppercase" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 600, letterSpacing: "-0.03em", textTransform: "none" },
     ],
-    sizeRange: [0.8, 1.7],
+    sizeRange: [1.2, 2.0],
     opacity: 0.85,
     colors: [
       "rgba(255, 120, 140, 0.9)",
@@ -76,7 +79,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       "rgba(255, 160, 160, 0.85)",
     ],
     textShadow: READABLE_SHADOW,
-    animation: "poetry-glitch",
+    animation: "poetry-line-lifecycle",
     animationDuration: [8, 14],
     seedLines: [
       "break the pattern before it breaks you",
@@ -93,7 +96,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.04em", textTransform: "lowercase" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 300, letterSpacing: "-0.01em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.2],
     opacity: 0.65,
     colors: [
       "rgba(255, 210, 160, 0.85)",
@@ -119,7 +122,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-sans)", fontWeight: 200, letterSpacing: "0.12em", textTransform: "uppercase" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 300, letterSpacing: "-0.02em", textTransform: "none" },
     ],
-    sizeRange: [0.85, 1.7],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(190, 140, 255, 0.85)",
@@ -145,7 +148,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-sans)", fontWeight: 100, letterSpacing: "0.02em", textTransform: "none" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 600, letterSpacing: "-0.03em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.75, 1.5],
+    sizeRange: [1.1, 1.8],
     opacity: 0.8,
     colors: [
       "rgba(255, 255, 255, 0.9)",
@@ -154,7 +157,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       "rgba(255, 255, 180, 0.85)",
     ],
     textShadow: READABLE_SHADOW + ", 1px 0 rgba(255, 0, 0, 0.15), -1px 0 rgba(0, 255, 255, 0.15)",
-    animation: "poetry-glitch",
+    animation: "poetry-line-lifecycle",
     animationDuration: [6, 10],
     seedLines: [
       "ctrl+z won't save you here",
@@ -171,7 +174,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.06em", textTransform: "lowercase" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 300, letterSpacing: "-0.01em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.6,
     colors: [
       "rgba(180, 150, 255, 0.8)",
@@ -197,7 +200,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.04em", textTransform: "none" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 300, letterSpacing: "-0.02em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(200, 190, 255, 0.85)",
@@ -223,7 +226,7 @@ export const POETRY_THEMES: Record<Mood, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 200, letterSpacing: "0.04em", textTransform: "none" },
       { fontFamily: "var(--font-geist-sans)", fontWeight: 300, letterSpacing: "-0.01em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.9, 2.0],
+    sizeRange: [1.3, 2.2],
     opacity: 0.7,
     colors: [
       "rgba(255, 220, 140, 0.85)",
@@ -257,7 +260,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, letterSpacing: "0.08em", textTransform: "lowercase" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.16em", textTransform: "uppercase" },
     ],
-    sizeRange: [1.0, 2.2],
+    sizeRange: [1.3, 2.4],
     opacity: 0.7,
     colors: [
       "rgba(255, 248, 220, 0.9)",
@@ -278,7 +281,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Bebas Neue', sans-serif", fontWeight: 400, letterSpacing: "0.10em", textTransform: "uppercase" },
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "-0.02em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.85,
     colors: [
       "rgba(255, 60, 40, 0.9)",
@@ -287,7 +290,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       "rgba(200, 40, 40, 0.85)",
     ],
     textShadow: READABLE_SHADOW + ", 0 0 20px rgba(255, 0, 0, 0.3)",
-    animation: "poetry-glitch",
+    animation: "poetry-line-lifecycle",
     animationDuration: [7, 12],
     seedLines: [],
   },
@@ -299,7 +302,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Playfair Display', serif", fontWeight: 700, letterSpacing: "-0.01em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.10em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(180, 210, 160, 0.85)",
@@ -320,7 +323,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.06em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.9, 2.0],
+    sizeRange: [1.3, 2.2],
     opacity: 0.7,
     colors: [
       "rgba(140, 200, 255, 0.85)",
@@ -341,7 +344,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500, letterSpacing: "0.12em", textTransform: "uppercase" },
       { fontFamily: "var(--font-geist-mono)", fontWeight: 400, letterSpacing: "0.06em", textTransform: "none" },
     ],
-    sizeRange: [0.8, 1.6],
+    sizeRange: [1.1, 1.8],
     opacity: 0.8,
     colors: [
       "rgba(200, 220, 240, 0.9)",
@@ -362,7 +365,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 400, letterSpacing: "0.06em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.14em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 2.0],
+    sizeRange: [1.3, 2.2],
     opacity: 0.75,
     colors: [
       "rgba(180, 160, 255, 0.85)",
@@ -382,7 +385,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.04em", textTransform: "lowercase" },
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "none" },
     ],
-    sizeRange: [0.7, 1.4],
+    sizeRange: [1.1, 1.8],
     opacity: 0.5,
     colors: [
       "rgba(180, 180, 190, 0.6)",
@@ -402,7 +405,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Playfair Display', serif", fontWeight: 400, letterSpacing: "0.06em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, letterSpacing: "0.12em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(220, 200, 160, 0.85)",
@@ -423,7 +426,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "lowercase" },
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.06em", textTransform: "none" },
     ],
-    sizeRange: [0.8, 1.6],
+    sizeRange: [1.1, 1.8],
     opacity: 0.7,
     colors: [
       "rgba(200, 180, 200, 0.8)",
@@ -443,7 +446,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, letterSpacing: "0.06em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, letterSpacing: "0.10em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(220, 220, 230, 0.85)",
@@ -463,7 +466,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, letterSpacing: "0.03em", textTransform: "none" },
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.06em", textTransform: "none" },
     ],
-    sizeRange: [0.85, 1.7],
+    sizeRange: [1.2, 1.9],
     opacity: 0.7,
     colors: [
       "rgba(240, 220, 180, 0.85)",
@@ -484,7 +487,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "var(--font-geist-mono)", fontWeight: 300, letterSpacing: "0.08em", textTransform: "none" },
       { fontFamily: "'Playfair Display', serif", fontWeight: 700, letterSpacing: "0.01em", textTransform: "none" },
     ],
-    sizeRange: [0.85, 1.7],
+    sizeRange: [1.2, 1.9],
     opacity: 0.7,
     colors: [
       "rgba(220, 210, 190, 0.85)",
@@ -504,7 +507,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500, letterSpacing: "0.01em", textTransform: "none" },
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.8, 1.7],
+    sizeRange: [1.2, 1.9],
     opacity: 0.8,
     colors: [
       "rgba(200, 220, 255, 0.9)",
@@ -513,7 +516,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       "rgba(255, 255, 255, 0.9)",
     ],
     textShadow: READABLE_SHADOW + ", 0 0 15px rgba(150, 200, 255, 0.2)",
-    animation: "poetry-glitch",
+    animation: "poetry-line-lifecycle",
     animationDuration: [8, 14],
     seedLines: [],
   },
@@ -527,7 +530,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.14em", textTransform: "uppercase" },
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, letterSpacing: "0.02em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 2.0],
+    sizeRange: [1.3, 2.2],
     opacity: 0.75,
     colors: [
       "rgba(220, 180, 255, 0.85)",
@@ -548,7 +551,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.12em", textTransform: "uppercase" },
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.06em", textTransform: "none" },
     ],
-    sizeRange: [0.85, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(180, 160, 255, 0.85)",
@@ -569,7 +572,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Lora', serif", fontWeight: 500, letterSpacing: "0.04em", textTransform: "lowercase" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(200, 220, 180, 0.85)",
@@ -590,7 +593,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 500, letterSpacing: "0.10em", textTransform: "uppercase" },
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.02em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.8, 1.6],
+    sizeRange: [1.1, 1.8],
     opacity: 0.75,
     colors: [
       "rgba(200, 220, 240, 0.85)",
@@ -610,7 +613,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "uppercase" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.06em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.85, 1.7],
+    sizeRange: [1.2, 1.9],
     opacity: 0.7,
     colors: [
       "rgba(200, 220, 255, 0.85)",
@@ -631,7 +634,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, letterSpacing: "0.08em", textTransform: "none" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 400, letterSpacing: "0.10em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(220, 200, 180, 0.85)",
@@ -652,7 +655,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Bebas Neue', sans-serif", fontWeight: 400, letterSpacing: "0.10em", textTransform: "uppercase" },
       { fontFamily: "var(--font-geist-mono)", fontWeight: 400, letterSpacing: "0.04em", textTransform: "none" },
     ],
-    sizeRange: [0.8, 1.7],
+    sizeRange: [1.2, 1.9],
     opacity: 0.8,
     colors: [
       "rgba(255, 80, 80, 0.85)",
@@ -661,7 +664,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       "rgba(180, 180, 200, 0.8)",
     ],
     textShadow: READABLE_SHADOW + ", 0 0 15px rgba(255, 0, 0, 0.15)",
-    animation: "poetry-glitch",
+    animation: "poetry-line-lifecycle",
     animationDuration: [8, 14],
     seedLines: [],
   },
@@ -673,7 +676,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.10em", textTransform: "uppercase" },
       { fontFamily: "'Lora', serif", fontWeight: 400, letterSpacing: "0.04em", textTransform: "lowercase" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(220, 200, 240, 0.85)",
@@ -696,7 +699,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.04em", textTransform: "none" },
       { fontFamily: "'Space Grotesk', sans-serif", fontWeight: 300, letterSpacing: "0.14em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 2.0],
+    sizeRange: [1.3, 2.2],
     opacity: 0.65,
     colors: [
       "rgba(200, 220, 240, 0.85)",
@@ -717,7 +720,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "lowercase" },
       { fontFamily: "'Playfair Display', serif", fontWeight: 700, letterSpacing: "-0.01em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(160, 210, 160, 0.85)",
@@ -738,7 +741,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Lora', serif", fontWeight: 500, letterSpacing: "0.06em", textTransform: "uppercase" },
       { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, letterSpacing: "0.03em", textTransform: "none" },
     ],
-    sizeRange: [0.9, 1.8],
+    sizeRange: [1.2, 2.0],
     opacity: 0.75,
     colors: [
       "rgba(255, 230, 160, 0.85)",
@@ -759,7 +762,7 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
       { fontFamily: "'Lora', serif", fontWeight: 500, letterSpacing: "0.01em", textTransform: "lowercase" },
       { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.10em", textTransform: "uppercase" },
     ],
-    sizeRange: [0.9, 1.9],
+    sizeRange: [1.2, 2.0],
     opacity: 0.7,
     colors: [
       "rgba(220, 160, 100, 0.85)",
@@ -770,6 +773,49 @@ export const TYPOGRAPHY_OVERRIDES: Record<string, PoetryTheme> = {
     textShadow: READABLE_SHADOW,
     animation: "poetry-float",
     animationDuration: [18, 30],
+    seedLines: [],
+  },
+
+  spirit: {
+    variants: [
+      { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.10em", textTransform: "none" },
+      { fontFamily: "'Cormorant Garamond', serif", fontWeight: 400, letterSpacing: "0.06em", textTransform: "lowercase" },
+      { fontFamily: "'Playfair Display', serif", fontWeight: 400, letterSpacing: "0.03em", textTransform: "none" },
+      { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.14em", textTransform: "uppercase" },
+      { fontFamily: "'Cormorant Garamond', serif", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" },
+    ],
+    sizeRange: [1.3, 2.4],
+    opacity: 0.8,
+    colors: [
+      "rgba(200, 180, 255, 0.9)",
+      "rgba(255, 240, 210, 0.85)",
+      "rgba(180, 210, 255, 0.85)",
+      "rgba(255, 220, 240, 0.8)",
+      "rgba(220, 255, 240, 0.85)",
+    ],
+    textShadow: READABLE_SHADOW + ", 0 0 20px rgba(160, 120, 255, 0.15)",
+    animation: "poetry-float",
+    animationDuration: [20, 34],
+    seedLines: [],
+  },
+
+  pain: {
+    variants: [
+      { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.02em", textTransform: "lowercase" },
+      { fontFamily: "'Cormorant Garamond', serif", fontWeight: 300, letterSpacing: "0.04em", textTransform: "none" },
+      { fontFamily: "'DM Sans', sans-serif", fontWeight: 300, letterSpacing: "0.08em", textTransform: "lowercase" },
+    ],
+    sizeRange: [1.2, 1.8],
+    opacity: 0.5,
+    colors: [
+      "rgba(120, 130, 160, 0.7)",
+      "rgba(100, 110, 140, 0.6)",
+      "rgba(140, 140, 160, 0.65)",
+      "rgba(80, 90, 120, 0.6)",
+    ],
+    textShadow: READABLE_SHADOW,
+    animation: "poetry-breathe",
+    animationDuration: [24, 40],
     seedLines: [],
   },
 };

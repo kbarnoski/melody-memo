@@ -2,18 +2,26 @@ import type { Journey, JourneyPhase } from "./types";
 import { getRealm } from "./realms";
 
 // Default phase arc — can be overridden per journey
+// Rotate an array so it starts at offset, wrapping around
+function rotateArray<T>(arr: T[], offset: number): T[] {
+  if (arr.length === 0) return arr;
+  const o = offset % arr.length;
+  return [...arr.slice(o), ...arr.slice(0, o)];
+}
+
 function defaultPhases(
   overrides: Partial<Record<string, Partial<JourneyPhase>>>
 ): JourneyPhase[] {
   const realm = overrides._realm as unknown as string | undefined;
   const realmData = realm ? getRealm(realm) : undefined;
+  const allShaders = realmData?.shaderModes ?? ["ethereal", "sacred", "fractal", "cosmos"];
 
   const defaults: JourneyPhase[] = [
     {
       id: "threshold",
       start: 0.0,
       end: 0.15,
-      shaderModes: realmData?.shaderModes.slice(0, 2) ?? ["ethereal", "sacred"],
+      shaderModes: rotateArray(allShaders, 0),
       shaderOpacity: 0.9,
       aiPrompt: "subtle darkness with faint emerging forms",
       aiPromptModifiers: {
@@ -28,7 +36,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["breathe...", "close your eyes...", "let the sound find you..."],
-      poetryIntervalSeconds: 8,
+      poetryIntervalSeconds: 10,
       intensityMultiplier: 0.4,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.1, rain: 0, drone: 0.2, chime: 0, fire: 0 },
@@ -40,7 +48,7 @@ function defaultPhases(
       id: "expansion",
       start: 0.15,
       end: 0.35,
-      shaderModes: realmData?.shaderModes.slice(0, 3) ?? ["sacred", "fractal", "ethereal"],
+      shaderModes: rotateArray(allShaders, 1),
       shaderOpacity: 0.7,
       aiPrompt: "forms emerging, energy building, geometry revealing itself",
       aiPromptModifiers: {
@@ -56,7 +64,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["let go...", "you're rising...", "don't resist..."],
-      poetryIntervalSeconds: 4,
+      poetryIntervalSeconds: 7,
       intensityMultiplier: 0.7,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.2, rain: 0.1, drone: 0.4, chime: 0.2, fire: 0 },
@@ -68,7 +76,7 @@ function defaultPhases(
       id: "transcendence",
       start: 0.35,
       end: 0.6,
-      shaderModes: realmData?.shaderModes ?? ["prismatic", "dissolution", "fractal", "sacred"],
+      shaderModes: rotateArray(allShaders, 2),
       shaderOpacity: 0.4,
       aiPrompt: "maximum intensity, overwhelming beauty, total immersion",
       aiPromptModifiers: {
@@ -85,7 +93,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["you are here...", "surrender...", "become..."],
-      poetryIntervalSeconds: 2,
+      poetryIntervalSeconds: 5,
       intensityMultiplier: 1.0,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.4, rain: 0.3, drone: 0.8, chime: 0.5, fire: 0.1 },
@@ -97,7 +105,7 @@ function defaultPhases(
       id: "illumination",
       start: 0.6,
       end: 0.8,
-      shaderModes: realmData?.shaderModes.slice(1, 4) ?? ["sacred", "astral", "ethereal"],
+      shaderModes: rotateArray(allShaders, 3),
       shaderOpacity: 0.55,
       aiPrompt: "clarity after intensity, insight, expanded awareness",
       aiPromptModifiers: {
@@ -112,7 +120,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["you see clearly now...", "stay...", "notice everything..."],
-      poetryIntervalSeconds: 6,
+      poetryIntervalSeconds: 8,
       intensityMultiplier: 0.75,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.2, rain: 0.1, drone: 0.5, chime: 0.3, fire: 0 },
@@ -124,7 +132,7 @@ function defaultPhases(
       id: "return",
       start: 0.8,
       end: 0.95,
-      shaderModes: realmData?.shaderModes.slice(2, 4) ?? ["ethereal", "aurora"],
+      shaderModes: rotateArray(allShaders, 1),
       shaderOpacity: 0.8,
       aiPrompt: "gentle descent, warmth returning, familiar forms",
       aiPromptModifiers: {
@@ -139,7 +147,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["slowly now...", "the warmth returns...", "remember this feeling..."],
-      poetryIntervalSeconds: 8,
+      poetryIntervalSeconds: 10,
       intensityMultiplier: 0.5,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.15, rain: 0.05, drone: 0.3, chime: 0.1, fire: 0 },
@@ -151,7 +159,7 @@ function defaultPhases(
       id: "integration",
       start: 0.95,
       end: 1.0,
-      shaderModes: realmData?.shaderModes.slice(0, 1) ?? ["ethereal"],
+      shaderModes: rotateArray(allShaders, 0),
       shaderOpacity: 0.95,
       aiPrompt: "peace, stillness, a single point of light",
       aiPromptModifiers: {
@@ -166,7 +174,7 @@ function defaultPhases(
       voice: realmData?.defaultVoice ?? "shimmer",
       poetryMood: realmData?.poetryMood ?? "flowing",
       guidancePhrases: ["welcome back...", "you are changed...", "carry this with you..."],
-      poetryIntervalSeconds: 12,
+      poetryIntervalSeconds: 15,
       intensityMultiplier: 0.3,
       palette: realmData?.palette ?? { primary: "#0a0a0a", secondary: "#1a1a1a", accent: "#666", glow: "#888" },
       ambientLayers: { wind: 0.05, rain: 0, drone: 0.1, chime: 0.05, fire: 0 },
@@ -994,6 +1002,417 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
     }),
+  },
+  // ─── Without a Brightness — The Infinite Spiritual Journey ───
+  // For Joseph. Every emotion. Every dimension. The most dynamic journey.
+  // Uses a fully custom arc to maximize shader variety and emotional range.
+  {
+    id: "without-a-brightness",
+    name: "Without a Brightness",
+    subtitle: "for Joseph — into the infinite",
+    description:
+      "A journey through every dimension of the spirit. Darkness becomes cathedral becomes cosmos becomes prayer becomes light. The brightness was inside you all along.",
+    realmId: "spirit",
+    aiEnabled: true,
+    phases: (() => {
+      const spiritPalette = { primary: "#0a0814", secondary: "#140e24", accent: "#a080d0", glow: "#c0a0f0" };
+      const warmPalette = { primary: "#0a0808", secondary: "#1a1008", accent: "#d0a050", glow: "#f0c070" };
+      const deepPalette = { primary: "#040408", secondary: "#0a0a18", accent: "#6070c0", glow: "#8090e0" };
+      const firePalette = { primary: "#100804", secondary: "#1a0c06", accent: "#e07030", glow: "#ff9050" };
+      const icePalette = { primary: "#060810", secondary: "#0c1020", accent: "#80b0e0", glow: "#a0d0ff" };
+      const goldPalette = { primary: "#0c0a04", secondary: "#1a1408", accent: "#e0c060", glow: "#ffd866" };
+      return [
+        // ── THRESHOLD (0 → 0.12) — Void. Before all things. ──
+        // The title is "Without a Brightness" — so we begin in its absence.
+        // Dark but with AI imagery visible — cosmic emptiness rendered as image.
+        {
+          id: "threshold" as const,
+          start: 0.0,
+          end: 0.12,
+          shaderModes: ["nebula", "astral", "stardust", "fog", "drift", "dissolution", "void", "expanse", "phantom", "monolith"],
+          shaderOpacity: 0.4,
+          aiPrompt: "absolute darkness with a single distant point of light, the moment before creation, vast empty cosmos with one faint star pulsing, primordial void that holds infinite potential",
+          aiPromptModifiers: {
+            lowAmplitude: "perfect stillness, the silence before the first word was ever spoken",
+            highBass: "deep vibration in the void, something ancient stirring",
+          },
+          denoisingRange: [0.25, 0.45] as [number, number],
+          targetFps: 0.3,
+          bloomIntensity: 0.08,
+          chromaticAberration: 0.0,
+          colorTemperature: -0.2,
+          vignette: 0.45,
+          voice: "ballad" as const,
+          poetryMood: "mystical" as const,
+          guidancePhrases: ["in the beginning, there was no light...", "listen...", "the darkness is not empty..."],
+          poetryIntervalSeconds: 12,
+          intensityMultiplier: 0.3,
+          palette: deepPalette,
+          ambientLayers: { wind: 0.05, rain: 0, drone: 0.3, chime: 0, fire: 0 },
+          filmGrain: 0.04,
+          particleDensity: 0.01,
+          halation: 0.0,
+        },
+        // ── EXPANSION (0.12 → 0.32) — The Awakening ──
+        // Sacred geometry emerges. Organic growth. Life finding form.
+        // Mix of geometry, organic, and cosmic — maximum variety.
+        {
+          id: "expansion" as const,
+          start: 0.12,
+          end: 0.32,
+          shaderModes: ["sacred", "mycelium", "fibonacci", "ethereal", "nebula", "aurora", "mandala", "liquid", "bloom", "chrysalis", "helix", "spiral"],
+          shaderOpacity: 0.45,
+          aiPrompt: "sacred geometry blooming from darkness, bioluminescent networks of light spreading like veins through space, mandalas forming from stardust, an infinite forest of crystalline structures growing in every direction",
+          aiPromptModifiers: {
+            highBass: "massive geometric structures pulsing with deep rhythm, cathedral-sized fractals",
+            highTreble: "tiny crystalline details within each structure, infinite recursive beauty",
+            highAmplitude: "everything growing at once, overwhelming emergence of form",
+          },
+          denoisingRange: [0.4, 0.65] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.35,
+          chromaticAberration: 0.03,
+          colorTemperature: 0.1,
+          vignette: 0.25,
+          voice: "ballad" as const,
+          poetryMood: "flowing" as const,
+          guidancePhrases: ["something is growing...", "feel it taking shape...", "the geometry of your soul..."],
+          poetryIntervalSeconds: 7,
+          intensityMultiplier: 0.65,
+          palette: spiritPalette,
+          ambientLayers: { wind: 0.15, rain: 0.05, drone: 0.45, chime: 0.2, fire: 0 },
+          filmGrain: 0.05,
+          particleDensity: 0.05,
+          halation: 0.04,
+        },
+        // ── TRANSCENDENCE (0.32 → 0.58) — The Peak — Every Emotion At Once ──
+        // This is the most dynamic phase. Shaders from EVERY category.
+        // Visionary + Cosmic + Dark + Organic + AI Imagery all firing.
+        // Maximum post-processing, maximum variety, maximum intensity.
+        {
+          id: "transcendence" as const,
+          start: 0.32,
+          end: 0.58,
+          shaderModes: [
+            "astral", "supernova", "rapture", "inferno", "storm", "nebula",
+            "cathedral", "revelation", "torus", "plasma", "wormhole",
+            "ascension", "spiral", "aurora", "sacred", "prismatic",
+          ],
+          shaderOpacity: 0.35,
+          aiPrompt: "overwhelming spiritual ecstasy, every sacred place from every tradition existing simultaneously — cathedrals melting into temples melting into mosques melting into starfields, the boundary between self and universe dissolving completely, infinite fractals of emotion",
+          aiPromptModifiers: {
+            highBass: "reality itself shaking, tectonic plates of consciousness shifting, volcanic light erupting from within",
+            highTreble: "glass cathedrals shattering into prismatic infinity, every shard reflecting a different lifetime",
+            highAmplitude: "total ego dissolution, all boundaries gone, every emotion at maximum intensity simultaneously",
+            lowAmplitude: "the eye of the storm, perfect stillness at the center of infinite chaos",
+          },
+          denoisingRange: [0.65, 0.9] as [number, number],
+          targetFps: 1,
+          bloomIntensity: 0.8,
+          chromaticAberration: 0.1,
+          colorTemperature: 0.35,
+          vignette: 0.1,
+          voice: "ballad" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["this is it...", "you are everything...", "surrender..."],
+          poetryIntervalSeconds: 5,
+          intensityMultiplier: 1.0,
+          palette: firePalette,
+          ambientLayers: { wind: 0.5, rain: 0.3, drone: 0.9, chime: 0.6, fire: 0.2 },
+          filmGrain: 0.12,
+          particleDensity: 0.09,
+          halation: 0.1,
+        },
+        // ── ILLUMINATION (0.58 → 0.75) — The Knowing ──
+        // After the peak — clarity. The brightness that was absent is found within.
+        // Warm golden light, sacred spaces, crystalline purity.
+        {
+          id: "illumination" as const,
+          start: 0.58,
+          end: 0.75,
+          shaderModes: ["ascension", "sacred", "prismatic", "astral", "aurora", "helix", "mandala", "fibonacci", "stardust", "ethereal", "torus", "temple"],
+          shaderOpacity: 0.35,
+          aiPrompt: "golden light flooding an infinite space, sacred geometry hovering in warm amber air, the feeling of understanding everything at once, a cathedral made entirely of sunlight and memory",
+          aiPromptModifiers: {
+            highTreble: "crystalline clarity in every particle of golden light, each one carrying a different truth",
+            lowAmplitude: "soft golden glow, the warmth of being understood completely",
+          },
+          denoisingRange: [0.4, 0.6] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.5,
+          chromaticAberration: 0.04,
+          colorTemperature: 0.25,
+          vignette: 0.2,
+          voice: "shimmer" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["the brightness was always here...", "you see it now...", "this is what you are..."],
+          poetryIntervalSeconds: 8,
+          intensityMultiplier: 0.75,
+          palette: goldPalette,
+          ambientLayers: { wind: 0.15, rain: 0.05, drone: 0.5, chime: 0.4, fire: 0 },
+          filmGrain: 0.04,
+          particleDensity: 0.06,
+          halation: 0.07,
+        },
+        // ── RETURN (0.75 → 0.92) — The Descent Back ──
+        // Gentle. Organic beauty. The spiritual made earthly.
+        // Mix of elemental and organic shaders — water, growth, natural forms.
+        {
+          id: "return" as const,
+          start: 0.75,
+          end: 0.92,
+          shaderModes: ["ethereal", "bloom", "liquid", "mycelium", "aurora", "snow", "chrysalis", "fog", "dendrite", "lichen", "membrane", "coral"],
+          shaderOpacity: 0.4,
+          aiPrompt: "gentle rain on still water, bioluminescent forest at twilight, snow falling on warm earth, the natural world welcoming you back with infinite gentleness",
+          aiPromptModifiers: {
+            highBass: "deep earth rhythm, the heartbeat of the planet itself",
+            lowAmplitude: "soft, fading, the gentlest possible return",
+          },
+          denoisingRange: [0.3, 0.5] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.25,
+          chromaticAberration: 0.03,
+          colorTemperature: -0.05,
+          vignette: 0.3,
+          voice: "nova" as const,
+          poetryMood: "flowing" as const,
+          guidancePhrases: ["gently now...", "the earth remembers you...", "bring it back with you..."],
+          poetryIntervalSeconds: 10,
+          intensityMultiplier: 0.5,
+          palette: icePalette,
+          ambientLayers: { wind: 0.2, rain: 0.15, drone: 0.3, chime: 0.1, fire: 0 },
+          filmGrain: 0.03,
+          particleDensity: 0.03,
+          halation: 0.03,
+        },
+        // ── INTEGRATION (0.92 → 1.0) — Peace ──
+        // Simple. One shader. One feeling. The orb — where we started.
+        // But now you understand what brightness means.
+        {
+          id: "integration" as const,
+          start: 0.92,
+          end: 1.0,
+          shaderModes: ["astral", "stardust", "nebula", "orb", "drift", "aurora", "sacred", "dissolution", "fog", "mandala"],
+          shaderOpacity: 0.5,
+          aiPrompt: "a single point of warm light in infinite peaceful darkness, the brightest thing in the universe is one small steady flame, everything is quiet and everything is beautiful",
+          aiPromptModifiers: {
+            lowAmplitude: "total peace, total silence, one light, enough",
+          },
+          denoisingRange: [0.2, 0.35] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.15,
+          chromaticAberration: 0.0,
+          colorTemperature: 0.1,
+          vignette: 0.35,
+          voice: "ballad" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["you found it...", "carry this light...", "for Joseph..."],
+          poetryIntervalSeconds: 15,
+          intensityMultiplier: 0.3,
+          palette: warmPalette,
+          ambientLayers: { wind: 0.05, rain: 0, drone: 0.15, chime: 0.1, fire: 0 },
+          filmGrain: 0.02,
+          particleDensity: 0.02,
+          halation: 0.05,
+        },
+      ];
+    })(),
+  },
+
+  // ─── 17th St 64**** — Ascension → Pain → Ascension ───
+  // Track: 18:40 total. Pain enters at 3:40 (0.196), lifts at 6:50 (0.366).
+  // This journey does NOT use defaultPhases — it has a fully custom arc.
+  {
+    id: "17th-st-descent",
+    name: "17th Street",
+    subtitle: "descent into the wound, and back",
+    description:
+      "Light rises, then plunges into the darkest place a soul can go. At the bottom, something breaks open — and you ascend.",
+    realmId: "pain",
+    aiEnabled: true,
+    phases: (() => {
+      const heavenRealm = getRealm("heaven");
+      const painRealm = getRealm("pain");
+      const heavenPalette = heavenRealm?.palette ?? { primary: "#1a1408", secondary: "#2e2410", accent: "#f0c040", glow: "#ffd866" };
+      const painPalette = painRealm?.palette ?? { primary: "#020204", secondary: "#0a0810", accent: "#4a5070", glow: "#2a3050" };
+      return [
+        // ── PHASE 1: THRESHOLD (0 → 0.10) — Ascension begins ──
+        {
+          id: "threshold" as const,
+          start: 0.0,
+          end: 0.10,
+          shaderModes: ["ascension", "astral", "aurora"],
+          shaderOpacity: 0.9,
+          aiPrompt: "faint warm light in darkness, particles rising slowly upward, the first breath of something sacred beginning",
+          aiPromptModifiers: { lowAmplitude: "near silence, barely visible, a single point of warmth" },
+          denoisingRange: [0.3, 0.5] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.15,
+          chromaticAberration: 0.0,
+          colorTemperature: 0.2,
+          vignette: 0.3,
+          voice: "shimmer" as const,
+          poetryMood: "dreamy" as const,
+          guidancePhrases: ["breathe...", "the light is finding you...", "rise..."],
+          poetryIntervalSeconds: 10,
+          intensityMultiplier: 0.4,
+          palette: heavenPalette,
+          ambientLayers: { wind: 0.1, rain: 0, drone: 0.2, chime: 0.1, fire: 0 },
+          filmGrain: 0.03,
+          particleDensity: 0.03,
+          halation: 0.03,
+        },
+        // ── PHASE 2: EXPANSION (0.10 → 0.196) — Ascension building ──
+        {
+          id: "expansion" as const,
+          start: 0.10,
+          end: 0.196,
+          shaderModes: ["ascension", "sacred", "ethereal", "aurora"],
+          shaderOpacity: 0.7,
+          aiPrompt: "golden light streaming upward, particles accelerating, sacred geometry emerging from warmth, the feeling of being lifted",
+          aiPromptModifiers: {
+            highBass: "massive upward surge, golden earthquake",
+            highTreble: "crystalline light, infinite detail in every particle",
+          },
+          denoisingRange: [0.4, 0.65] as [number, number],
+          targetFps: 1,
+          bloomIntensity: 0.4,
+          chromaticAberration: 0.02,
+          colorTemperature: 0.3,
+          vignette: 0.2,
+          voice: "shimmer" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["you are rising...", "the light grows...", "higher..."],
+          poetryIntervalSeconds: 7,
+          intensityMultiplier: 0.7,
+          palette: heavenPalette,
+          ambientLayers: { wind: 0.2, rain: 0, drone: 0.4, chime: 0.3, fire: 0 },
+          filmGrain: 0.05,
+          particleDensity: 0.06,
+          halation: 0.05,
+        },
+        // ── PHASE 3: TRANSCENDENCE (0.196 → 0.366) — THE PAIN ──
+        // 3:40 to 6:50 — the darkest place. Cold, alone, suicidal despair.
+        {
+          id: "transcendence" as const,
+          start: 0.196,
+          end: 0.366,
+          shaderModes: ["void", "phantom", "obsidian", "umbra", "chasm"],
+          shaderOpacity: 0.95,
+          aiPrompt: "absolute darkness, empty room at 4am, frozen tears, a person alone with unbearable grief, hospital corridor at night, the silence after everyone has left forever",
+          aiPromptModifiers: {
+            highBass: "the floor giving way, falling into bottomless grief",
+            highTreble: "glass shattering in an empty room, the sound of something irreversible",
+            highAmplitude: "the full weight of despair, drowning in cold water",
+            lowAmplitude: "the silence after the last person leaves, absolute zero",
+          },
+          denoisingRange: [0.6, 0.85] as [number, number],
+          targetFps: 1.5,
+          bloomIntensity: 0.05,
+          chromaticAberration: 0.1,
+          colorTemperature: -0.4,
+          vignette: 0.5,
+          voice: "onyx" as const,
+          poetryMood: "melancholic" as const,
+          guidancePhrases: ["stay here...", "feel it all...", "this is the bottom..."],
+          poetryIntervalSeconds: 6,
+          intensityMultiplier: 0.8,
+          palette: painPalette,
+          ambientLayers: { wind: 0.5, rain: 0.4, drone: 0.7, chime: 0, fire: 0 },
+          filmGrain: 0.15,
+          particleDensity: 0.01,
+          halation: 0.0,
+        },
+        // ── PHASE 4: ILLUMINATION (0.366 → 0.50) — First light returns ──
+        // 6:50 mark — the turn. Pain cracks open and light seeps through.
+        {
+          id: "illumination" as const,
+          start: 0.366,
+          end: 0.50,
+          shaderModes: ["ascension", "dissolution", "astral"],
+          shaderOpacity: 0.6,
+          aiPrompt: "a crack of light in total darkness, dawn after the longest night, ice beginning to thaw, one warm breath in frozen air",
+          aiPromptModifiers: {
+            highTreble: "light fracturing through ice, prisms in frozen tears",
+          },
+          denoisingRange: [0.4, 0.6] as [number, number],
+          targetFps: 1,
+          bloomIntensity: 0.3,
+          chromaticAberration: 0.04,
+          colorTemperature: 0.1,
+          vignette: 0.3,
+          voice: "shimmer" as const,
+          poetryMood: "flowing" as const,
+          guidancePhrases: ["look up...", "the light is returning...", "you survived..."],
+          poetryIntervalSeconds: 8,
+          intensityMultiplier: 0.6,
+          palette: { primary: "#0a0810", secondary: "#1a1420", accent: "#8090c0", glow: "#a0b0e0" },
+          ambientLayers: { wind: 0.3, rain: 0.1, drone: 0.4, chime: 0.1, fire: 0 },
+          filmGrain: 0.06,
+          particleDensity: 0.04,
+          halation: 0.04,
+        },
+        // ── PHASE 5: RETURN (0.50 → 0.85) — Full ascension ──
+        // The long climb back into pure light. Warmer, brighter, more particles.
+        {
+          id: "return" as const,
+          start: 0.50,
+          end: 0.85,
+          shaderModes: ["ascension", "sacred", "aurora", "ethereal"],
+          shaderOpacity: 0.6,
+          aiPrompt: "golden light flooding upward, infinite particles rising, warmth replacing cold, the feeling of being carried upward by something larger than yourself",
+          aiPromptModifiers: {
+            highBass: "massive golden surge, earthquake of light",
+            lowAmplitude: "soft warm glow, held in gentle radiance",
+          },
+          denoisingRange: [0.4, 0.7] as [number, number],
+          targetFps: 1,
+          bloomIntensity: 0.5,
+          chromaticAberration: 0.03,
+          colorTemperature: 0.3,
+          vignette: 0.15,
+          voice: "shimmer" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["rise...", "you are ascending...", "the light knows your name..."],
+          poetryIntervalSeconds: 8,
+          intensityMultiplier: 0.8,
+          palette: heavenPalette,
+          ambientLayers: { wind: 0.2, rain: 0, drone: 0.5, chime: 0.4, fire: 0 },
+          filmGrain: 0.04,
+          particleDensity: 0.07,
+          halation: 0.06,
+        },
+        // ── PHASE 6: INTEGRATION (0.85 → 1.0) — Peace ──
+        // Pure light. The wound is still there but you are above it now.
+        {
+          id: "integration" as const,
+          start: 0.85,
+          end: 1.0,
+          shaderModes: ["ascension", "astral"],
+          shaderOpacity: 0.8,
+          aiPrompt: "pure warm light, total peace, golden particles drifting slowly in infinite space, the view from above everything",
+          aiPromptModifiers: {
+            lowAmplitude: "silence, warmth, nothing left to carry",
+          },
+          denoisingRange: [0.2, 0.4] as [number, number],
+          targetFps: 0.5,
+          bloomIntensity: 0.6,
+          chromaticAberration: 0.0,
+          colorTemperature: 0.2,
+          vignette: 0.2,
+          voice: "shimmer" as const,
+          poetryMood: "transcendent" as const,
+          guidancePhrases: ["you made it...", "carry this light...", "you are changed..."],
+          poetryIntervalSeconds: 12,
+          intensityMultiplier: 0.5,
+          palette: heavenPalette,
+          ambientLayers: { wind: 0.1, rain: 0, drone: 0.2, chime: 0.2, fire: 0 },
+          filmGrain: 0.02,
+          particleDensity: 0.04,
+          halation: 0.08,
+        },
+      ];
+    })(),
   },
 ];
 

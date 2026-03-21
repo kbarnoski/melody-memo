@@ -212,6 +212,7 @@ export function SharedJourneyClient({
         className="absolute bottom-6 left-6 z-20"
         style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)" }}
       >
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
         <a href="/" className="text-white/15 hover:text-white/30 transition-colors">
           Listen on Resonance
         </a>

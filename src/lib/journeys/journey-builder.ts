@@ -76,6 +76,7 @@ Each phase needs a visual scene prompt, mood word, and 2-3 whispered guidance ph
       id,
       shaderModes: shuffled.slice(0, shaderBudget),
       aiPrompt: aiPhase.aiPrompt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       poetryMood: aiPhase.poetryMood as any,
       guidancePhrases: aiPhase.guidancePhrases,
       voice: realm.defaultVoice,

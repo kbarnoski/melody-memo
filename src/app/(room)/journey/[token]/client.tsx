@@ -16,6 +16,7 @@ interface SharedJourneyClientProps {
   audioUrl: string | null;
   recordingTitle: string | null;
   shareToken: string;
+  playbackSeed: string | null;
 }
 
 export function SharedJourneyClient({
@@ -23,6 +24,7 @@ export function SharedJourneyClient({
   audioUrl,
   recordingTitle,
   shareToken,
+  playbackSeed,
 }: SharedJourneyClientProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -64,13 +66,14 @@ export function SharedJourneyClient({
     };
   }, [audioUrl]);
 
-  // Start journey engine
+  // Start journey engine — with seed for deterministic shared playback
   useEffect(() => {
     const engine = getJourneyEngine();
-    engine.start(journey);
+    const seed = playbackSeed ? parseInt(playbackSeed, 10) : undefined;
+    engine.start(journey, seed != null && !isNaN(seed) ? { seed } : undefined);
 
     return () => engine.stop();
-  }, [journey]);
+  }, [journey, playbackSeed]);
 
   // Animation loop for journey frames
   useEffect(() => {
@@ -116,7 +119,7 @@ export function SharedJourneyClient({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const shaderMode = journeyFrame?.shaderMode ?? journey.phases[0]?.shaderModes[0] ?? "mandala";
+  const shaderMode = journeyFrame?.shaderMode ?? journey.phases[0]?.shaderModes[0] ?? "cosmos";
   const audioFeatures = { amplitude: 0, bass: 0 };
 
   // Read audio features for compositor
@@ -141,6 +144,7 @@ export function SharedJourneyClient({
           audioAmplitude={audioFeatures.amplitude}
           audioBass={audioFeatures.bass}
           aiEnabled={journey.aiEnabled}
+          promptSeed={playbackSeed ? parseInt(playbackSeed, 10) : undefined}
         >
           {MODES_3D.has(shaderMode) ? (
             <Visualizer3D

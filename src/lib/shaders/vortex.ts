@@ -65,39 +65,39 @@ void main() {
 
   // Colors — deep dark with blood-red and violet accretion
   vec3 bgColor = palette(bgField * 0.3 + paletteShift,
-    vec3(0.02, 0.01, 0.03),
-    vec3(0.04, 0.02, 0.05),
+    vec3(0.04, 0.025, 0.05),
+    vec3(0.06, 0.04, 0.08),
     vec3(0.8, 0.5, 1.0),
     vec3(0.2, 0.1, 0.4));
 
   vec3 armColor = palette(arm1 * 0.5 + paletteShift + 0.3,
-    vec3(0.06, 0.01, 0.02),
-    vec3(0.1, 0.03, 0.06),
+    vec3(0.08, 0.03, 0.04),
+    vec3(0.14, 0.06, 0.1),
     vec3(1.0, 0.4, 0.6),
     vec3(0.0, 0.1, 0.3));
 
   vec3 ringColor = palette(ringNoise * 0.5 + paletteShift + 0.6,
-    vec3(0.1, 0.02, 0.01),
-    vec3(0.15, 0.04, 0.02),
+    vec3(0.12, 0.04, 0.03),
+    vec3(0.2, 0.08, 0.05),
     vec3(1.0, 0.5, 0.3),
     vec3(0.0, 0.1, 0.2));
 
   vec3 debrisColor = palette(debris * 0.4 + paletteShift + 0.15,
-    vec3(0.04, 0.02, 0.05),
-    vec3(0.06, 0.03, 0.08),
+    vec3(0.06, 0.04, 0.07),
+    vec3(0.1, 0.06, 0.12),
     vec3(0.7, 0.5, 1.0),
     vec3(0.15, 0.1, 0.35));
 
   // Composite
-  vec3 color = bgColor * 0.3;
-  color += armColor * (arm1 + arm2 * 0.6 + arm3 * 0.4) * 0.3;
-  color += debrisColor * debrisField * 0.2 * (0.5 + u_treble * 0.5);
-  color += ringColor * ring * 0.5 * (0.6 + u_bass * 0.4);
+  vec3 color = bgColor * 0.5;
+  color += armColor * (arm1 + arm2 * 0.6 + arm3 * 0.4) * 0.5;
+  color += debrisColor * debrisField * 0.35 * (0.5 + u_treble * 0.5);
+  color += ringColor * ring * 0.7 * (0.6 + u_bass * 0.4);
 
   // Radial streaks — matter stretching as it falls in
   float streaks = snoise(vec2(angle * 15.0, r * 3.0 - t * 2.0));
   streaks = smoothstep(0.5, 0.9, streaks) * exp(-r * 2.0);
-  color += armColor * streaks * 0.1 * u_treble;
+  color += armColor * streaks * 0.15 * u_treble;
 
   // Central void consumes everything
   color *= 1.0 - centralVoid;

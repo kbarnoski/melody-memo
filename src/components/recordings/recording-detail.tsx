@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -153,6 +153,16 @@ export function RecordingDetail({
   }
 
   const hasAnalysis = analysis?.status === "completed";
+  const [activeTab, setActiveTab] = useState(hasAnalysis ? "analysis" : "chat");
+
+  // Auto-switch to analysis tab when analysis completes
+  const prevHasAnalysis = useRef(hasAnalysis);
+  useEffect(() => {
+    if (hasAnalysis && !prevHasAnalysis.current) {
+      setActiveTab("analysis");
+    }
+    prevHasAnalysis.current = hasAnalysis;
+  }, [hasAnalysis]);
 
   const confidence = analysis?.key_confidence ?? 0;
   const confidenceLabel = confidence > 0.85 ? "high" : confidence > 0.7 ? "moderate" : "low";
@@ -332,7 +342,7 @@ export function RecordingDetail({
       />
 
       {/* Two tabs: Analysis | Chat */}
-      <Tabs defaultValue={hasAnalysis ? "analysis" : "chat"}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="analysis" disabled={!hasAnalysis}>
             Analysis

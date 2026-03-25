@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { X, Type, AudioLines, ArrowLeft, Activity, Library, Hexagon, Share2, ChevronUp, ChevronDown, Compass, Pause, Play, SkipBack, SkipForward, RotateCcw, BookOpen, Globe, Search } from "lucide-react";
+import { X, Type, AudioLines, ArrowLeft, Activity, Library, Hexagon, Share2, ChevronUp, ChevronDown, Compass, Pause, Play, SkipBack, SkipForward, RotateCcw, BookOpen, Globe, Search, Maximize2, Minimize2 } from "lucide-react";
 import { getAudioEngine, ensureResumed } from "@/lib/audio/audio-engine";
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
@@ -15,9 +15,9 @@ export type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
 // Ambient shaders used as backdrop underneath AI imagery modes
 const AI_BACKDROP_SHADERS: VisualizerMode[] = [
-  "cosmos", "ethereal", "liquid", "fog", "nebula", "drift",
+  "cosmos", "ethereal", "fog", "nebula", "drift",
   "haze", "vapor", "abyss", "tide", "dusk",
-  "stardust", "horizon", "ember", "permafrost",
+  "stardust", "ember",
 ];
 
 /** Pick a deterministic backdrop shader for an AI mode */
@@ -61,6 +61,8 @@ export interface VisualizerCoreProps {
   journeyShaderMode?: string | null;
   /** Optional second shader layered during peak journey moments */
   journeyDualShaderMode?: string | null;
+  /** Optional third shader layered during peak journey moments */
+  journeyTertiaryShaderMode?: string | null;
   /** Journey phase for poetry */
   journeyPhase?: string | null;
   /** Journey voice override */
@@ -79,8 +81,14 @@ export interface VisualizerCoreProps {
   journeyActive?: boolean;
   /** Callback to stop the active journey */
   onStopJourney?: () => void;
+  /** Callback to share the active journey */
+  onShareJourney?: () => void;
   /** Callback to navigate to the track's studio detail page */
   onStudy?: () => void;
+  /** Whether fullscreen/immersive mode is active */
+  isFullscreen?: boolean;
+  /** Toggle fullscreen/immersive mode */
+  onFullscreenToggle?: () => void;
 }
 
 interface VisualizerProps {
@@ -317,6 +325,7 @@ export function VisualizerCore({
   children,
   journeyShaderMode,
   journeyDualShaderMode,
+  journeyTertiaryShaderMode,
   journeyPhase,
   journeyVoice,
   journeyPoetryInterval,
@@ -326,7 +335,10 @@ export function VisualizerCore({
   journeyStoryText,
   journeyActive,
   onStopJourney,
+  onShareJourney,
   onStudy,
+  isFullscreen,
+  onFullscreenToggle,
 }: VisualizerCoreProps) {
   // Viz settings from store — persist across open/close
   const storeMode = useAudioStore((s) => s.vizMode) as VisualizerMode;
@@ -446,9 +458,9 @@ export function VisualizerCore({
       cancelAnimationFrame(dualFadeRef.current);
       let progress = 0;
       const fadeIn = () => {
-        progress = Math.min(1, progress + 0.012);
+        progress = Math.min(1, progress + 0.006);
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-        if (dualShaderRef.current) dualShaderRef.current.style.opacity = String(eased * 0.45);
+        if (dualShaderRef.current) dualShaderRef.current.style.opacity = String(eased * 0.75);
         if (progress < 1) dualFadeRef.current = requestAnimationFrame(fadeIn);
       };
       // Wait two frames for React to mount the element
@@ -470,7 +482,7 @@ export function VisualizerCore({
       }
       let progress = 0;
       const fadeOut = () => {
-        progress = Math.min(1, progress + 0.015);
+        progress = Math.min(1, progress + 0.008);
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         if (dualShaderRef.current) dualShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
         if (progress < 1) {
@@ -483,6 +495,56 @@ export function VisualizerCore({
     }
     return () => cancelAnimationFrame(dualFadeRef.current);
   }, [dualShaderTarget]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Tertiary shader layer — third layer for even richer visuals during journey moments
+  const [tertiaryShaderVisible, setTertiaryShaderVisible] = useState<string | null>(null);
+  const tertiaryShaderRef = useRef<HTMLDivElement>(null);
+  const tertiaryFadeRef = useRef<number>(0);
+
+  const tertiaryShaderTarget = journeyTertiaryShaderMode && SHADERS[journeyTertiaryShaderMode as VisualizerMode]
+    ? journeyTertiaryShaderMode : null;
+
+  useEffect(() => {
+    if (tertiaryShaderTarget) {
+      setTertiaryShaderVisible(tertiaryShaderTarget);
+      cancelAnimationFrame(tertiaryFadeRef.current);
+      let progress = 0;
+      const fadeIn = () => {
+        progress = Math.min(1, progress + 0.005);
+        const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        if (tertiaryShaderRef.current) tertiaryShaderRef.current.style.opacity = String(eased * 0.60);
+        if (progress < 1) tertiaryFadeRef.current = requestAnimationFrame(fadeIn);
+      };
+      tertiaryFadeRef.current = requestAnimationFrame(() => {
+        if (tertiaryShaderRef.current) tertiaryShaderRef.current.style.opacity = "0";
+        tertiaryFadeRef.current = requestAnimationFrame(fadeIn);
+      });
+    } else {
+      cancelAnimationFrame(tertiaryFadeRef.current);
+      if (!tertiaryShaderRef.current) {
+        setTertiaryShaderVisible(null);
+        return;
+      }
+      const startOpacity = parseFloat(tertiaryShaderRef.current.style.opacity || "0");
+      if (startOpacity <= 0.001) {
+        setTertiaryShaderVisible(null);
+        return;
+      }
+      let progress = 0;
+      const fadeOut = () => {
+        progress = Math.min(1, progress + 0.007);
+        const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+        if (tertiaryShaderRef.current) tertiaryShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
+        if (progress < 1) {
+          tertiaryFadeRef.current = requestAnimationFrame(fadeOut);
+        } else {
+          setTertiaryShaderVisible(null);
+        }
+      };
+      tertiaryFadeRef.current = requestAnimationFrame(fadeOut);
+    }
+    return () => cancelAnimationFrame(tertiaryFadeRef.current);
+  }, [tertiaryShaderTarget]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync config ref for parent to read
   useEffect(() => {
@@ -514,7 +576,7 @@ export function VisualizerCore({
       if (backdropFrag) {
         return (
           <div key={layerMode} ref={ref} style={{ ...wrapStyle, opacity: 0.6 }}>
-            <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion={journeyActive} />
+            <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion />
           </div>
         );
       }
@@ -529,7 +591,7 @@ export function VisualizerCore({
     }
     return (
       <div key={layerMode} ref={ref} style={wrapStyle}>
-        <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion={journeyActive} />
+        <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion />
       </div>
     );
   };
@@ -549,7 +611,19 @@ export function VisualizerCore({
             analyser={analyser}
             dataArray={dataArray}
             fragShader={SHADERS[dualShaderVisible as VisualizerMode]!}
-            smoothMotion={journeyActive}
+            smoothMotion
+          />
+        </div>
+      )}
+
+      {/* Tertiary shader — third layer for rich multi-shader moments */}
+      {tertiaryShaderVisible && SHADERS[tertiaryShaderVisible as VisualizerMode] && (
+        <div ref={tertiaryShaderRef} style={{ position: "absolute", inset: 0, zIndex: 1, pointerEvents: "none", opacity: 0, mixBlendMode: "screen" }}>
+          <ShaderVisualizer
+            analyser={analyser}
+            dataArray={dataArray}
+            fragShader={SHADERS[tertiaryShaderVisible as VisualizerMode]!}
+            smoothMotion
           />
         </div>
       )}
@@ -700,7 +774,7 @@ export function VisualizerCore({
       )}
 
       {/* ─── Bottom control bar ─── */}
-      {!installationMode && <div
+      {!installationMode && (currentTrack || journeyActive) && <div
         className="absolute inset-x-0 bottom-0 transition-opacity duration-500 ease-out"
         style={{
           zIndex: 10,
@@ -767,6 +841,19 @@ export function VisualizerCore({
                   >
                     <AudioLines className="h-4 w-4" />
                   </button>
+                )}
+
+                {onShareJourney && (
+                  <>
+                    <div className="w-px h-5 bg-white/10 mx-1" />
+                    <button
+                      onClick={onShareJourney}
+                      className="p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                      title="Share Journey"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  </>
                 )}
               </>
             ) : (
@@ -961,6 +1048,15 @@ export function VisualizerCore({
                 title="Study This Track"
               >
                 <BookOpen className="h-4 w-4" />
+              </button>
+            )}
+            {onFullscreenToggle && (
+              <button
+                onClick={onFullscreenToggle}
+                className={`p-2.5 rounded-lg transition-colors ${isFullscreen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
+                title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              >
+                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </button>
             )}
             <button

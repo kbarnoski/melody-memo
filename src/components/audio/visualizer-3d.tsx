@@ -5,8 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import {
-  ObeliskScene, WaveScene, SilkScene, OrbitScene, PillarScene,
-  SeabedScene, MoleculeScene, BlackholeScene, CageScene, PendulumScene,
+  WaveScene, SeabedScene, CageScene, PendulumScene,
 } from "./visualizer-3d-extra";
 
 // ─── Audio data hook — reads analyser every frame ───
@@ -19,37 +18,18 @@ interface AudioData {
 }
 
 function useAudioData(
-  analyser: AnalyserNode,
-  dataArray: Uint8Array<ArrayBuffer>
+  _analyser: AnalyserNode,
+  _dataArray: Uint8Array<ArrayBuffer>
 ): React.MutableRefObject<AudioData> {
   const ref = useRef<AudioData>({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
-  const smoothing = 0.15;
 
-  useFrame(() => {
-    analyser.getByteFrequencyData(dataArray);
-
-    let bassSum = 0, midSum = 0, trebleSum = 0, totalSum = 0;
-    const len = dataArray.length;
-    for (let i = 0; i < len; i++) {
-      const v = dataArray[i];
-      totalSum += v;
-      if (i <= 5) bassSum += v;
-      else if (i <= 30) midSum += v;
-      else if (i <= 63) trebleSum += v;
-    }
-
-    const raw = {
-      bass: bassSum / (6 * 255),
-      mid: midSum / (25 * 255),
-      treble: trebleSum / (33 * 255),
-      amplitude: totalSum / (len * 255),
-    };
-
+  useFrame((state) => {
+    const time = state.clock.elapsedTime;
     const s = ref.current;
-    s.bass += (raw.bass - s.bass) * smoothing;
-    s.mid += (raw.mid - s.mid) * smoothing;
-    s.treble += (raw.treble - s.treble) * smoothing;
-    s.amplitude += (raw.amplitude - s.amplitude) * smoothing;
+    s.bass = 0.3 + 0.12 * Math.sin(time * 0.13);
+    s.mid = 0.25 + 0.1 * Math.sin(time * 0.17 + 1.0);
+    s.treble = 0.2 + 0.08 * Math.sin(time * 0.23 + 2.0);
+    s.amplitude = 0.28 + 0.1 * Math.sin(time * 0.11 + 0.5);
   });
 
   return ref;
@@ -319,80 +299,6 @@ function FieldScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray
   );
 }
 
-// ─── Rings scene — concentric audio-reactive rings ───
-
-function RingsScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const groupRef = useRef<THREE.Group>(null);
-  const ringsRef = useRef<THREE.Mesh[]>([]);
-
-  const RING_COUNT = 12;
-
-  const ringData = useMemo(() => {
-    return Array.from({ length: RING_COUNT }, (_, i) => ({
-      radius: 0.6 + i * 0.35,
-      rotSpeed: (i % 2 === 0 ? 1 : -1) * (0.15 + i * 0.03),
-      tiltAxis: new THREE.Vector3(
-        Math.sin(i * 0.8) * 0.5,
-        1,
-        Math.cos(i * 0.8) * 0.5,
-      ).normalize(),
-      hue: i / RING_COUNT,
-    }));
-  }, []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-
-    if (groupRef.current) {
-      groupRef.current.rotation.y = t * 0.03;
-    }
-
-    ringsRef.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const d = ringData[i];
-
-      // Each ring tilts and rotates independently
-      const tiltAngle = t * d.rotSpeed + Math.sin(t * 0.2 + i) * 0.3;
-      mesh.rotation.set(0, 0, 0);
-      mesh.rotateOnWorldAxis(d.tiltAxis, tiltAngle);
-
-      // Audio-reactive scale: bass for inner rings, treble for outer
-      const blend = i / (RING_COUNT - 1);
-      const audioScale = 1 + (a.bass * (1 - blend) + a.treble * blend) * 0.4;
-      mesh.scale.setScalar(audioScale);
-
-      // Pulse opacity with amplitude
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      mat.opacity = 0.3 + a.amplitude * 0.4 + Math.sin(t * 1.5 + i * 0.5) * 0.1;
-
-      // Color shift
-      const hue = (d.hue + t * 0.02 + a.mid * 0.1) % 1;
-      mat.color.setHSL(hue, 0.6, 0.35 + a.amplitude * 0.2);
-    });
-  });
-
-  return (
-    <>
-      <group ref={groupRef}>
-        {ringData.map((d, i) => (
-          <mesh
-            key={i}
-            ref={(el) => { if (el) ringsRef.current[i] = el; }}
-          >
-            <torusGeometry args={[d.radius, 0.015 + (i % 3) * 0.005, 16, 128]} />
-            <meshBasicMaterial transparent depthWrite={false} />
-          </mesh>
-        ))}
-      </group>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={2.0} />
-      </EffectComposer>
-    </>
-  );
-}
-
 // ─── Aurora scene — flowing ribbon curtains ───
 
 const auroraVertexShader = `
@@ -545,133 +451,6 @@ function AuroraScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArra
       ))}
       <EffectComposer>
         <Bloom luminanceThreshold={0.1} luminanceSmoothing={0.9} intensity={1.8} />
-      </EffectComposer>
-    </>
-  );
-}
-
-// ─── Totem scene — stacked rotating polyhedra ───
-
-function TotemScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const groupRef = useRef<THREE.Group>(null);
-  const meshRefs = useRef<THREE.Mesh[]>([]);
-
-  const FORMS = [
-    { geo: "octahedron", y: -1.8, scale: 0.6, rotSpeed: 0.3 },
-    { geo: "icosahedron", y: -0.6, scale: 0.5, rotSpeed: -0.25 },
-    { geo: "dodecahedron", y: 0.6, scale: 0.55, rotSpeed: 0.2 },
-    { geo: "octahedron", y: 1.8, scale: 0.45, rotSpeed: -0.35 },
-  ];
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-
-    if (groupRef.current) {
-      groupRef.current.rotation.y = t * 0.05;
-    }
-
-    meshRefs.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const form = FORMS[i];
-      mesh.rotation.x = t * form.rotSpeed;
-      mesh.rotation.z = t * form.rotSpeed * 0.7;
-
-      const pulse = 1 + a.bass * 0.3 * Math.sin(t * 2 + i * 1.5);
-      mesh.scale.setScalar(form.scale * pulse);
-
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      const hue = ((i * 0.25 + t * 0.03 + a.mid * 0.1) % 1);
-      mat.color.setHSL(hue, 0.5, 0.3 + a.amplitude * 0.3);
-    });
-  });
-
-  return (
-    <>
-      <group ref={groupRef}>
-        {FORMS.map((form, i) => (
-          <mesh
-            key={i}
-            position={[0, form.y, 0]}
-            ref={(el) => { if (el) meshRefs.current[i] = el; }}
-          >
-            {form.geo === "octahedron" && <octahedronGeometry args={[1, 0]} />}
-            {form.geo === "icosahedron" && <icosahedronGeometry args={[1, 0]} />}
-            {form.geo === "dodecahedron" && <dodecahedronGeometry args={[1, 0]} />}
-            <meshBasicMaterial wireframe transparent opacity={0.6} />
-          </mesh>
-        ))}
-        {/* Energy beams between forms */}
-        {FORMS.slice(0, -1).map((_, i) => (
-          <mesh key={`beam-${i}`} position={[0, (FORMS[i].y + FORMS[i + 1].y) / 2, 0]}>
-            <cylinderGeometry args={[0.01, 0.01, Math.abs(FORMS[i + 1].y - FORMS[i].y) * 0.6, 4]} />
-            <meshBasicMaterial color="#4466ff" transparent opacity={0.3} />
-          </mesh>
-        ))}
-      </group>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={2.5} />
-      </EffectComposer>
-    </>
-  );
-}
-
-// ─── Wormhole scene — fly-through particle ring tunnel ───
-
-function WormholeScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const groupRef = useRef<THREE.Group>(null);
-  const materialsRef = useRef<THREE.MeshBasicMaterial[]>([]);
-
-  const RING_COUNT = 30;
-
-  const ringData = useMemo(() => {
-    return Array.from({ length: RING_COUNT }, (_, i) => ({
-      z: -i * 1.2,
-      radius: 2.0 + Math.sin(i * 0.5) * 0.5,
-      hue: (i / RING_COUNT) % 1,
-    }));
-  }, []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-    const speed = 1.0 + a.bass * 2.0;
-
-    if (groupRef.current) {
-      // Advance through the tunnel
-      groupRef.current.position.z = (t * speed) % (RING_COUNT * 1.2);
-    }
-
-    materialsRef.current.forEach((mat, i) => {
-      if (!mat) return;
-      const hue = (ringData[i].hue + t * 0.05 + a.mid * 0.15) % 1;
-      mat.color.setHSL(hue, 0.6, 0.25 + a.amplitude * 0.3);
-      mat.opacity = 0.4 + a.treble * 0.3 + Math.sin(t * 2 + i * 0.3) * 0.1;
-    });
-  });
-
-  return (
-    <>
-      <group ref={groupRef}>
-        {ringData.map((ring, i) => (
-          <mesh
-            key={i}
-            position={[0, 0, ring.z]}
-            rotation={[Math.PI / 2, 0, i * 0.15]}
-          >
-            <torusGeometry args={[ring.radius, 0.02, 8, 64]} />
-            <meshBasicMaterial
-              ref={(el) => { if (el) materialsRef.current[i] = el; }}
-              transparent
-              depthWrite={false}
-            />
-          </mesh>
-        ))}
-      </group>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.1} luminanceSmoothing={0.9} intensity={2.0} />
       </EffectComposer>
     </>
   );
@@ -1186,130 +965,6 @@ function CrystalScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArr
             <mesh ref={(el) => { if (el) wireRefs.current[i] = el; }}>
               <boxGeometry args={[1, 1, 1, 1, 1, 1]} />
               <meshBasicMaterial wireframe transparent opacity={0.4} />
-            </mesh>
-          </group>
-        ))}
-      </group>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.15} luminanceSmoothing={0.9} intensity={2.0} />
-      </EffectComposer>
-    </>
-  );
-}
-
-// ─── DNA scene — double helix ───
-
-function DnaScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const groupRef = useRef<THREE.Group>(null);
-  const sphereRefs = useRef<THREE.Mesh[]>([]);
-  const pairRefs = useRef<THREE.Mesh[]>([]);
-
-  const PAIRS = 30;
-  const HELIX_HEIGHT = 8;
-  const HELIX_RADIUS = 1.2;
-  const TURNS = 2.5;
-
-  const helixData = useMemo(() => {
-    const data: Array<{
-      y: number; angle: number;
-      posA: [number, number, number];
-      posB: [number, number, number];
-      midpoint: [number, number, number];
-      pairLength: number;
-      pairAngle: number;
-    }> = [];
-
-    for (let i = 0; i < PAIRS; i++) {
-      const t = i / (PAIRS - 1);
-      const y = (t - 0.5) * HELIX_HEIGHT;
-      const angle = t * Math.PI * 2 * TURNS;
-
-      const ax = Math.cos(angle) * HELIX_RADIUS;
-      const az = Math.sin(angle) * HELIX_RADIUS;
-      const bx = Math.cos(angle + Math.PI) * HELIX_RADIUS;
-      const bz = Math.sin(angle + Math.PI) * HELIX_RADIUS;
-
-      data.push({
-        y, angle,
-        posA: [ax, y, az],
-        posB: [bx, y, bz],
-        midpoint: [(ax + bx) / 2, y, (az + bz) / 2],
-        pairLength: Math.sqrt((bx - ax) ** 2 + (bz - az) ** 2),
-        pairAngle: Math.atan2(bz - az, bx - ax),
-      });
-    }
-    return data;
-  }, []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-
-    if (groupRef.current) {
-      groupRef.current.rotation.y = t * 0.08;
-      groupRef.current.rotation.x = Math.sin(t * 0.04) * 0.1;
-    }
-
-    // Animate strand spheres
-    sphereRefs.current.forEach((mesh, idx) => {
-      if (!mesh) return;
-      const pairIdx = Math.floor(idx / 2);
-      const isStrandB = idx % 2 === 1;
-      const d = helixData[pairIdx];
-
-      const wave = Math.sin(t * 0.5 + pairIdx * 0.3) * 0.05 + a.bass * 0.04;
-      const scale = 0.08 + wave;
-      mesh.scale.setScalar(scale);
-
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      if (isStrandB) {
-        // Teal-green strand
-        mat.color.setHSL(0.47 + a.mid * 0.03, 0.7, 0.35 + a.amplitude * 0.15);
-      } else {
-        // Blue-purple strand
-        mat.color.setHSL(0.72 + a.treble * 0.03, 0.7, 0.35 + a.amplitude * 0.15);
-      }
-    });
-
-    // Animate base pairs
-    pairRefs.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const mat = mesh.material as THREE.MeshBasicMaterial;
-      const pulse = 0.3 + Math.sin(t * 0.8 + i * 0.4) * 0.1 + a.amplitude * 0.2;
-      mat.color.setHSL(0.12, 0.6, pulse); // Warm gold
-      mat.opacity = 0.4 + a.mid * 0.2;
-    });
-  });
-
-  return (
-    <>
-      <group ref={groupRef}>
-        {/* Strand spheres */}
-        {helixData.map((d, i) => (
-          <group key={`pair-${i}`}>
-            <mesh
-              position={d.posA}
-              ref={(el) => { if (el) sphereRefs.current[i * 2] = el; }}
-            >
-              <sphereGeometry args={[1, 12, 12]} />
-              <meshBasicMaterial />
-            </mesh>
-            <mesh
-              position={d.posB}
-              ref={(el) => { if (el) sphereRefs.current[i * 2 + 1] = el; }}
-            >
-              <sphereGeometry args={[1, 12, 12]} />
-              <meshBasicMaterial />
-            </mesh>
-            {/* Base pair connector */}
-            <mesh
-              position={d.midpoint}
-              rotation={[0, -d.pairAngle, Math.PI / 2]}
-              ref={(el) => { if (el) pairRefs.current[i] = el; }}
-            >
-              <cylinderGeometry args={[0.015, 0.015, d.pairLength, 4]} />
-              <meshBasicMaterial transparent opacity={0.5} />
             </mesh>
           </group>
         ))}
@@ -1886,196 +1541,13 @@ function WaterfallScene({ analyser, dataArray }: { analyser: AnalyserNode; dataA
   );
 }
 
-// ─── Terrain scene — procedural morphing terrain mesh ───
-
-const terrainVertexShader = `
-  uniform float u_time;
-  uniform float u_bass;
-  uniform float u_mid;
-  uniform float u_amplitude;
-  varying vec3 vWorldPos;
-  varying vec3 vNormal;
-  varying float vHeight;
-
-  // Simplex noise functions
-  vec3 mod289v3(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-  vec4 mod289v4(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-  vec4 permute4(vec4 x) { return mod289v4(((x*34.0)+1.0)*x); }
-  vec4 taylorInvSqrt4(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-
-  float snoise(vec3 v) {
-    const vec2 C = vec2(1.0/6.0, 1.0/3.0);
-    const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
-    vec3 i = floor(v + dot(v, C.yyy));
-    vec3 x0 = v - i + dot(i, C.xxx);
-    vec3 g = step(x0.yzx, x0.xyz);
-    vec3 l = 1.0 - g;
-    vec3 i1 = min(g.xyz, l.zxy);
-    vec3 i2 = max(g.xyz, l.zxy);
-    vec3 x1 = x0 - i1 + C.xxx;
-    vec3 x2 = x0 - i2 + C.yyy;
-    vec3 x3 = x0 - D.yyy;
-    i = mod289v3(i);
-    vec4 p = permute4(permute4(permute4(
-      i.z + vec4(0.0, i1.z, i2.z, 1.0))
-      + i.y + vec4(0.0, i1.y, i2.y, 1.0))
-      + i.x + vec4(0.0, i1.x, i2.x, 1.0));
-    float n_ = 0.142857142857;
-    vec3 ns = n_ * D.wyz - D.xzx;
-    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
-    vec4 x_ = floor(j * ns.z);
-    vec4 y_ = floor(j - 7.0 * x_);
-    vec4 x = x_ * ns.x + ns.yyyy;
-    vec4 y = y_ * ns.x + ns.yyyy;
-    vec4 h = 1.0 - abs(x) - abs(y);
-    vec4 b0 = vec4(x.xy, y.xy);
-    vec4 b1 = vec4(x.zw, y.zw);
-    vec4 s0 = floor(b0)*2.0 + 1.0;
-    vec4 s1 = floor(b1)*2.0 + 1.0;
-    vec4 sh = -step(h, vec4(0.0));
-    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
-    vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
-    vec3 p0 = vec3(a0.xy, h.x);
-    vec3 p1 = vec3(a0.zw, h.y);
-    vec3 p2 = vec3(a1.xy, h.z);
-    vec3 p3 = vec3(a1.zw, h.w);
-    vec4 norm = taylorInvSqrt4(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
-    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
-    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
-    m = m * m;
-    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
-  }
-
-  void main() {
-    float t = u_time * 0.06;
-
-    vec3 pos = position;
-
-    // Multi-octave noise displacement
-    float n1 = snoise(vec3(pos.x * 0.3 + t, pos.z * 0.3, t * 0.5)) * 1.5;
-    float n2 = snoise(vec3(pos.x * 0.6 + t * 0.3, pos.z * 0.6, t * 0.8)) * 0.6;
-    float n3 = snoise(vec3(pos.x * 1.2 + t * 0.1, pos.z * 1.2, t * 1.2)) * 0.25;
-
-    float height = n1 + n2 + n3;
-
-    // Audio: gentle terrain breathing
-    height *= 1.0 + u_bass * 0.15;
-    height += u_mid * 0.1 * sin(pos.x * 0.5 + t);
-
-    pos.y = height;
-    vHeight = height;
-
-    // Compute approximate normal
-    float eps = 0.1;
-    float hx = snoise(vec3((pos.x + eps) * 0.3 + t, pos.z * 0.3, t * 0.5)) * 1.5
-             + snoise(vec3((pos.x + eps) * 0.6 + t * 0.3, pos.z * 0.6, t * 0.8)) * 0.6;
-    float hz = snoise(vec3(pos.x * 0.3 + t, (pos.z + eps) * 0.3, t * 0.5)) * 1.5
-             + snoise(vec3(pos.x * 0.6 + t * 0.3, (pos.z + eps) * 0.6, t * 0.8)) * 0.6;
-    vec3 computedNormal = normalize(vec3(height - hx, eps * 2.0, height - hz));
-    vNormal = normalize(normalMatrix * computedNormal);
-
-    vWorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
-`;
-
-const terrainFragmentShader = `
-  uniform float u_time;
-  uniform float u_amplitude;
-  varying vec3 vWorldPos;
-  varying vec3 vNormal;
-  varying float vHeight;
-
-  void main() {
-    // Low-angle sunlight direction
-    vec3 lightDir = normalize(vec3(0.6, 0.2, 0.4));
-    float diffuse = max(dot(vNormal, lightDir), 0.0);
-    float ambient = 0.15;
-
-    // Height-based color
-    vec3 color;
-    float h = vHeight;
-
-    if (h < -0.5) {
-      // Deep valleys: dark green
-      color = vec3(0.05, 0.15, 0.05);
-    } else if (h < 0.2) {
-      float t = (h + 0.5) / 0.7;
-      // Green to brown-tan
-      color = mix(vec3(0.08, 0.2, 0.05), vec3(0.35, 0.25, 0.12), t);
-    } else if (h < 1.0) {
-      float t = (h - 0.2) / 0.8;
-      // Brown to lighter tan
-      color = mix(vec3(0.35, 0.25, 0.12), vec3(0.5, 0.4, 0.3), t);
-    } else {
-      float t = clamp((h - 1.0) / 0.8, 0.0, 1.0);
-      // Snow caps
-      color = mix(vec3(0.5, 0.4, 0.3), vec3(0.85, 0.88, 0.9), t);
-    }
-
-    // Apply lighting
-    color *= ambient + diffuse * 0.85;
-
-    // Subtle warm light color
-    color *= vec3(1.0, 0.95, 0.85);
-
-    // Audio: slight brightness modulation
-    color *= 1.0 + u_amplitude * 0.1;
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-function TerrainScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const meshRef = useRef<THREE.Mesh>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-
-  const uniforms = useMemo(() => ({
-    u_time: { value: 0 }, u_bass: { value: 0 },
-    u_mid: { value: 0 }, u_amplitude: { value: 0 },
-  }), []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-    if (materialRef.current) {
-      const u = materialRef.current.uniforms;
-      u.u_time.value = t; u.u_bass.value = a.bass;
-      u.u_mid.value = a.mid; u.u_amplitude.value = a.amplitude;
-    }
-    if (meshRef.current) {
-      meshRef.current.rotation.y = t * 0.015;
-    }
-  });
-
-  return (
-    <>
-      <mesh ref={meshRef} rotation={[-0.6, 0, 0]} position={[0, -0.5, 0]}>
-        <planeGeometry args={[12, 12, 200, 200]} />
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={terrainVertexShader}
-          fragmentShader={terrainFragmentShader}
-          uniforms={uniforms}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.5} luminanceSmoothing={0.9} intensity={0.5} />
-      </EffectComposer>
-    </>
-  );
-}
-
 // ─── Mode type ───
 
 export type Visualizer3DMode =
-  | "orb" | "field" | "rings" | "aurora" | "totem" | "wormhole"
-  | "galaxy" | "depths" | "bonfire" | "crystal" | "dna" | "swarm"
-  | "lotus" | "cloud" | "waterfall" | "terrain"
-  | "obelisk" | "wave" | "silk" | "orbit" | "pillar" | "seabed"
-  | "molecule" | "blackhole" | "cage" | "pendulum";
+  | "orb" | "field" | "aurora"
+  | "galaxy" | "depths" | "bonfire" | "crystal" | "swarm"
+  | "lotus" | "cloud" | "waterfall"
+  | "wave" | "seabed" | "cage" | "pendulum";
 
 // ─── Main 3D visualizer component ───
 
@@ -2098,28 +1570,17 @@ export function Visualizer3D({
       <color attach="background" args={["#000000"]} />
       {mode === "orb" && <OrbScene analyser={analyser} dataArray={dataArray} />}
       {mode === "field" && <FieldScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "rings" && <RingsScene analyser={analyser} dataArray={dataArray} />}
       {mode === "aurora" && <AuroraScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "totem" && <TotemScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "wormhole" && <WormholeScene analyser={analyser} dataArray={dataArray} />}
       {mode === "galaxy" && <GalaxyScene analyser={analyser} dataArray={dataArray} />}
       {mode === "depths" && <DepthsScene analyser={analyser} dataArray={dataArray} />}
       {mode === "bonfire" && <BonfireScene analyser={analyser} dataArray={dataArray} />}
       {mode === "crystal" && <CrystalScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "dna" && <DnaScene analyser={analyser} dataArray={dataArray} />}
       {mode === "swarm" && <SwarmScene analyser={analyser} dataArray={dataArray} />}
       {mode === "lotus" && <LotusScene analyser={analyser} dataArray={dataArray} />}
       {mode === "cloud" && <CloudScene analyser={analyser} dataArray={dataArray} />}
       {mode === "waterfall" && <WaterfallScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "terrain" && <TerrainScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "obelisk" && <ObeliskScene analyser={analyser} dataArray={dataArray} />}
       {mode === "wave" && <WaveScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "silk" && <SilkScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "orbit" && <OrbitScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "pillar" && <PillarScene analyser={analyser} dataArray={dataArray} />}
       {mode === "seabed" && <SeabedScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "molecule" && <MoleculeScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "blackhole" && <BlackholeScene analyser={analyser} dataArray={dataArray} />}
       {mode === "cage" && <CageScene analyser={analyser} dataArray={dataArray} />}
       {mode === "pendulum" && <PendulumScene analyser={analyser} dataArray={dataArray} />}
     </Canvas>

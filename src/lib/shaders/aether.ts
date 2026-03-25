@@ -74,38 +74,38 @@ void main() {
   float haloRing3 = exp(-pow((halo3 - 0.1) * 12.0, 2.0)) * 0.15;
 
   // Colors: the invisible made barely perceptible
-  // Base: near-total darkness
+  // Base: deep darkness with subtle color
   vec3 voidColor = palette(0.9 + paletteShift,
-    vec3(0.005, 0.003, 0.008),
-    vec3(0.008, 0.005, 0.012),
+    vec3(0.02, 0.015, 0.03),
+    vec3(0.03, 0.02, 0.05),
     vec3(0.5, 0.4, 0.8),
     vec3(0.2, 0.15, 0.4));
 
   // Distortion visualization — where space is being bent
   vec3 lensColor = palette(distortion * 5.0 + paletteShift + 0.3,
-    vec3(0.01, 0.008, 0.02),
-    vec3(0.03, 0.015, 0.04),
+    vec3(0.04, 0.03, 0.06),
+    vec3(0.08, 0.05, 0.12),
     vec3(0.6, 0.4, 0.9),
     vec3(0.15, 0.1, 0.35));
 
   // Filament color — the cosmic web
   vec3 webColor = palette(webField * 0.4 + paletteShift + 0.5,
-    vec3(0.008, 0.005, 0.015),
-    vec3(0.02, 0.01, 0.03),
+    vec3(0.03, 0.02, 0.05),
+    vec3(0.06, 0.04, 0.1),
     vec3(0.5, 0.3, 0.8),
     vec3(0.2, 0.15, 0.4));
 
   // Halo color — gravitational aura
   vec3 haloColor = palette(t * 0.2 + paletteShift + 0.7,
-    vec3(0.01, 0.005, 0.02),
-    vec3(0.03, 0.01, 0.05),
+    vec3(0.05, 0.03, 0.07),
+    vec3(0.1, 0.05, 0.15),
     vec3(0.7, 0.4, 1.0),
     vec3(0.1, 0.1, 0.3));
 
   // Star color
   vec3 starColor = palette(starField * 0.3 + paletteShift + 0.15,
-    vec3(0.06, 0.05, 0.08),
-    vec3(0.1, 0.08, 0.12),
+    vec3(0.1, 0.09, 0.13),
+    vec3(0.18, 0.15, 0.22),
     vec3(0.5, 0.6, 0.8),
     vec3(0.1, 0.15, 0.25));
 
@@ -113,17 +113,17 @@ void main() {
   vec3 color = voidColor;
 
   // Cosmic web filaments — faint structure
-  color += webColor * filament * 0.08 * (0.5 + u_mid * 0.5);
-  color += webColor * filamentEdge * 0.12;
+  color += webColor * filament * 0.15 * (0.5 + u_mid * 0.5);
+  color += webColor * filamentEdge * 0.25;
 
   // Distortion glow — where lensing is strongest
-  color += lensColor * distortionMap * 0.15 * (0.4 + u_bass * 0.6);
+  color += lensColor * distortionMap * 0.3 * (0.4 + u_bass * 0.6);
 
   // Dark matter halos
   color += haloColor * (haloRing1 + haloRing2 + haloRing3) * (0.3 + u_amplitude * 0.7);
 
   // Lensed starfield
-  color += starColor * starField * 0.04 * (0.5 + u_treble * 0.5);
+  color += starColor * starField * 0.1 * (0.5 + u_treble * 0.5);
 
   // Einstein ring effect — bright arc around strongest mass
   float einsteinAngle = atan(uv.y - mass1.y, uv.x - mass1.x);
@@ -131,7 +131,7 @@ void main() {
   float ringR = 0.18 + u_bass * 0.04;
   float einsteinRing = exp(-pow((einsteinR - ringR) * 20.0, 2.0));
   float arcMask = smoothstep(-0.3, 0.3, sin(einsteinAngle * 2.0 + t));
-  color += lensColor * einsteinRing * arcMask * 0.1;
+  color += lensColor * einsteinRing * arcMask * 0.2;
 
   // Negative space emphasis — where mass is, light is absent
   float massProximity = exp(-halo1 * 5.0) + exp(-halo2 * 6.0) + exp(-halo3 * 7.0);
@@ -139,7 +139,7 @@ void main() {
 
   // Vignette
   float vd = length(uv);
-  float vignette = 1.0 - smoothstep(0.3, 1.4, vd);
+  float vignette = 1.0 - smoothstep(0.35, 1.4, vd);
   color *= vignette;
 
   gl_FragColor = vec4(color, 1.0);

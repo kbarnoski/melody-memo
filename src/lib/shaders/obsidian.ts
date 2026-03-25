@@ -15,8 +15,8 @@ void main() {
 
   // Sky portion — pure void
   vec3 skyColor = palette(0.78 + paletteShift,
-    vec3(0.0),
-    vec3(0.01, 0.01, 0.03),
+    vec3(0.02, 0.015, 0.03),
+    vec3(0.04, 0.03, 0.07),
     vec3(1.0, 1.0, 1.0),
     vec3(0.0, 0.1, 0.4));
 
@@ -58,22 +58,22 @@ void main() {
     // Colors
     // Obsidian base: near-black with very faint dark teal
     vec3 obsidianBase = palette(0.55 + paletteShift + vor1.x * 0.05,
-      vec3(0.01, 0.01, 0.015),
-      vec3(0.03, 0.04, 0.06),
+      vec3(0.03, 0.03, 0.04),
+      vec3(0.05, 0.06, 0.08),
       vec3(1.0, 1.0, 1.0),
       vec3(0.5, 0.6, 0.7));
 
     // Crack glow — faint luminescence, deep violet
     vec3 crackColor = palette(0.72 + paletteShift + u_mid * 0.12,
-      vec3(0.0, 0.0, 0.01),
-      vec3(0.08, 0.04, 0.18),
+      vec3(0.05, 0.03, 0.08),
+      vec3(0.12, 0.07, 0.22),
       vec3(1.0, 1.0, 1.0),
       vec3(0.6, 0.7, 0.9));
 
     // Reflection color
     vec3 reflColor = palette(0.82 + paletteShift + reflNoise * 0.1,
-      vec3(0.0, 0.0, 0.02),
-      vec3(0.05, 0.04, 0.08),
+      vec3(0.025, 0.02, 0.04),
+      vec3(0.07, 0.06, 0.1),
       vec3(1.0, 1.0, 1.0),
       vec3(0.1, 0.3, 0.6));
 
@@ -93,7 +93,7 @@ void main() {
 
   // Vignette
   float dist = length(uv);
-  float vignette = pow(1.0 - smoothstep(0.2, 1.3, dist), 2.0);
+  float vignette = pow(1.0 - smoothstep(0.3, 1.3, dist), 1.8);
   color *= vignette;
 
   gl_FragColor = vec4(color, 1.0);

@@ -75,6 +75,7 @@ export default async function SharedJourneyPage({
       audioUrl={audioUrl}
       recordingTitle={recordingTitle}
       shareToken={token}
+      playbackSeed={journeyRow.playback_seed ?? null}
     />
   );
 }

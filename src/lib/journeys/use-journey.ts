@@ -39,9 +39,21 @@ export function useJourney(): UseJourneyReturn {
   const engineRef = useRef(getJourneyEngine());
   const lastFrameTimeRef = useRef(0);
   const frameRef = useRef<JourneyFrame | null>(null);
+  /** Wall-clock time when the current journey started — for fallback progress */
+  const journeyStartRef = useRef(0);
 
-  // Compute progress
-  const progress = duration > 0 ? currentTime / duration : 0;
+  // Record wall-clock start time when a journey begins
+  useEffect(() => {
+    if (activeJourney) {
+      journeyStartRef.current = performance.now();
+    } else {
+      journeyStartRef.current = 0;
+    }
+  }, [activeJourney]);
+
+  // Compute progress from audio, with wall-clock fallback
+  const audioProgress = duration > 0 ? currentTime / duration : 0;
+  const progress = audioProgress;
   const progressRef = useRef(progress);
   progressRef.current = progress;
 
@@ -58,7 +70,14 @@ export function useJourney(): UseJourneyReturn {
     const now = performance.now();
     const engine = engineRef.current;
 
-    const newFrame = engine.getFrame(progress);
+    // Use audio progress, or wall-clock fallback if audio isn't advancing
+    let p = progress;
+    if (p <= 0 && journeyStartRef.current > 0) {
+      const elapsedSec = (now - journeyStartRef.current) / 1000;
+      p = Math.min(elapsedSec / 300, 1); // assume 300s default track
+    }
+
+    const newFrame = engine.getFrame(p);
     frameRef.current = newFrame;
 
     if (now - lastFrameTimeRef.current >= FRAME_THROTTLE_MS) {
@@ -67,15 +86,23 @@ export function useJourney(): UseJourneyReturn {
     }
   }, [activeJourney, progress]);
 
-  // Poll engine for shader/state changes independent of audio progress.
-  // The engine rotates shaders on a timer — this ensures React picks up
-  // those changes even when audio isn't playing (progress stays static).
+  // Poll engine for progress-based changes (shader switches, phase changes).
+  // When audio progress is available, this catches changes at switch boundaries.
+  // When audio is unavailable, the wall-clock fallback keeps the journey advancing.
   useEffect(() => {
     if (!activeJourney) return;
 
     const id = setInterval(() => {
       const engine = engineRef.current;
-      const newFrame = engine.getFrame(progressRef.current);
+
+      // Use audio progress if available, otherwise wall-clock fallback
+      let p = progressRef.current;
+      if (p <= 0 && journeyStartRef.current > 0) {
+        const elapsedSec = (performance.now() - journeyStartRef.current) / 1000;
+        p = Math.min(elapsedSec / 300, 1);
+      }
+
+      const newFrame = engine.getFrame(p);
       if (!newFrame) return;
 
       const prev = frameRef.current;
@@ -83,7 +110,8 @@ export function useJourney(): UseJourneyReturn {
       if (
         !prev ||
         prev.shaderMode !== newFrame.shaderMode ||
-        prev.phase !== newFrame.phase
+        prev.phase !== newFrame.phase ||
+        prev.aiPrompt !== newFrame.aiPrompt
       ) {
         frameRef.current = newFrame;
         setFrame(newFrame);

@@ -93,92 +93,96 @@ export function RecordingCard({
     router.refresh();
   }
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   return (
-    <Link href={`/recording/${id}`} className="block">
-    <Card
-      className="transition-all duration-200 hover:bg-white/[0.03] cursor-pointer"
-    >
-      <CardContent className="flex items-center gap-4 py-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
-          <FileAudio className="h-5 w-5 text-white/40" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="truncate font-light">{title}</p>
-          {description && (
-            <p className="truncate text-xs text-muted-foreground">{description}</p>
-          )}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>{recordedAt ? `Recorded ${formatDate(recordedAt)}` : formatDate(createdAt)}</span>
-            {duration && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatDuration(duration)}
-              </span>
+    <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <Link href={`/recording/${id}`} className="block">
+      <Card
+        className="transition-all duration-200 hover:bg-white/[0.03] cursor-pointer"
+      >
+        <CardContent className="flex items-center gap-4 py-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
+            <FileAudio className="h-5 w-5 text-white/40" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="truncate font-light">{title}</p>
+            {description && (
+              <p className="truncate text-xs text-muted-foreground">{description}</p>
             )}
-            {keySignature && (
-              <span className="flex items-center gap-1">
-                <Music className="h-3 w-3" />
-                {keySignature}
-              </span>
-            )}
-            {tempo && (
-              <span className="flex items-center gap-1">
-                <Activity className="h-3 w-3" />
-                {Math.round(tempo)} bpm
-              </span>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span>{recordedAt ? `Recorded ${formatDate(recordedAt)}` : formatDate(createdAt)}</span>
+              {duration && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3" />
+                  {formatDuration(duration)}
+                </span>
+              )}
+              {keySignature && (
+                <span className="flex items-center gap-1">
+                  <Music className="h-3 w-3" />
+                  {keySignature}
+                </span>
+              )}
+              {tempo && (
+                <span className="flex items-center gap-1">
+                  <Activity className="h-3 w-3" />
+                  {Math.round(tempo)} bpm
+                </span>
+              )}
+            </div>
+            {/* Tags */}
+            {tags && tags.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex items-center rounded-full border border-white/[0.08] px-2 py-0 text-[10px] font-medium text-white/30"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </div>
             )}
           </div>
-          {/* Tags */}
-          {tags && tags.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {tags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center rounded-full border border-white/[0.08] px-2 py-0 text-[10px] font-medium text-white/30"
-                >
-                  {tag.name}
-                </span>
-              ))}
-            </div>
+          {hasAnalysis && (
+            <span className="shrink-0 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 font-mono text-[0.65rem] text-white/40">
+              Analyzed
+            </span>
           )}
-        </div>
-        {hasAnalysis && (
-          <span className="shrink-0 inline-flex items-center rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-0.5 font-mono text-[0.65rem] text-white/40">
-            Analyzed
-          </span>
-        )}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-              disabled={deleting}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete recording?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete &ldquo;{title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </CardContent>
-    </Card>
-    </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 text-muted-foreground hover:text-destructive"
+            disabled={deleting}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setConfirmOpen(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </CardContent>
+      </Card>
+      </Link>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete recording?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This will permanently delete &ldquo;{title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

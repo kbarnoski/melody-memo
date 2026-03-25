@@ -69,50 +69,50 @@ void main() {
 
   // Echoes inside — faint reverberations
   float echo = sin(length(uv) * 15.0 + t * 0.5 + interiorNoise * 3.0);
-  echo = smoothstep(0.6, 0.8, echo) * interiorMask * 0.03;
+  echo = smoothstep(0.6, 0.8, echo) * interiorMask * 0.1;
 
   // Shell texture
   float shellTex = fbm(uv * 12.0 + 0.5);
 
   // Colors
   vec3 shellColor = palette(shellTex * 0.3 + 0.5,
-    vec3(0.015, 0.013, 0.018),
-    vec3(0.02, 0.018, 0.025),
+    vec3(0.05, 0.04, 0.06),
+    vec3(0.08, 0.06, 0.1),
     vec3(1.0, 1.0, 1.0),
     vec3(0.3, 0.35, 0.5));
 
   vec3 edgeColor = palette(0.4 + u_amplitude * 0.15,
-    vec3(0.03, 0.025, 0.04),
-    vec3(0.06, 0.05, 0.08),
+    vec3(0.08, 0.06, 0.1),
+    vec3(0.16, 0.12, 0.2),
     vec3(1.0, 1.0, 1.0),
     vec3(0.4, 0.45, 0.65));
 
   vec3 interiorColor = palette(0.8,
-    vec3(0.002, 0.002, 0.003),
-    vec3(0.004, 0.003, 0.006),
+    vec3(0.02, 0.018, 0.03),
+    vec3(0.04, 0.03, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.45, 0.65));
 
   vec3 echoColor = palette(0.35 + u_mid * 0.1,
-    vec3(0.008, 0.008, 0.015),
-    vec3(0.015, 0.012, 0.025),
+    vec3(0.04, 0.035, 0.06),
+    vec3(0.08, 0.06, 0.1),
     vec3(1.0, 1.0, 1.0),
     vec3(0.45, 0.5, 0.7));
 
-  vec3 bgColor = vec3(0.004, 0.004, 0.006);
+  vec3 bgColor = vec3(0.015, 0.013, 0.02);
 
   // Compose
   vec3 color = bgColor;
   color = mix(color, interiorColor, interiorMask * 0.5);
   color += echoColor * echo * (1.0 + u_mid * 0.8);
   color = mix(color, shellColor, shellMask);
-  color += edgeColor * edges * 0.1 * (1.0 + u_treble * 0.6);
+  color += edgeColor * edges * 0.3 * (1.0 + u_treble * 0.6);
 
   // Bass: the vessel resonates — edges brighten
-  color += edgeColor * edges * u_bass * 0.04;
+  color += edgeColor * edges * u_bass * 0.12;
 
   // Faint exterior glow
-  float extGlow = exp(-max(outer, 0.0) * 5.0) * 0.02;
+  float extGlow = exp(-max(outer, 0.0) * 5.0) * 0.08;
   color += edgeColor * extGlow;
 
   // Vignette

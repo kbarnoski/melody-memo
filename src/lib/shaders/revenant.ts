@@ -48,8 +48,8 @@ void main() {
 
   // Layered glow — tighter when reforming, diffuse when dispersing
   float spread = mix(1.5, 5.0, pulse);
-  float innerGlow = exp(-max(body, 0.0) * spread * 2.0) * 0.1;
-  float outerGlow = exp(-max(body, 0.0) * spread * 0.5) * 0.06;
+  float innerGlow = exp(-max(body, 0.0) * spread * 2.0) * 0.4;
+  float outerGlow = exp(-max(body, 0.0) * spread * 0.5) * 0.2;
 
   // Particle field — fragments reassembling
   float particles = 0.0;
@@ -64,26 +64,26 @@ void main() {
     float pull = mix(1.0, 0.3, pulse);
     pPos = mix(pPos, vec2(0.0, 0.1), pull);
     pDist = length(uv - pPos);
-    particles += exp(-pDist * 15.0) * 0.02;
+    particles += exp(-pDist * 15.0) * 0.08;
   }
 
   // Background
   vec3 bgColor = palette(0.75,
-    vec3(0.005, 0.004, 0.008),
-    vec3(0.01, 0.008, 0.015),
+    vec3(0.025, 0.02, 0.035),
+    vec3(0.04, 0.035, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.55, 0.5, 0.7));
 
   // Revenant form — cold spectral light
   vec3 formColor = palette(0.5 + u_mid * 0.12,
-    vec3(0.02, 0.015, 0.03),
-    vec3(0.06, 0.04, 0.08),
+    vec3(0.07, 0.055, 0.09),
+    vec3(0.15, 0.1, 0.2),
     vec3(1.0, 1.0, 1.0),
     vec3(0.45, 0.5, 0.75));
 
   vec3 particleColor = palette(0.35 + u_treble * 0.1,
-    vec3(0.01, 0.01, 0.02),
-    vec3(0.04, 0.03, 0.06),
+    vec3(0.05, 0.05, 0.08),
+    vec3(0.1, 0.08, 0.16),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.55, 0.8));
 
@@ -96,7 +96,7 @@ void main() {
   // Static interference — the spirit disrupts reality
   float staticNoise = snoise(uv * 30.0 + t * 5.0);
   float staticMask = exp(-max(body, 0.0) * 3.0);
-  color += formColor * smoothstep(0.7, 0.9, staticNoise) * staticMask * u_treble * 0.04;
+  color += formColor * smoothstep(0.7, 0.9, staticNoise) * staticMask * u_treble * 0.12;
 
   // Vignette
   color *= smoothstep(1.5, 0.5, length(uv));

@@ -5,7 +5,13 @@ import type { Realm } from "@/lib/journeys/types";
 import { getJourney } from "@/lib/journeys/journeys";
 import { getRealm } from "@/lib/journeys/realms";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
-import { MODE_META } from "@/lib/shaders";
+import { MODE_META, MODES_3D } from "@/lib/shaders";
+
+/** Pick a random 3D World shader for the welcome screen ambient viz */
+const AMBIENT_3D_MODES = Array.from(MODES_3D);
+function randomAmbientMode(): string {
+  return AMBIENT_3D_MODES[Math.floor(Math.random() * AMBIENT_3D_MODES.length)];
+}
 
 export interface Track {
   id: string;
@@ -32,6 +38,10 @@ interface AudioState {
   // Analysis
   analysis: AnalysisData | null;
   analysisLoading: boolean;
+  /** In-flight analysis progress (survives route changes) */
+  analysisInProgress: { recordingId: string; stage: string; progress: number } | null;
+  /** Completed analysis waiting to be picked up by the detail page */
+  analysisComplete: { recordingId: string; data: AnalysisData } | null;
 
   // The Room UI
   roomOpen: boolean;
@@ -74,6 +84,8 @@ interface AudioState {
   setDuration: (duration: number) => void;
   setAnalysis: (analysis: AnalysisData | null) => void;
   setAnalysisLoading: (loading: boolean) => void;
+  setAnalysisInProgress: (info: { recordingId: string; stage: string; progress: number } | null) => void;
+  setAnalysisComplete: (result: { recordingId: string; data: AnalysisData } | null) => void;
   openRoom: () => void;
   closeRoom: () => void;
   setVizMode: (mode: string) => void;
@@ -113,8 +125,10 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   queueIndex: -1,
   analysis: null,
   analysisLoading: false,
+  analysisInProgress: null,
+  analysisComplete: null,
   roomOpen: false,
-  vizMode: "orb",
+  vizMode: randomAmbientMode(),
   textOverlayMode: "off",
   vizWhisper: false,
   storyData: null,
@@ -160,6 +174,8 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   setDuration: (duration) => set({ duration }),
   setAnalysis: (analysis) => set({ analysis }),
   setAnalysisLoading: (loading) => set({ analysisLoading: loading }),
+  setAnalysisInProgress: (info) => set({ analysisInProgress: info }),
+  setAnalysisComplete: (result) => set({ analysisComplete: result }),
   openRoom: () => set({ roomOpen: true }),
   closeRoom: () => set({ roomOpen: false }),
   setVizMode: (mode) => set({ vizMode: mode }),
@@ -293,8 +309,9 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     const engine = getJourneyEngine();
     engine.start(journey);
 
-    // Set initial shader from journey's first phase
-    const firstMode = journey.phases[0]?.shaderModes[0] ?? "mandala";
+    // Read initial shader from the engine (after regeneration) to avoid
+    // a flash where the store has a different shader than the engine
+    const firstMode = engine.getCurrentShaderMode();
 
     set({
       activeJourney: journey,
@@ -317,7 +334,7 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     const realm = getRealm(journey.realmId);
     const engine = getJourneyEngine();
     engine.start(journey);
-    const firstMode = journey.phases[0]?.shaderModes[0] ?? "mandala";
+    const firstMode = engine.getCurrentShaderMode();
     set({
       activeJourney: journey,
       activeRealm: realm ?? null,
@@ -343,7 +360,7 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
       journeyPhase: null,
       journeyProgress: 0,
       isPlaying: false,
-      vizMode: "orb",
+      vizMode: randomAmbientMode(),
     });
   },
 

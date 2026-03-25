@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { randomUUID, randomInt } from "crypto";
+import { getJourney } from "@/lib/journeys/journeys";
 
 export async function POST(request: Request) {
   try {
@@ -15,45 +16,35 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing journeyId" }, { status: 400 });
     }
 
-    // Check ownership
-    const { data: journey } = await supabase
-      .from("journeys")
-      .select("id, share_token, playback_seed")
-      .eq("id", journeyId)
-      .eq("user_id", user.id)
-      .single();
-
+    // Look up built-in journey definition
+    const journey = getJourney(journeyId);
     if (!journey) {
       return Response.json({ error: "Journey not found" }, { status: 404 });
-    }
-
-    // Return existing token (backfill seed if missing) or generate new one
-    if (journey.share_token) {
-      if (!journey.playback_seed) {
-        const seed = String(randomInt(0, 4294967296));
-        await supabase
-          .from("journeys")
-          .update({ playback_seed: seed })
-          .eq("id", journeyId);
-      }
-      return Response.json({ token: journey.share_token });
     }
 
     const token = randomUUID().replace(/-/g, "").slice(0, 16);
     const seed = String(randomInt(0, 4294967296));
 
-    const { error } = await supabase
-      .from("journeys")
-      .update({ share_token: token, playback_seed: seed })
-      .eq("id", journeyId);
+    // Insert a snapshot of the built-in journey into the journeys table
+    const { error } = await supabase.from("journeys").insert({
+      user_id: user.id,
+      name: journey.name,
+      subtitle: journey.subtitle,
+      description: journey.description,
+      realm_id: journey.realmId,
+      phases: journey.phases,
+      share_token: token,
+      playback_seed: seed,
+    });
 
     if (error) {
-      return Response.json({ error: "Failed to generate share token" }, { status: 500 });
+      console.error("Share built-in error:", error);
+      return Response.json({ error: "Failed to share journey" }, { status: 500 });
     }
 
     return Response.json({ token });
   } catch (error) {
-    console.error("Journey share error:", error);
+    console.error("Share built-in error:", error);
     return Response.json({ error: "Failed to share journey" }, { status: 500 });
   }
 }

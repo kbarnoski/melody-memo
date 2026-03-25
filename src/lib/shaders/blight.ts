@@ -29,11 +29,11 @@ void main() {
   // The "light" areas — faintly luminous surface being consumed
   float surfaceNoise = fbm(uv * 2.5 + t * 0.03);
   float surface = surfaceNoise * 0.5 + 0.5;
-  surface = smoothstep(0.3, 0.7, surface) * 0.08;
+  surface = smoothstep(0.3, 0.7, surface) * 0.3;
 
   vec3 lightColor = palette(0.2 + u_mid * 0.1,
-    vec3(0.04, 0.035, 0.03),
-    vec3(0.05, 0.04, 0.03),
+    vec3(0.06, 0.055, 0.05),
+    vec3(0.1, 0.08, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.1, 0.15, 0.2));
 
@@ -47,15 +47,15 @@ void main() {
 
   // Corrupted areas: deep dark with sickly undertone
   vec3 blightColor = palette(0.85 + u_amplitude * 0.2,
-    vec3(0.008, 0.005, 0.003),
-    vec3(0.02, 0.012, 0.008),
+    vec3(0.035, 0.025, 0.02),
+    vec3(0.07, 0.05, 0.035),
     vec3(1.0, 1.0, 1.0),
     vec3(0.2, 0.4, 0.1));
 
   // Edge of corruption: faint toxic glow
   vec3 edgeColor = palette(0.35 + u_treble * 0.15,
-    vec3(0.01, 0.015, 0.005),
-    vec3(0.04, 0.05, 0.015),
+    vec3(0.05, 0.06, 0.03),
+    vec3(0.12, 0.15, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.15, 0.35, 0.1));
 
@@ -70,12 +70,12 @@ void main() {
   // Veins within corrupted areas
   float veins = fbm(uv * 12.0 + t * 0.3);
   veins = smoothstep(0.45, 0.5, veins) * corr;
-  color += edgeColor * veins * 0.04;
+  color += edgeColor * veins * 0.12;
 
   // Particles breaking off the corruption front
   float particles = snoise(uv * 25.0 + t * 2.0);
   particles = smoothstep(0.85, 0.95, particles) * edgeDetail;
-  color += edgeColor * particles * u_treble * 0.08;
+  color += edgeColor * particles * u_treble * 0.15;
 
   // Vignette
   color *= smoothstep(1.5, 0.5, length(uv));

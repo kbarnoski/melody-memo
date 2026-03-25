@@ -16,6 +16,7 @@ import { useInstallationMode } from "@/lib/audio/use-installation-mode";
 import { useJourney, usePhaseChange } from "@/lib/journeys/use-journey";
 import { useStoryGeneration } from "@/lib/journeys/use-story";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { getJourney } from "@/lib/journeys/journeys";
 import { createClient } from "@/lib/supabase/client";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import { Mic, ArrowLeft } from "lucide-react";
@@ -83,6 +84,14 @@ export function VisualizerClient({
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array<ArrayBuffer> | null>(null);
   const [shareSheet, setShareSheet] = useState<{ url: string; title: string } | null>(null);
+
+  // Fullscreen / immersive mode
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isIOS = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1);
+  }, []);
 
   // Journey system
   const { frame: journeyFrame, active: journeyActive, phase: journeyPhase } = useJourney();
@@ -224,6 +233,33 @@ export function VisualizerClient({
     const trackTitle = currentTrack?.title ?? "The Room";
     setShareSheet({ url, title: `${trackTitle} — Resonance` });
   }, [hudVisible, currentTrack]);
+
+  // Share active journey handler
+  const [sharingJourney, setSharingJourney] = useState(false);
+  const handleShareJourney = useCallback(async () => {
+    if (!activeJourney || sharingJourney) return;
+    setSharingJourney(true);
+    try {
+      const isBuiltIn = !!getJourney(activeJourney.id);
+      const endpoint = isBuiltIn ? "/api/journeys/share-builtin" : "/api/journeys/share";
+      const body = isBuiltIn
+        ? { journeyId: activeJourney.id }
+        : { journeyId: activeJourney.id };
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Failed to share");
+      const { token } = await res.json();
+      const url = `${window.location.origin}/journey/${token}`;
+      setShareSheet({ url, title: `${activeJourney.name} — a Resonance journey` });
+    } catch {
+      // Silently fail — user sees no share sheet
+    } finally {
+      setSharingJourney(false);
+    }
+  }, [activeJourney, sharingJourney]);
 
   // Live speech
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -431,6 +467,30 @@ export function VisualizerClient({
     seek(newTime);
   }, [seek]);
 
+  // Fullscreen toggle
+  const handleFullscreenToggle = useCallback(() => {
+    if (isIOS) {
+      // iOS doesn't support Fullscreen API on non-video elements — toggle immersive mode
+      setIsFullscreen((v) => !v);
+      return;
+    }
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => setIsFullscreen(false));
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {
+        // Fullscreen API failed — fall back to immersive mode
+        setIsFullscreen((v) => !v);
+      });
+    }
+  }, [isIOS]);
+
+  // Sync fullscreen state when user presses Escape or browser exits fullscreen
+  useEffect(() => {
+    const handleChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handleChange);
+    return () => document.removeEventListener("fullscreenchange", handleChange);
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -457,11 +517,16 @@ export function VisualizerClient({
           break;
         case "ArrowLeft":
           e.preventDefault();
-          useAudioStore.getState().cycleVizModePrev();
+          // Only cycle shaders when a track is playing or a journey is active
+          if (useAudioStore.getState().currentTrack || useAudioStore.getState().activeJourney) {
+            useAudioStore.getState().cycleVizModePrev();
+          }
           break;
         case "ArrowRight":
           e.preventDefault();
-          useAudioStore.getState().cycleVizMode();
+          if (useAudioStore.getState().currentTrack || useAudioStore.getState().activeJourney) {
+            useAudioStore.getState().cycleVizMode();
+          }
           break;
         case "ArrowUp":
           e.preventDefault();
@@ -486,12 +551,15 @@ export function VisualizerClient({
         case "v":
           useAudioStore.getState().setVizWhisper(!useAudioStore.getState().vizWhisper);
           break;
+        case "f":
+          handleFullscreenToggle();
+          break;
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleExit, libraryOpen, togglePlayPause, seekBy]);
+  }, [handleExit, libraryOpen, togglePlayPause, seekBy, handleFullscreenToggle]);
 
   // Show HUD when analysis is available and completed
   const showHud = activeAnalysis?.status === "completed";
@@ -531,13 +599,13 @@ export function VisualizerClient({
           showLiveButton={hasSpeechApi}
           hudVisible={hudVisible}
           onHudToggle={() => setHudVisible((v) => !v)}
-          showHudButton={showHud && !journeyActive}
+          showHudButton={false /* paused — re-enable with: showHud && !journeyActive */}
           libraryOpen={libraryOpen}
           onLibraryToggle={() => setLibraryOpen((v) => !v)}
           showLibraryButton={true}
           sectionFlash={sectionFlash}
           tonnetzVisible={tonnetzVisible}
-          onTonnetzToggle={journeyActive ? undefined : () => setTonnetzVisible((v) => !v)}
+          onTonnetzToggle={undefined /* paused — re-enable with: journeyActive ? undefined : () => setTonnetzVisible((v) => !v) */}
           onShareRoom={handleShareRoom}
           onJourneyToggle={() => setJourneyOpen((v) => !v)}
           showJourneyButton={true}
@@ -546,6 +614,7 @@ export function VisualizerClient({
           configRef={configRef}
           journeyShaderMode={journeyFrame?.shaderMode}
           journeyDualShaderMode={journeyFrame?.dualShaderMode}
+          journeyTertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
           journeyPhase={journeyFrame?.phase}
           journeyVoice={journeyFrame?.voice}
           journeyPoetryInterval={journeyFrame?.poetryIntervalSeconds}
@@ -558,7 +627,10 @@ export function VisualizerClient({
             useAudioStore.getState().stopJourney();
             setJourneyOpen(true);
           }}
+          onShareJourney={journeyActive ? handleShareJourney : undefined}
           onStudy={currentTrack ? handleStudy : undefined}
+          isFullscreen={isFullscreen}
+          onFullscreenToggle={handleFullscreenToggle}
         >
           {/* Analysis HUD — top layer (hidden during journeys) */}
           {hudVisible && showHud && !journeyActive && (
@@ -669,6 +741,8 @@ export function VisualizerClient({
               <span>Poetry</span>
               <span className="text-white/50 text-right">v</span>
               <span>Voice</span>
+              <span className="text-white/50 text-right">f</span>
+              <span>Fullscreen</span>
             </div>
           </div>
           {/* Back button */}
@@ -682,8 +756,8 @@ export function VisualizerClient({
         </div>
       )}
 
-      {/* Journey phase indicator */}
-      {journeyActive && activeJourney && (
+      {/* Journey phase indicator — hidden in fullscreen/immersive mode */}
+      {journeyActive && activeJourney && !isFullscreen && (
         <JourneyPhaseIndicator
           journey={activeJourney}
           currentPhase={journeyPhase}
@@ -692,8 +766,8 @@ export function VisualizerClient({
         />
       )}
 
-      {/* Live listening indicator */}
-      {liveEnabled && (
+      {/* Live listening indicator — hidden in fullscreen/immersive mode */}
+      {liveEnabled && !isFullscreen && (
         <div
           className="absolute top-6 right-6 flex items-center gap-2 transition-opacity duration-300"
           style={{ opacity: controlsVisible ? 1 : 0 }}

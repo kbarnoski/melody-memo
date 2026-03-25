@@ -33,8 +33,8 @@ export const REALMS: Realm[] = [
     },
     shaderModes: [
       "astral", "sacred", "ethereal", "aurora", "ascension", "revelation",
-      "prismatic", "dissolution", "stardust", "fibonacci", "mandala", "nebula",
-      "solstice", "helix", "drift", "expanse",
+      "prismatic", "stardust", "fibonacci", "nebula",
+      "helix", "drift", "expanse",
     ],
     palette: {
       primary: "#1a1408",
@@ -78,9 +78,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "inferno", "chasm", "crypt", "obsidian", "phantom", "wraith",
-      "umbra", "plasma", "torrent", "monolith", "abyss",
-      "warp", "fractal", "eclipse", "rapture",
+      "inferno", "obsidian",
+      "umbra", "plasma", "abyss",
+      "rapture",
     ],
     palette: {
       primary: "#0a0000",
@@ -171,7 +171,7 @@ export const REALMS: Realm[] = [
     },
     shaderModes: [
       "liquid", "cosmos", "ethereal", "tide", "ocean",
-      "whirlpool", "current", "delta", "plankton", "coral", "membrane",
+      "whirlpool", "plankton", "coral", "membrane",
       "drift", "nebula", "abyss", "cascade",
     ],
     palette: {
@@ -216,8 +216,8 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "neon", "tesseract", "warp", "fractal", "lattice", "helix",
-      "meridian", "prism", "moire", "spiral", "geodesic", "weave",
+      "neon", "tesseract", "lattice", "helix",
+      "prism", "moire", "spiral", "geodesic", "weave",
       "plasma", "pulsar", "penrose", "torus",
     ],
     palette: {
@@ -262,9 +262,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "cosmos", "astral", "warp", "nebula", "stardust",
-      "supernova", "pulsar", "quasar", "singularity", "corona", "solstice",
-      "drift", "expanse", "horizon", "abyss",
+      "cosmos", "astral", "nebula", "stardust",
+      "supernova", "pulsar", "quasar", "singularity",
+      "drift", "expanse", "abyss",
     ],
     palette: {
       primary: "#05051a",
@@ -308,9 +308,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "sacred", "mandala", "tesseract", "astral", "fibonacci", "oracle",
-      "revelation", "prophecy", "glyph", "sigil", "lattice", "helix",
-      "prism", "temple", "geodesic", "penrose",
+      "sacred", "tesseract", "astral", "fibonacci", "oracle",
+      "revelation", "sigil", "lattice", "helix",
+      "prism", "geodesic", "penrose",
     ],
     palette: {
       primary: "#141008",
@@ -354,9 +354,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "temple", "crypt", "lattice", "tesseract", "spiral",
-      "moire", "penrose", "meridian", "weave", "portal", "threshold",
-      "fog", "monolith", "phantom", "geodesic",
+      "lattice", "tesseract", "spiral",
+      "moire", "penrose", "weave", "portal", "threshold",
+      "fog", "geodesic",
     ],
     palette: {
       primary: "#0a0a08",
@@ -400,9 +400,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "astral", "fog", "horizon", "expanse", "drift", "solstice",
-      "corona", "aurora", "stardust", "nebula", "oracle", "field",
-      "revelation", "threshold", "dissolution", "cosmos",
+      "astral", "fog", "expanse", "drift",
+      "aurora", "stardust", "nebula", "oracle", "field",
+      "revelation", "threshold", "cosmos",
     ],
     palette: {
       primary: "#080a10",
@@ -446,8 +446,8 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "horizon", "dusk", "expanse", "umbra", "solstice", "drift",
-      "fog", "corona", "dissolution", "stardust", "ember", "flux",
+      "dusk", "expanse", "umbra", "drift",
+      "fog", "stardust", "ember", "flux",
       "abyss", "singularity", "mesa",
     ],
     palette: {
@@ -492,9 +492,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "temple", "lattice", "prophecy", "fog", "oracle", "glyph",
+      "lattice", "fog", "oracle",
       "sacred", "spiral", "moire", "penrose", "sigil", "threshold",
-      "revelation", "weave", "meridian", "chronos",
+      "revelation", "weave", "chronos",
     ],
     palette: {
       primary: "#10100a",
@@ -538,9 +538,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "storm", "plasma", "chasm", "wraith", "torrent", "inferno",
-      "flux", "cascade", "current", "whirlpool", "warp",
-      "abyss", "eclipse", "delta", "umbra",
+      "storm", "plasma", "inferno",
+      "flux", "cascade", "whirlpool",
+      "abyss", "umbra",
     ],
     palette: {
       primary: "#050510",
@@ -559,33 +559,33 @@ export const REALMS: Realm[] = [
     subtitle: "crystalline silence, infinite white",
     visualVocabulary: {
       environments: [
-        "frozen landscapes",
-        "ice caverns",
-        "endless snowfields",
-        "aurora borealis over glaciers",
+        "connected frost constellation radiating across cosmic-scale dark void",
+        "fractal powder formations on brilliant white with blue-grey shadow edges",
+        "infinite lattice of ice and particle against deep indigo and purple",
+        "dark geometric structures emerging from vast pale open field",
       ],
       entities: [
-        "ice crystals forming",
-        "snowflakes under microscope",
-        "frost patterns on glass",
-        "northern lights dancing",
+        "interconnected ice paths with powder dispersed along the geometric channels",
+        "fractal snow structures expanding outward in fibonacci and voronoi patterns",
+        "continuous flowing lattice with blue and violet light at the nodes",
+        "fine granular white particle texture like sand scattered in geometric designs",
       ],
       textures: [
-        "ice with embedded air bubbles",
-        "hoarfrost on branches",
-        "fresh snow catching starlight",
-        "frozen water mid-splash",
+        "dispersed powder particles in flowing arcs connecting geometric forms",
+        "translucent layered ice structures with dynamic internal light",
+        "white on white fractal detail defined by subtle shadow and blue edge",
+        "prismatic color threading through frozen lattice — blue to violet to gold",
       ],
       atmospheres: [
-        "deep cold stillness",
-        "the silence after snowfall",
-        "crystalline clarity",
-        "hushed reverence",
+        "cosmic scale where frost could be star clusters or nebulae",
+        "the infinite depth of connected frozen geometry",
+        "dynamic and powerful yet mathematically precise",
+        "crystalline expansion expressed through ice and particle",
       ],
     },
     shaderModes: [
       "snow", "fog", "aurora", "ethereal", "drift", "expanse",
-      "dissolution", "prismatic", "solstice", "membrane",
+      "prismatic", "membrane",
       "threshold", "tide", "stardust", "glacier", "cosmos",
     ],
     palette: {
@@ -597,7 +597,7 @@ export const REALMS: Realm[] = [
     defaultVoice: "shimmer",
     poetryMood: "melancholic",
     poetryImagery:
-      "crystalline silence, frozen geometry, endless white, ice cathedral, northern lights, hoarfrost patterns, the stillness of deep winter, starlight on snow",
+      "connected frost constellations radiating into cosmic depth, dispersed powder in fractal geometry, white sand patterns on dark void and pale infinite fields, the frozen cosmos breathing between structure and particle",
   },
   {
     id: "spring",
@@ -676,9 +676,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "dusk", "ember", "storm", "prismatic", "solstice", "corona",
-      "horizon", "aurora", "bloom", "flux", "cascade", "fog",
-      "tide", "supernova", "delta", "current",
+      "dusk", "ember", "storm", "prismatic",
+      "aurora", "bloom", "flux", "cascade", "fog",
+      "tide", "supernova",
     ],
     palette: {
       primary: "#1a1408",
@@ -722,9 +722,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "ember", "fog", "dissolution", "dendrite", "dusk", "drift",
+      "ember", "fog", "dendrite", "dusk", "drift",
       "moss", "lichen", "membrane", "tide", "flux", "mycelium",
-      "spore", "cascade", "stardust", "horizon",
+      "spore", "cascade", "stardust",
     ],
     palette: {
       primary: "#1a0e08",
@@ -768,9 +768,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "astral", "sacred", "ethereal", "mandala", "dissolution",
+      "astral", "sacred", "ethereal",
       "aurora", "nebula", "stardust", "mycelium", "fibonacci", "ascension",
-      "revelation", "prismatic", "oracle", "prophecy", "eclipse",
+      "revelation", "prismatic", "oracle",
     ],
     palette: {
       primary: "#0a0814",
@@ -814,9 +814,9 @@ export const REALMS: Realm[] = [
       ],
     },
     shaderModes: [
-      "phantom", "obsidian", "umbra", "chasm", "crypt",
-      "wraith", "monolith", "abyss", "torrent", "dissolution", "plasma",
-      "fog", "singularity", "eclipse", "inferno",
+      "obsidian", "umbra",
+      "abyss", "plasma",
+      "fog", "singularity", "inferno",
     ],
     palette: {
       primary: "#020204",

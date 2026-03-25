@@ -78,7 +78,7 @@ export default function SharedRoomPage({
   const shaderMode = (
     Object.keys(SHADERS).includes(config.shaderMode)
       ? config.shaderMode
-      : "mandala"
+      : "cosmos"
   ) as VisualizerMode;
 
   return (

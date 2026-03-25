@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { createSeededRandom } from "@/lib/journeys/seeded-random";
 
 interface AiImageLayerProps {
   /** AI prompt for image generation */
@@ -21,6 +22,10 @@ interface AiImageLayerProps {
   /** Journey shader opacity (0-1). Controls AI layer opacity inversely —
    *  higher shaderOpacity = lower AI presence. Default 1.0 (AI minimal). */
   shaderOpacity?: number;
+  /** Fires once when the first AI image is ready and painted */
+  onFirstImage?: () => void;
+  /** Optional seed for deterministic prompt variation (shared playback) */
+  promptSeed?: number;
 }
 
 interface ImageLayer {
@@ -41,13 +46,15 @@ interface ImageLayer {
   blendMode: GlobalCompositeOperation;
 }
 
-const DISSOLVE_DURATION = 5000; // 5 seconds for smooth dissolves
-const GEN_INTERVAL_MIN = 10000; // 10 seconds between generations
-const GEN_INTERVAL_MAX = 15000; // 15 seconds max — no image stays > 20s
-const POETRY_GEN_DELAY = 2500; // 2.5s after new poetry line
-const PROMPT_DEBOUNCE = 2000; // 2s debounce on prompt changes
+const DISSOLVE_DURATION = 4000; // 4s fade-in — smooth cross-dissolve
+const FADEOUT_DURATION = 8000; // 8s fade-out — images linger longer for layered depth
+const GEN_INTERVAL_MIN = 6000; // 6s between generations — keep imagery flowing
+const GEN_INTERVAL_MAX = 10000; // 10s max — ensures constant visual movement
+const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
+const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
 const KEN_BURNS_DURATION = 50; // seconds — full motion cycle
-const MAX_LAYERS = 3; // allow up to 3 overlapping layers for smooth cross-dissolves
+const MAX_LAYERS = 4; // 4 overlapping layers — 2-3 visible + 1 fading = sense of video
+const MAX_CONCURRENT_GENS = 2; // 2 parallel REST requests for faster imagery fill
 
 /** Smooth ease-in-out cubic — no jarring linear interpolation */
 function easeInOutCubic(t: number): number {
@@ -59,11 +66,12 @@ function easeInOutCubic(t: number): number {
 /**
  * AI image layer — generates and renders AI imagery via fal.ai.
  *
- * Multi-layer compositing with smooth cross-dissolve transitions:
+ * Multi-layer compositing with up to 3 simultaneously visible images:
  *   - Each new image fades in over DISSOLVE_DURATION
- *   - Previous images fade out from their current opacity (no jumps)
+ *   - Only the OLDEST layer fades out when at capacity — recent layers stay at peak
  *   - Ken Burns motion uses a stable creation timestamp (never reset)
- *   - Layers are only removed after fully faded out
+ *   - Fade-out is slower than fade-in, keeping images visible during transitions
+ *   - Creates a "video" feel where imagery is always moving and always in transition
  */
 export function AiImageLayer({
   prompt,
@@ -75,6 +83,8 @@ export function AiImageLayer({
   aiOnly = false,
   generating = true,
   shaderOpacity = 1.0,
+  onFirstImage,
+  promptSeed,
 }: AiImageLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layersRef = useRef<ImageLayer[]>([]);
@@ -86,15 +96,20 @@ export function AiImageLayer({
   const generatingRef = useRef(generating);
   const poetryLineRef = useRef("");
   const poetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const loadingRef = useRef(false);
+  const loadingCountRef = useRef(0); // number of in-flight REST requests
   const genCountRef = useRef(0);
   const promptChangeTimeRef = useRef(0);
+  const firstImageFiredRef = useRef(false);
+  const onFirstImageRef = useRef(onFirstImage);
+  onFirstImageRef.current = onFirstImage;
+  const promptSeedRef = useRef(promptSeed);
+  promptSeedRef.current = promptSeed;
 
   // Sync props → refs
   useEffect(() => { generatingRef.current = generating; }, [generating]);
   useEffect(() => {
     promptRef.current = prompt;
-    // Cancel in-flight request for old prompt and debounce 2s
+    // Cancel in-flight request for old prompt and debounce
     getRealtimeImageService().cancelInFlight();
     promptChangeTimeRef.current = performance.now();
     lastGenTimeRef.current = 0;
@@ -118,35 +133,43 @@ export function AiImageLayer({
     });
   }, []);
 
-  // Push new image onto the layer stack with smooth cross-dissolve
+  // Push new image onto the layer stack — keeps 2-3 images visible simultaneously.
+  // Only the OLDEST layer fades out when at capacity; recent layers stay at peak.
+  // This creates a sense of video — imagery is always moving and always in transition.
   const pushImage = useCallback((img: HTMLImageElement) => {
     const service = getRealtimeImageService();
     service.cacheImage(promptRef.current, img);
 
+    // Signal parent that first AI image is ready (for intro gating)
+    if (!firstImageFiredRef.current) {
+      firstImageFiredRef.current = true;
+      onFirstImageRef.current?.();
+    }
+
     const layers = layersRef.current;
     const now = performance.now();
 
-    // Transition existing visible layers to fading-out,
-    // preserving their current opacity so there's no jump
-    for (const layer of layers) {
-      if (layer.state === "fading-in" || layer.state === "peak") {
-        layer.fadeStartOpacity = layer.opacity; // capture current opacity
-        layer.state = "fading-out";
-        layer.fadeStartTime = now;
-        // NOTE: createdTime is NOT touched — Ken Burns continues smoothly
-      }
-    }
-
-    // Only evict layers that are fully invisible (opacity ≤ 0)
-    // This prevents visible layers from being ripped away
+    // Evict fully invisible layers first
     for (let i = layers.length - 1; i >= 0; i--) {
       if (layers[i].opacity <= 0 && layers[i].state === "fading-out") {
         layers.splice(i, 1);
       }
     }
 
-    // Hard cap: if we still have too many layers, remove the oldest fading-out one
+    // Only fade out the OLDEST visible layer when at capacity
+    // This keeps 2-3 images stacked and visible at the same time
     if (layers.length >= MAX_LAYERS) {
+      const oldestVisible = layers.find((l) => l.state === "fading-in" || l.state === "peak");
+      if (oldestVisible) {
+        oldestVisible.fadeStartOpacity = oldestVisible.opacity;
+        oldestVisible.state = "fading-out";
+        oldestVisible.fadeStartTime = now;
+        // NOTE: createdTime is NOT touched — Ken Burns continues smoothly
+      }
+    }
+
+    // Hard cap: if still over limit after starting a fade, force-remove oldest fading
+    if (layers.length >= MAX_LAYERS + 1) {
       const oldestFadingIdx = layers.findIndex((l) => l.state === "fading-out");
       if (oldestFadingIdx >= 0) {
         layers.splice(oldestFadingIdx, 1);
@@ -154,12 +177,13 @@ export function AiImageLayer({
     }
 
     // Randomize Ken Burns params for visual variety
-    const blendModes: GlobalCompositeOperation[] = ["source-over", "screen", "lighten"];
+    // Favor source-over — screen/lighten between layers can cause additive blow-out
+    const roll = Math.random();
+    const blendMode: GlobalCompositeOperation = roll < 0.65 ? "source-over" : roll < 0.85 ? "screen" : "lighten";
     const scaleStart = 1.0 + Math.random() * 0.12; // 1.0 - 1.12
     const scaleEnd = 1.04 + Math.random() * 0.16;  // 1.04 - 1.20
     const panX = (Math.random() - 0.5) * 2;        // -1 to 1
     const panY = (Math.random() - 0.5) * 2;        // -1 to 1
-    const blendMode = blendModes[Math.floor(Math.random() * blendModes.length)];
 
     layers.push({
       img,
@@ -180,7 +204,9 @@ export function AiImageLayer({
   // skipCache=true for periodic refreshes (same prompt, want new image)
   const triggerGeneration = useCallback((skipCache = false) => {
     const service = getRealtimeImageService();
-    if (service.isCapped() || loadingRef.current) return;
+    if (service.isCapped()) return;
+    // Allow up to MAX_CONCURRENT_GENS parallel requests
+    if (loadingCountRef.current >= MAX_CONCURRENT_GENS) return;
 
     const currentPrompt = promptRef.current;
     if (!currentPrompt) return;
@@ -195,12 +221,45 @@ export function AiImageLayer({
       }
     }
 
-    loadingRef.current = true;
+    loadingCountRef.current++;
     lastGenTimeRef.current = performance.now();
 
-    // Add a variation seed so the same prompt produces different images
-    const seed = Math.floor(Math.random() * 999999);
-    const variedPrompt = `${currentPrompt}, variation ${seed}`;
+    // Three independent variation axes — each generation picks one from each,
+    // producing thousands of unique combinations from the same base prompt.
+    // This prevents consecutive images from looking similar.
+    const compositions = [
+      "extreme close-up macro detail", "wide aerial view",
+      "diagonal composition", "centered symmetrical",
+      "off-center with vast negative space", "tightly cropped abstract fragment",
+      "layered depth with foreground blur", "radial emanating from center",
+      "scattered elements with generous empty space",
+      "single dominant form filling the frame", "two contrasting fields meeting",
+      "spiral composition", "minimal elements in vast emptiness",
+      "small forms against expansive void", "dense texture filling the frame",
+    ];
+    const interpretations = [
+      "painterly and impressionistic", "photographic and textural",
+      "geometric and structured", "fluid and organic",
+      "minimal and sparse", "dense and layered",
+      "dreamy and soft focus", "sharp and crystalline",
+      "ethereal and translucent", "raw and tactile",
+      "microscopic detail", "atmospheric and hazy",
+    ];
+    const moods = [
+      "quiet solitude", "vast stillness", "gentle motion",
+      "raw power", "delicate fragility", "infinite depth",
+      "emerging from darkness", "dissolving into light",
+      "tension between opposites", "peaceful emptiness",
+    ];
+    // When a promptSeed is set (shared playback), derive deterministic variation
+    // from seed + genCount so consecutive generations differ but are reproducible.
+    const rng = promptSeedRef.current != null
+      ? createSeededRandom(promptSeedRef.current + genCountRef.current)
+      : Math.random;
+    const comp = compositions[Math.floor(rng() * compositions.length)];
+    const interp = interpretations[Math.floor(rng() * interpretations.length)];
+    const mood = moods[Math.floor(rng() * moods.length)];
+    const variedPrompt = `${currentPrompt}, ${comp}, ${interp}, ${mood}, no snowflakes`;
 
     service
       .generateFrameREST({
@@ -217,7 +276,7 @@ export function AiImageLayer({
         } catch { /* load failed, skip */ }
       })
       .catch(() => {})
-      .finally(() => { loadingRef.current = false; });
+      .finally(() => { loadingCountRef.current = Math.max(0, loadingCountRef.current - 1); });
   }, [loadImage, pushImage]);
 
   // Poetry-driven generation: poll journey engine for new poetry lines
@@ -269,32 +328,42 @@ export function AiImageLayer({
     return () => { cancelled = true; };
   }, [enabled, loadImage, pushImage]);
 
-  // Generation loop — fires immediately, then every 25-35s
+  // Generation loop — fires 2 requests immediately for fast initial imagery,
+  // then keeps 2-3 images flowing at all times for the "video" feel
   useEffect(() => {
     if (!enabled || available !== true) return;
     genCountRef.current = 0;
-    // Pick a stable interval for this cycle (not re-randomized each tick)
     let nextInterval = 0;
 
     const tick = () => {
       if (!generatingRef.current) return;
       const now = performance.now();
 
-      // Debounce: wait 2s after prompt changes before generating
-      if (now - promptChangeTimeRef.current < PROMPT_DEBOUNCE) return;
+      // Skip debounce on first 2 gens for instant imagery
+      if (genCountRef.current > 1 && now - promptChangeTimeRef.current < PROMPT_DEBOUNCE) return;
 
-      if (genCountRef.current > 0 && now - lastGenTimeRef.current < nextInterval) return;
-      const isFirstGen = genCountRef.current === 0;
+      // First 2 generations fire immediately (parallel fill)
+      if (genCountRef.current < 2) {
+        genCountRef.current++;
+        triggerGeneration(genCountRef.current > 1); // first uses cache, second skips
+        return;
+      }
+
+      if (now - lastGenTimeRef.current < nextInterval) return;
       genCountRef.current++;
-      // Pick next interval for after this generation
       nextInterval = GEN_INTERVAL_MIN + Math.random() * (GEN_INTERVAL_MAX - GEN_INTERVAL_MIN);
-      // Skip cache on periodic updates (not the first load)
-      triggerGeneration(!isFirstGen);
+      triggerGeneration(true); // always skip cache for ongoing gens
     };
 
+    // Fire first tick immediately
     tick();
-    const id = setInterval(tick, 500);
-    return () => clearInterval(id);
+    // Second tick fires 200ms later (stagger the 2 initial parallel requests)
+    const stagger = setTimeout(tick, 200);
+    const id = setInterval(tick, 400); // check frequently
+    return () => {
+      clearTimeout(stagger);
+      clearInterval(id);
+    };
   }, [enabled, available, triggerGeneration]);
 
   // Track aiOnly in a ref so the render loop can read it
@@ -340,20 +409,19 @@ export function AiImageLayer({
       for (let i = layers.length - 1; i >= 0; i--) {
         const layer = layers[i];
         const elapsed = now - layer.fadeStartTime;
-        const rawProgress = Math.min(1, elapsed / DISSOLVE_DURATION);
-        const easedProgress = easeInOutCubic(rawProgress);
 
         if (layer.state === "fading-in") {
-          // Fade from 0 → 1 with easing
+          const rawProgress = Math.min(1, elapsed / DISSOLVE_DURATION);
+          const easedProgress = easeInOutCubic(rawProgress);
           layer.opacity = easedProgress;
           if (rawProgress >= 1) {
             layer.state = "peak";
             layer.opacity = 1;
           }
         } else if (layer.state === "fading-out") {
-          // Fade from captured opacity → 0 with easing
-          // fadeStartOpacity preserves whatever opacity the layer had when
-          // it was told to fade out — no jump from 0.5 → 1.0
+          // Slow fade-out keeps images visible longer during transitions
+          const rawProgress = Math.min(1, elapsed / FADEOUT_DURATION);
+          const easedProgress = easeInOutCubic(rawProgress);
           layer.opacity = layer.fadeStartOpacity * (1 - easedProgress);
           if (rawProgress >= 1) {
             layers.splice(i, 1);

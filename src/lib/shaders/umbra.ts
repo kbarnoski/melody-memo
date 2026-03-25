@@ -52,15 +52,15 @@ void main() {
 
     // Surface in light
     vec3 litColor = palette(stoneN * 0.15 + paletteShift,
-      vec3(0.06, 0.05, 0.04),
-      vec3(0.08, 0.07, 0.06),
+      vec3(0.1, 0.08, 0.06),
+      vec3(0.15, 0.12, 0.1),
       vec3(1.0, 1.0, 1.0),
       vec3(0.0, 0.05, 0.12));
 
     // Surface in shadow — nearly black
     vec3 shadowColor = palette(0.7 + paletteShift,
-      vec3(0.005, 0.004, 0.006),
-      vec3(0.01, 0.008, 0.015),
+      vec3(0.02, 0.015, 0.025),
+      vec3(0.04, 0.03, 0.05),
       vec3(1.0, 1.0, 1.0),
       vec3(0.5, 0.6, 0.8));
 
@@ -70,8 +70,8 @@ void main() {
     float edgeGlow = smoothstep(0.15, 0.5, edgeMask) * exp(-depth * 0.04);
 
     vec3 edgeColor = palette(0.1 + paletteShift + u_mid * 0.08,
-      vec3(0.04, 0.02, 0.01),
-      vec3(0.08, 0.04, 0.01),
+      vec3(0.08, 0.05, 0.03),
+      vec3(0.15, 0.08, 0.04),
       vec3(1.0, 1.0, 1.0),
       vec3(0.0, 0.1, 0.2));
 
@@ -85,30 +85,30 @@ void main() {
     // Near-horizon haze: bass-driven murk
     float horizonFog = exp(-max(depth - 3.0, 0.0) * 0.15) * u_bass * 0.1;
     vec3 hazeColor = palette(0.68 + paletteShift,
-      vec3(0.008, 0.006, 0.012),
-      vec3(0.02, 0.015, 0.03),
+      vec3(0.03, 0.025, 0.04),
+      vec3(0.06, 0.04, 0.07),
       vec3(1.0, 1.0, 1.0),
       vec3(0.4, 0.5, 0.7));
     color += hazeColor * horizonFog;
 
     // Treble: micro-glint on lit surface edges
-    float glint = snoise(floorUV * 8.0 + t) * u_treble * totalShadow * fog * 0.04;
+    float glint = snoise(floorUV * 8.0 + t) * u_treble * totalShadow * fog * 0.1;
     color += litColor * glint;
 
   } else {
     // Sky: pure void, tiny hint of ambient at horizon
     float skyFade = exp(-py * 10.0);
     vec3 skyColor = palette(0.72 + paletteShift,
-      vec3(0.0),
-      vec3(0.008, 0.006, 0.012),
+      vec3(0.02, 0.015, 0.025),
+      vec3(0.04, 0.03, 0.05),
       vec3(1.0, 1.0, 1.0),
       vec3(0.3, 0.4, 0.6));
-    color = skyColor * skyFade * 0.4;
+    color = skyColor * skyFade * 0.6;
   }
 
   // Vignette
   float vd = length(uv);
-  float vignette = pow(1.0 - smoothstep(0.15, 1.3, vd), 2.2);
+  float vignette = pow(1.0 - smoothstep(0.3, 1.3, vd), 1.6);
   color *= vignette;
 
   gl_FragColor = vec4(color, 1.0);

@@ -17,8 +17,8 @@ const FEATURED_JOURNEY_ID = "first-snow";
 
 // Journeys paired with specific tracks — always load from the beginning
 const PAIRED_TRACKS: Record<string, string> = {
-  "first-snow": "%snowflake%",
-  "inferno": "%realized%",
+  "first-snow": "%KB_SFLAKE%",
+  "inferno": "%KB_REALIZED%",
   "cosmic-drift": "%17th St 61%",
   "folsom-street": "%Folsom St 5%",
 };
@@ -113,11 +113,25 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     }
   }, []);
 
-  // Share a built-in journey — direct URL
-  const handleShareBuiltIn = useCallback((journeyId: string, journeyName: string, e: React.MouseEvent) => {
+  // Share a built-in journey — creates a DB snapshot with deterministic seed
+  const handleShareBuiltIn = useCallback(async (journeyId: string, journeyName: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/room?journey=${journeyId}`;
-    setShareSheet({ url, title: `${journeyName} — a Resonance journey` });
+    setSharingId(journeyId);
+    try {
+      const res = await fetch("/api/journeys/share-builtin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ journeyId }),
+      });
+      if (!res.ok) throw new Error("Failed to share");
+      const { token } = await res.json();
+      const url = `${window.location.origin}/journey/${token}`;
+      setShareSheet({ url, title: `${journeyName} — a Resonance journey` });
+    } catch {
+      toast.error("Failed to share journey");
+    } finally {
+      setSharingId(null);
+    }
   }, []);
 
   // Delete a custom journey (with confirmation)
@@ -419,10 +433,11 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           </div>
           <button
             onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
-            className="p-1.5 rounded-lg text-white/20 hover:text-white/50 hover:bg-white/5 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors shrink-0"
             title="Share Journey"
+            disabled={sharingId === journey.id}
           >
-            <Share2 className="h-3 w-3" />
+            <Share2 className="h-3.5 w-3.5" />
           </button>
           <button
             onClick={(e) => {

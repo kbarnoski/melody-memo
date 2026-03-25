@@ -5,182 +5,112 @@ import { FRAG as SNOW_FRAG } from "./snow";
 import { FRAG as OCEAN_FRAG } from "./ocean";
 import { FRAG as CASCADE_FRAG } from "./cascade";
 import { FRAG as WHIRLPOOL_FRAG } from "./whirlpool";
-import { FRAG as CURRENT_FRAG } from "./current";
-import { FRAG as DELTA_FRAG } from "./delta";
 import { FRAG as FLUX_FRAG } from "./flux";
 // Elemental (new)
 import { FRAG as MONSOON_FRAG } from "./monsoon";
 import { FRAG as HAZE_FRAG } from "./haze";
 import { FRAG as GEYSER_FRAG } from "./geyser";
 import { FRAG as MAGMA_FRAG } from "./magma";
-import { FRAG as PERMAFROST_FRAG } from "./permafrost";
 import { FRAG as SANDSTORM_FRAG } from "./sandstorm";
 import { FRAG as TYPHOON_FRAG } from "./typhoon";
 import { FRAG as VAPOR_FRAG } from "./vapor";
-import { FRAG as MANDALA_FRAG } from "./mandala";
 import { FRAG as COSMOS_FRAG } from "./cosmos";
 import { FRAG as NEON_FRAG } from "./neon";
-import { FRAG as LIQUID_FRAG } from "./liquid";
+
 import { FRAG as SACRED_FRAG } from "./sacred";
 import { FRAG as ETHEREAL_FRAG } from "./ethereal";
-import { FRAG as FRACTAL_FRAG } from "./fractal";
-import { FRAG as WARP_FRAG } from "./warp";
 import { FRAG as PRISMATIC_FRAG } from "./prismatic";
-import { FRAG as MYCELIUM_FRAG } from "./mycelium";
+
 import { FRAG as TESSERACT_FRAG } from "./tesseract";
-import { FRAG as DISSOLUTION_FRAG } from "./dissolution";
 import { FRAG as ASTRAL_FRAG } from "./astral";
-import { FRAG as HORIZON_FRAG } from "./horizon";
 import { FRAG as ABYSS_FRAG } from "./abyss";
-import { FRAG as TEMPLE_FRAG } from "./temple";
 import { FRAG as EMBER_FRAG } from "./ember";
-import { FRAG as MERIDIAN_FRAG } from "./meridian";
 import { FRAG as TIDE_FRAG } from "./tide";
-import { FRAG as MONOLITH_FRAG } from "./monolith";
 import { FRAG as OBSIDIAN_FRAG } from "./obsidian";
-import { FRAG as CRYPT_FRAG } from "./crypt";
-import { FRAG as PHANTOM_FRAG } from "./phantom";
-import { FRAG as WRAITH_FRAG } from "./wraith";
 import { FRAG as UMBRA_FRAG } from "./umbra";
-import { FRAG as CHASM_FRAG } from "./chasm";
 import { FRAG as INFERNO_FRAG } from "./inferno";
 import { FRAG as PLASMA_FRAG } from "./plasma";
-import { FRAG as TORRENT_FRAG } from "./torrent";
 import { FRAG as PULSAR_FRAG } from "./pulsar";
 import { FRAG as QUASAR_FRAG } from "./quasar";
 import { FRAG as SUPERNOVA_FRAG } from "./supernova";
 import { FRAG as NEBULA_FRAG } from "./nebula";
 import { FRAG as SINGULARITY_FRAG } from "./singularity";
 import { FRAG as STARDUST_FRAG } from "./stardust";
-import { FRAG as CORONA_FRAG } from "./corona";
-import { FRAG as SOLSTICE_FRAG } from "./solstice";
 import { FRAG as DRIFT_FRAG } from "./drift";
 import { FRAG as EXPANSE_FRAG } from "./expanse";
 import { FRAG as COMET_FRAG } from "./comet";
 import { FRAG as MAGNETAR_FRAG } from "./magnetar";
 import { FRAG as PROTOSTAR_FRAG } from "./protostar";
-import { FRAG as DARKSTAR_FRAG } from "./darkstar";
+
 import { FRAG as REDSHIFT_FRAG } from "./redshift";
-import { FRAG as ACCRETION_FRAG } from "./accretion";
 import { FRAG as PERIHELION_FRAG } from "./perihelion";
 import { FRAG as APHELION_FRAG } from "./aphelion";
 // Visionary
-import { FRAG as SIGIL_FRAG } from "./sigil";
+
 import { FRAG as PORTAL_FRAG } from "./portal";
 import { FRAG as ORACLE_FRAG } from "./oracle";
 import { FRAG as REVELATION_FRAG } from "./revelation";
 import { FRAG as THRESHOLD_FRAG } from "./threshold";
 import { FRAG as ASCENSION_FRAG } from "./ascension";
-import { FRAG as ECLIPSE_FRAG } from "./eclipse";
 import { FRAG as RAPTURE_FRAG } from "./rapture";
-import { FRAG as PROPHECY_FRAG } from "./prophecy";
-import { FRAG as GLYPH_FRAG } from "./glyph";
-import { FRAG as RUNE_FRAG } from "./rune";
 import { FRAG as MANDORLA_FRAG } from "./mandorla";
 import { FRAG as SERAPH_FRAG } from "./seraph";
-import { FRAG as GNOSIS_FRAG } from "./gnosis";
-import { FRAG as YANTRA_FRAG } from "./yantra";
-import { FRAG as ANKH_FRAG } from "./ankh";
-import { FRAG as ALCHEMY_FRAG } from "./alchemy";
-import { FRAG as DHARMA_FRAG } from "./dharma";
+
 // Organic
 import { FRAG as MOSS_FRAG } from "./moss";
-import { FRAG as CORAL_FRAG } from "./coral";
-import { FRAG as BLOOM_FRAG } from "./bloom";
+
 import { FRAG as SPORE_FRAG } from "./spore";
 import { FRAG as CHRYSALIS_FRAG } from "./chrysalis";
 import { FRAG as PLANKTON_FRAG } from "./plankton";
 import { FRAG as LICHEN_FRAG } from "./lichen";
-import { FRAG as DENDRITE_FRAG } from "./dendrite";
+
 import { FRAG as MEMBRANE_FRAG } from "./membrane";
 import { FRAG as GROWTH_FRAG } from "./growth";
 // Organic (new)
 import { FRAG as ENZYME_FRAG } from "./enzyme";
-import { FRAG as SYNAPSE_FRAG } from "./synapse";
+
 import { FRAG as MITOSIS_FRAG } from "./mitosis";
 import { FRAG as POLLEN_FRAG } from "./pollen";
 import { FRAG as SYMBIOSIS_FRAG } from "./symbiosis";
-import { FRAG as TENDRIL_FRAG } from "./tendril";
+
 import { FRAG as RHIZOME_FRAG } from "./rhizome";
 import { FRAG as CHITIN_FRAG } from "./chitin";
 // Organic (biological)
-import { FRAG as CORTEX_FRAG } from "./cortex";
-import { FRAG as AXON_FRAG } from "./axon";
+
 import { FRAG as PHYLUM_FRAG } from "./phylum";
-import { FRAG as CANOPY_FRAG } from "./canopy";
-import { FRAG as NECTAR_FRAG } from "./nectar";
-import { FRAG as MARROW_FRAG } from "./marrow";
-import { FRAG as CAPILLARY_FRAG } from "./capillary";
-import { FRAG as VENTRICLE_FRAG } from "./ventricle";
-import { FRAG as ALVEOLI_FRAG } from "./alveoli";
-import { FRAG as FOLLICLE_FRAG } from "./follicle";
+
 import { FRAG as KELP_FRAG } from "./kelp";
 import { FRAG as MANGROVE_FRAG } from "./mangrove";
-import { FRAG as COCOON_FRAG } from "./cocoon";
-import { FRAG as BLOSSOM_FRAG } from "./blossom";
-import { FRAG as METAMORPH_FRAG } from "./metamorph";
-import { FRAG as PERISTALSIS_FRAG } from "./peristalsis";
+
 // Geometry
 import { FRAG as LATTICE_FRAG } from "./lattice";
-import { FRAG as HELIX_FRAG } from "./helix";
-import { FRAG as WEAVE_FRAG } from "./weave";
-import { FRAG as PRISM_FRAG } from "./prism";
+
 import { FRAG as SPIRAL_FRAG } from "./spiral";
-import { FRAG as TORUS_FRAG } from "./torus";
+
 import { FRAG as FIBONACCI_FRAG } from "./fibonacci";
 import { FRAG as GEODESIC_FRAG } from "./geodesic";
-import { FRAG as PENROSE_FRAG } from "./penrose";
+
 import { FRAG as MOIRE_FRAG } from "./moire";
-import { FRAG as CELLS_FRAG } from "./cells";
-import { FRAG as QUASICRYSTAL_FRAG } from "./quasicrystal";
-import { FRAG as TENSEGRITY_FRAG } from "./tensegrity";
+
+
 import { FRAG as CATENARY_FRAG } from "./catenary";
-import { FRAG as HYPERBOLIC_FRAG } from "./hyperbolic";
-import { FRAG as INTERFERENCE_FRAG } from "./interference";
-import { FRAG as TESSELLATION_FRAG } from "./tessellation";
-import { FRAG as ORIGAMI_FRAG } from "./origami";
+
 // Dark (new)
-import { FRAG as ENTROPY_FRAG } from "./entropy";
 import { FRAG as VORTEX_FRAG } from "./vortex";
-import { FRAG as GLITCH_FRAG } from "./glitch";
-import { FRAG as CORROSION_FRAG } from "./corrosion";
-import { FRAG as SMOTHER_FRAG } from "./smother";
-import { FRAG as FRACTURE_FRAG } from "./fracture";
 import { FRAG as AETHER_FRAG } from "./aether";
-import { FRAG as MIASMA_FRAG } from "./miasma";
-import { FRAG as CINDER_FRAG } from "./cinder";
-import { FRAG as REQUIEM_FRAG } from "./requiem";
 // Visionary (new)
 import { FRAG as ROSETTA_FRAG } from "./rosetta";
-import { FRAG as OUROBOROS_FRAG } from "./ouroboros";
-import { FRAG as MERKABA_FRAG } from "./merkaba";
-import { FRAG as ENNEAGRAM_FRAG } from "./enneagram";
-import { FRAG as CADUCEUS_FRAG } from "./caduceus";
 import { FRAG as HALO_FRAG } from "./halo";
-import { FRAG as SANCTUM_FRAG } from "./sanctum";
-import { FRAG as TRANSFIGURE_FRAG } from "./transfigure";
-import { FRAG as INVOCATION_FRAG } from "./invocation";
 import { FRAG as NIMBUS_FRAG } from "./nimbus";
-import { FRAG as CHALICE_FRAG } from "./chalice";
-import { FRAG as TORII_FRAG } from "./torii";
-import { FRAG as AEGIS_FRAG } from "./aegis";
-import { FRAG as VESPER_FRAG } from "./vesper";
-import { FRAG as AVATAR_FRAG } from "./avatar";
-import { FRAG as COVENANT_FRAG } from "./covenant";
 // Cosmic (new)
 import { FRAG as NADIR_FRAG } from "./nadir";
-import { FRAG as EQUINOX_FRAG } from "./equinox";
 import { FRAG as PARSEC_FRAG } from "./parsec";
-import { FRAG as SOLARIS_FRAG } from "./solaris";
-import { FRAG as LUNAR_FRAG } from "./lunar";
 import { FRAG as NOVA_FRAG } from "./nova";
 import { FRAG as PHOTON_FRAG } from "./photon";
 import { FRAG as HELIOS_FRAG } from "./helios";
 import { FRAG as SELENE_FRAG } from "./selene";
-import { FRAG as GANYMEDE_FRAG } from "./ganymede";
 import { FRAG as KEPLER_FRAG } from "./kepler";
 import { FRAG as CASSINI_FRAG } from "./cassini";
-import { FRAG as VOYAGER_FRAG } from "./voyager";
 import { FRAG as HUBBLE_FRAG } from "./hubble";
 import { FRAG as TYCHO_FRAG } from "./tycho";
 import { FRAG as DOPPLER_FRAG } from "./doppler";
@@ -189,14 +119,10 @@ import { FRAG as ASTROID_FRAG } from "./astroid";
 import { FRAG as CARDIOID_FRAG } from "./cardioid";
 import { FRAG as LISSAJOUS_FRAG } from "./lissajous";
 import { FRAG as CYMATIC_FRAG } from "./cymatic";
-import { FRAG as CHLADNI_FRAG } from "./chladni";
 import { FRAG as GUILLOCHE_FRAG } from "./guilloche";
-import { FRAG as KOLAM_FRAG } from "./kolam";
 import { FRAG as TREFOIL_FRAG } from "./trefoil";
 import { FRAG as QUATREFOIL_FRAG } from "./quatrefoil";
 import { FRAG as INVOLUTE_FRAG } from "./involute";
-import { FRAG as CAUSTIC_FRAG } from "./caustic";
-import { FRAG as FRIEZE_FRAG } from "./frieze";
 import { FRAG as ROSETTE_FRAG } from "./rosette";
 import { FRAG as ROULETTE_FRAG } from "./roulette";
 import { FRAG as DELTOID_FRAG } from "./deltoid";
@@ -204,20 +130,12 @@ import { FRAG as NEPHROID_FRAG } from "./nephroid";
 import { FRAG as EPICYCLE_FRAG } from "./epicycle";
 // Elemental (new)
 import { FRAG as CHINOOK_FRAG } from "./chinook";
-import { FRAG as CALDERA_FRAG } from "./caldera";
 import { FRAG as THERMAL_FRAG } from "./thermal";
-import { FRAG as TSUNAMI_FRAG } from "./tsunami";
 import { FRAG as LIGHTNING_FRAG } from "./lightning";
 import { FRAG as MAELSTROM_FRAG } from "./maelstrom";
-import { FRAG as BLIZZARD_FRAG } from "./blizzard";
-import { FRAG as AVALANCHE_FRAG } from "./avalanche";
 import { FRAG as RIPTIDE_FRAG } from "./riptide";
-import { FRAG as PYROCLAST_FRAG } from "./pyroclast";
-import { FRAG as TEMPEST_FRAG } from "./tempest";
 import { FRAG as DELUGE_FRAG } from "./deluge";
 import { FRAG as SQUALL_FRAG } from "./squall";
-import { FRAG as EROSION_FRAG } from "./erosion";
-import { FRAG as FUMAROLE_FRAG } from "./fumarole";
 // Elemental (nature)
 import { FRAG as RIVER_FRAG } from "./river";
 import { FRAG as RAIN_FRAG } from "./rain";
@@ -226,7 +144,6 @@ import { FRAG as BREEZE_FRAG } from "./breeze";
 import { FRAG as ZEPHYR_FRAG } from "./zephyr";
 // Nature (fire / cellular / light)
 import { FRAG as FLAME_FRAG } from "./flame";
-import { FRAG as WILDFIRE_FRAG } from "./wildfire";
 import { FRAG as AMOEBA_FRAG } from "./amoeba";
 import { FRAG as CYTOPLASM_FRAG } from "./cytoplasm";
 import { FRAG as FIREFLY_FRAG } from "./firefly";
@@ -234,25 +151,15 @@ import { FRAG as FIREFLY_FRAG } from "./firefly";
 import { FRAG as REEF_FRAG } from "./reef";
 import { FRAG as ABYSSAL_FRAG } from "./abyssal";
 import { FRAG as STARFIELD_FRAG } from "./starfield";
-import { FRAG as SHIMMER_FRAG } from "./shimmer";
 import { FRAG as RADIANCE_FRAG } from "./radiance";
 // Dark (new)
 import { FRAG as SPECTER_FRAG } from "./specter";
 import { FRAG as BLIGHT_FRAG } from "./blight";
 import { FRAG as NECROSIS_FRAG } from "./necrosis";
-import { FRAG as PYRE_FRAG } from "./pyre";
 import { FRAG as DIRGE_FRAG } from "./dirge";
 import { FRAG as REVENANT_FRAG } from "./revenant";
-import { FRAG as BANSHEE_FRAG } from "./banshee";
-import { FRAG as OMEN_FRAG } from "./omen";
-import { FRAG as HARBINGER_FRAG } from "./harbinger";
-import { FRAG as DOLMEN_FRAG } from "./dolmen";
-import { FRAG as CAIRN_FRAG } from "./cairn";
-import { FRAG as OSSUARY_FRAG } from "./ossuary";
-import { FRAG as OBLIVION_FRAG } from "./oblivion";
 import { FRAG as LAMENT_FRAG } from "./lament";
 import { FRAG as HOLLOW_FRAG } from "./hollow";
-import { FRAG as PERDITION_FRAG } from "./perdition";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
 export const SHADERS: Partial<Record<VisualizerMode, string>> = {
@@ -263,178 +170,106 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   ocean: OCEAN_FRAG,
   cascade: CASCADE_FRAG,
   whirlpool: WHIRLPOOL_FRAG,
-  current: CURRENT_FRAG,
-  delta: DELTA_FRAG,
   flux: FLUX_FRAG,
   monsoon: MONSOON_FRAG,
   haze: HAZE_FRAG,
   geyser: GEYSER_FRAG,
   magma: MAGMA_FRAG,
-  permafrost: PERMAFROST_FRAG,
   sandstorm: SANDSTORM_FRAG,
   typhoon: TYPHOON_FRAG,
   vapor: VAPOR_FRAG,
-  mandala: MANDALA_FRAG,
   cosmos: COSMOS_FRAG,
   neon: NEON_FRAG,
-  liquid: LIQUID_FRAG,
+
   sacred: SACRED_FRAG,
   ethereal: ETHEREAL_FRAG,
-  fractal: FRACTAL_FRAG,
-  warp: WARP_FRAG,
   prismatic: PRISMATIC_FRAG,
-  mycelium: MYCELIUM_FRAG,
+
   tesseract: TESSERACT_FRAG,
-  dissolution: DISSOLUTION_FRAG,
   astral: ASTRAL_FRAG,
-  horizon: HORIZON_FRAG,
   abyss: ABYSS_FRAG,
-  temple: TEMPLE_FRAG,
   ember: EMBER_FRAG,
-  meridian: MERIDIAN_FRAG,
   tide: TIDE_FRAG,
-  monolith: MONOLITH_FRAG,
   obsidian: OBSIDIAN_FRAG,
-  crypt: CRYPT_FRAG,
-  phantom: PHANTOM_FRAG,
-  wraith: WRAITH_FRAG,
   umbra: UMBRA_FRAG,
-  chasm: CHASM_FRAG,
   inferno: INFERNO_FRAG,
   plasma: PLASMA_FRAG,
-  torrent: TORRENT_FRAG,
-  entropy: ENTROPY_FRAG,
   vortex: VORTEX_FRAG,
-  glitch: GLITCH_FRAG,
-  corrosion: CORROSION_FRAG,
-  smother: SMOTHER_FRAG,
-  fracture: FRACTURE_FRAG,
   aether: AETHER_FRAG,
-  miasma: MIASMA_FRAG,
-  cinder: CINDER_FRAG,
-  requiem: REQUIEM_FRAG,
   pulsar: PULSAR_FRAG,
   quasar: QUASAR_FRAG,
   supernova: SUPERNOVA_FRAG,
   nebula: NEBULA_FRAG,
   singularity: SINGULARITY_FRAG,
   stardust: STARDUST_FRAG,
-  corona: CORONA_FRAG,
-  solstice: SOLSTICE_FRAG,
   drift: DRIFT_FRAG,
   expanse: EXPANSE_FRAG,
   comet: COMET_FRAG,
   magnetar: MAGNETAR_FRAG,
   protostar: PROTOSTAR_FRAG,
-  darkstar: DARKSTAR_FRAG,
+
   redshift: REDSHIFT_FRAG,
-  accretion: ACCRETION_FRAG,
   perihelion: PERIHELION_FRAG,
   aphelion: APHELION_FRAG,
   // Visionary
-  sigil: SIGIL_FRAG,
+
   portal: PORTAL_FRAG,
   oracle: ORACLE_FRAG,
   revelation: REVELATION_FRAG,
   threshold: THRESHOLD_FRAG,
   ascension: ASCENSION_FRAG,
-  eclipse: ECLIPSE_FRAG,
   rapture: RAPTURE_FRAG,
-  prophecy: PROPHECY_FRAG,
-  glyph: GLYPH_FRAG,
-  rune: RUNE_FRAG,
   mandorla: MANDORLA_FRAG,
   seraph: SERAPH_FRAG,
-  gnosis: GNOSIS_FRAG,
-  yantra: YANTRA_FRAG,
-  ankh: ANKH_FRAG,
-  alchemy: ALCHEMY_FRAG,
-  dharma: DHARMA_FRAG,
+
   // Organic
   moss: MOSS_FRAG,
-  coral: CORAL_FRAG,
-  bloom: BLOOM_FRAG,
+
   spore: SPORE_FRAG,
   chrysalis: CHRYSALIS_FRAG,
   plankton: PLANKTON_FRAG,
   lichen: LICHEN_FRAG,
-  dendrite: DENDRITE_FRAG,
+
   membrane: MEMBRANE_FRAG,
   growth: GROWTH_FRAG,
   enzyme: ENZYME_FRAG,
-  synapse: SYNAPSE_FRAG,
+
   mitosis: MITOSIS_FRAG,
   pollen: POLLEN_FRAG,
   symbiosis: SYMBIOSIS_FRAG,
-  tendril: TENDRIL_FRAG,
+
   rhizome: RHIZOME_FRAG,
   chitin: CHITIN_FRAG,
-  cortex: CORTEX_FRAG,
-  axon: AXON_FRAG,
+
   phylum: PHYLUM_FRAG,
-  canopy: CANOPY_FRAG,
-  nectar: NECTAR_FRAG,
-  marrow: MARROW_FRAG,
-  capillary: CAPILLARY_FRAG,
-  ventricle: VENTRICLE_FRAG,
-  alveoli: ALVEOLI_FRAG,
-  follicle: FOLLICLE_FRAG,
+
   kelp: KELP_FRAG,
   mangrove: MANGROVE_FRAG,
-  cocoon: COCOON_FRAG,
-  blossom: BLOSSOM_FRAG,
-  metamorph: METAMORPH_FRAG,
-  peristalsis: PERISTALSIS_FRAG,
+
   // Geometry
   lattice: LATTICE_FRAG,
-  helix: HELIX_FRAG,
-  weave: WEAVE_FRAG,
-  prism: PRISM_FRAG,
+
   spiral: SPIRAL_FRAG,
-  torus: TORUS_FRAG,
+
   fibonacci: FIBONACCI_FRAG,
   geodesic: GEODESIC_FRAG,
-  penrose: PENROSE_FRAG,
+
   moire: MOIRE_FRAG,
-  cells: CELLS_FRAG,
-  quasicrystal: QUASICRYSTAL_FRAG,
-  tensegrity: TENSEGRITY_FRAG,
+
   catenary: CATENARY_FRAG,
-  hyperbolic: HYPERBOLIC_FRAG,
-  interference: INTERFERENCE_FRAG,
-  tessellation: TESSELLATION_FRAG,
-  origami: ORIGAMI_FRAG,
   // Visionary (new)
   rosetta: ROSETTA_FRAG,
-  ouroboros: OUROBOROS_FRAG,
-  merkaba: MERKABA_FRAG,
-  enneagram: ENNEAGRAM_FRAG,
-  caduceus: CADUCEUS_FRAG,
   halo: HALO_FRAG,
-  sanctum: SANCTUM_FRAG,
-  transfigure: TRANSFIGURE_FRAG,
-  invocation: INVOCATION_FRAG,
   nimbus: NIMBUS_FRAG,
-  chalice: CHALICE_FRAG,
-  torii: TORII_FRAG,
-  aegis: AEGIS_FRAG,
-  vesper: VESPER_FRAG,
-  avatar: AVATAR_FRAG,
-  covenant: COVENANT_FRAG,
   // Cosmic (new)
   nadir: NADIR_FRAG,
-  equinox: EQUINOX_FRAG,
   parsec: PARSEC_FRAG,
-  solaris: SOLARIS_FRAG,
-  lunar: LUNAR_FRAG,
   nova: NOVA_FRAG,
   photon: PHOTON_FRAG,
   helios: HELIOS_FRAG,
   selene: SELENE_FRAG,
-  ganymede: GANYMEDE_FRAG,
   kepler: KEPLER_FRAG,
   cassini: CASSINI_FRAG,
-  voyager: VOYAGER_FRAG,
   hubble: HUBBLE_FRAG,
   tycho: TYCHO_FRAG,
   doppler: DOPPLER_FRAG,
@@ -443,14 +278,10 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   cardioid: CARDIOID_FRAG,
   lissajous: LISSAJOUS_FRAG,
   cymatic: CYMATIC_FRAG,
-  chladni: CHLADNI_FRAG,
   guilloche: GUILLOCHE_FRAG,
-  kolam: KOLAM_FRAG,
   trefoil: TREFOIL_FRAG,
   quatrefoil: QUATREFOIL_FRAG,
   involute: INVOLUTE_FRAG,
-  caustic: CAUSTIC_FRAG,
-  frieze: FRIEZE_FRAG,
   rosette: ROSETTE_FRAG,
   roulette: ROULETTE_FRAG,
   deltoid: DELTOID_FRAG,
@@ -458,20 +289,12 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   epicycle: EPICYCLE_FRAG,
   // Elemental (new)
   chinook: CHINOOK_FRAG,
-  caldera: CALDERA_FRAG,
   thermal: THERMAL_FRAG,
-  tsunami: TSUNAMI_FRAG,
   lightning: LIGHTNING_FRAG,
   maelstrom: MAELSTROM_FRAG,
-  blizzard: BLIZZARD_FRAG,
-  avalanche: AVALANCHE_FRAG,
   riptide: RIPTIDE_FRAG,
-  pyroclast: PYROCLAST_FRAG,
-  tempest: TEMPEST_FRAG,
   deluge: DELUGE_FRAG,
   squall: SQUALL_FRAG,
-  erosion: EROSION_FRAG,
-  fumarole: FUMAROLE_FRAG,
   // Elemental (nature)
   river: RIVER_FRAG,
   rain: RAIN_FRAG,
@@ -480,7 +303,6 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   zephyr: ZEPHYR_FRAG,
   // Nature (fire / cellular / light)
   flame: FLAME_FRAG,
-  wildfire: WILDFIRE_FRAG,
   amoeba: AMOEBA_FRAG,
   cytoplasm: CYTOPLASM_FRAG,
   firefly: FIREFLY_FRAG,
@@ -488,25 +310,15 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   reef: REEF_FRAG,
   abyssal: ABYSSAL_FRAG,
   starfield: STARFIELD_FRAG,
-  shimmer: SHIMMER_FRAG,
   radiance: RADIANCE_FRAG,
   // Dark (new)
   specter: SPECTER_FRAG,
   blight: BLIGHT_FRAG,
   necrosis: NECROSIS_FRAG,
-  pyre: PYRE_FRAG,
   dirge: DIRGE_FRAG,
   revenant: REVENANT_FRAG,
-  banshee: BANSHEE_FRAG,
-  omen: OMEN_FRAG,
-  harbinger: HARBINGER_FRAG,
-  dolmen: DOLMEN_FRAG,
-  cairn: CAIRN_FRAG,
-  ossuary: OSSUARY_FRAG,
-  oblivion: OBLIVION_FRAG,
   lament: LAMENT_FRAG,
   hollow: HOLLOW_FRAG,
-  perdition: PERDITION_FRAG,
 };
 
 export interface ModeMeta {
@@ -518,49 +330,22 @@ export interface ModeMeta {
 export const MODE_META: ModeMeta[] = [
   // Visionary
   { mode: "prismatic", label: "Prismatic", category: "Visionary" },
-  { mode: "dissolution", label: "Dissolution", category: "Visionary" },
-  { mode: "mandala", label: "Mandala", category: "Visionary" },
   { mode: "astral", label: "Astral", category: "Visionary" },
-  { mode: "temple", label: "Temple", category: "Visionary" },
-  { mode: "sigil", label: "Sigil", category: "Visionary" },
+
   { mode: "portal", label: "Portal", category: "Visionary" },
   { mode: "oracle", label: "Oracle", category: "Visionary" },
   { mode: "revelation", label: "Revelation", category: "Visionary" },
   { mode: "threshold", label: "Threshold", category: "Visionary" },
   { mode: "ascension", label: "Ascension", category: "Visionary" },
-  { mode: "eclipse", label: "Eclipse", category: "Visionary" },
   { mode: "rapture", label: "Rapture", category: "Visionary" },
-  { mode: "prophecy", label: "Prophecy", category: "Visionary" },
-  { mode: "glyph", label: "Glyph", category: "Visionary" },
-  { mode: "rune", label: "Rune", category: "Visionary" },
   { mode: "mandorla", label: "Mandorla", category: "Visionary" },
   { mode: "seraph", label: "Seraph", category: "Visionary" },
-  { mode: "gnosis", label: "Gnosis", category: "Visionary" },
-  { mode: "yantra", label: "Yantra", category: "Visionary" },
-  { mode: "ankh", label: "Ankh", category: "Visionary" },
-  { mode: "alchemy", label: "Alchemy", category: "Visionary" },
-  { mode: "dharma", label: "Dharma", category: "Visionary" },
+
   { mode: "rosetta", label: "Rosetta", category: "Visionary" },
-  { mode: "ouroboros", label: "Ouroboros", category: "Visionary" },
-  { mode: "merkaba", label: "Merkaba", category: "Visionary" },
-  { mode: "enneagram", label: "Enneagram", category: "Visionary" },
-  { mode: "caduceus", label: "Caduceus", category: "Visionary" },
   { mode: "halo", label: "Halo", category: "Visionary" },
-  { mode: "sanctum", label: "Sanctum", category: "Visionary" },
-  { mode: "transfigure", label: "Transfigure", category: "Visionary" },
-  { mode: "invocation", label: "Invocation", category: "Visionary" },
   { mode: "nimbus", label: "Nimbus", category: "Visionary" },
-  { mode: "chalice", label: "Chalice", category: "Visionary" },
-  { mode: "torii", label: "Torii", category: "Visionary" },
-  { mode: "aegis", label: "Aegis", category: "Visionary" },
-  { mode: "vesper", label: "Vesper", category: "Visionary" },
-  { mode: "avatar", label: "Avatar", category: "Visionary" },
-  { mode: "covenant", label: "Covenant", category: "Visionary" },
   // Cosmic
   { mode: "cosmos", label: "Cosmos", category: "Cosmic" },
-  { mode: "warp", label: "Warp", category: "Cosmic" },
-  { mode: "fractal", label: "Fractal", category: "Cosmic" },
-  { mode: "horizon", label: "Horizon", category: "Cosmic" },
   { mode: "abyss", label: "Abyss", category: "Cosmic" },
   { mode: "pulsar", label: "Pulsar", category: "Cosmic" },
   { mode: "quasar", label: "Quasar", category: "Cosmic" },
@@ -568,109 +353,75 @@ export const MODE_META: ModeMeta[] = [
   { mode: "nebula", label: "Nebula", category: "Cosmic" },
   { mode: "singularity", label: "Singularity", category: "Cosmic" },
   { mode: "stardust", label: "Stardust", category: "Cosmic" },
-  { mode: "corona", label: "Corona", category: "Cosmic" },
-  { mode: "solstice", label: "Solstice", category: "Cosmic" },
   { mode: "drift", label: "Drift", category: "Cosmic" },
   { mode: "expanse", label: "Expanse", category: "Cosmic" },
   { mode: "comet", label: "Comet", category: "Cosmic" },
   { mode: "magnetar", label: "Magnetar", category: "Cosmic" },
   { mode: "protostar", label: "Protostar", category: "Cosmic" },
-  { mode: "darkstar", label: "Darkstar", category: "Cosmic" },
+
   { mode: "redshift", label: "Redshift", category: "Cosmic" },
-  { mode: "accretion", label: "Accretion", category: "Cosmic" },
   { mode: "perihelion", label: "Perihelion", category: "Cosmic" },
   { mode: "aphelion", label: "Aphelion", category: "Cosmic" },
   { mode: "nadir", label: "Nadir", category: "Cosmic" },
-  { mode: "equinox", label: "Equinox", category: "Cosmic" },
   { mode: "parsec", label: "Parsec", category: "Cosmic" },
-  { mode: "solaris", label: "Solaris", category: "Cosmic" },
-  { mode: "lunar", label: "Lunar", category: "Cosmic" },
   { mode: "nova", label: "Nova", category: "Cosmic" },
   { mode: "photon", label: "Photon", category: "Cosmic" },
   { mode: "helios", label: "Helios", category: "Cosmic" },
   { mode: "selene", label: "Selene", category: "Cosmic" },
-  { mode: "ganymede", label: "Ganymede", category: "Cosmic" },
   { mode: "kepler", label: "Kepler", category: "Cosmic" },
   { mode: "cassini", label: "Cassini", category: "Cosmic" },
-  { mode: "voyager", label: "Voyager", category: "Cosmic" },
   { mode: "hubble", label: "Hubble", category: "Cosmic" },
   { mode: "tycho", label: "Tycho", category: "Cosmic" },
   { mode: "doppler", label: "Doppler", category: "Cosmic" },
   // Organic
-  { mode: "liquid", label: "Liquid", category: "Organic" },
-  { mode: "mycelium", label: "Mycelium", category: "Organic" },
+
   { mode: "ethereal", label: "Entity", category: "Organic" },
   { mode: "ember", label: "Ember", category: "Organic" },
   { mode: "tide", label: "Tide", category: "Organic" },
   { mode: "moss", label: "Moss", category: "Organic" },
-  { mode: "coral", label: "Coral", category: "Organic" },
-  { mode: "bloom", label: "Bloom", category: "Organic" },
+
   { mode: "spore", label: "Spore", category: "Organic" },
   { mode: "chrysalis", label: "Chrysalis", category: "Organic" },
   { mode: "plankton", label: "Plankton", category: "Organic" },
   { mode: "lichen", label: "Lichen", category: "Organic" },
-  { mode: "dendrite", label: "Dendrite", category: "Organic" },
+
   { mode: "membrane", label: "Membrane", category: "Organic" },
   { mode: "growth", label: "Growth", category: "Organic" },
   { mode: "enzyme", label: "Enzyme", category: "Organic" },
-  { mode: "synapse", label: "Synapse", category: "Organic" },
+
   { mode: "mitosis", label: "Mitosis", category: "Organic" },
   { mode: "pollen", label: "Pollen", category: "Organic" },
   { mode: "symbiosis", label: "Symbiosis", category: "Organic" },
-  { mode: "tendril", label: "Tendril", category: "Organic" },
+
   { mode: "rhizome", label: "Rhizome", category: "Organic" },
   { mode: "chitin", label: "Chitin", category: "Organic" },
-  { mode: "cortex", label: "Cortex", category: "Organic" },
-  { mode: "axon", label: "Axon", category: "Organic" },
   { mode: "phylum", label: "Phylum", category: "Organic" },
-  { mode: "canopy", label: "Canopy", category: "Organic" },
-  { mode: "nectar", label: "Nectar", category: "Organic" },
-  { mode: "marrow", label: "Marrow", category: "Organic" },
-  { mode: "capillary", label: "Capillary", category: "Organic" },
-  { mode: "ventricle", label: "Ventricle", category: "Organic" },
-  { mode: "alveoli", label: "Alveoli", category: "Organic" },
-  { mode: "follicle", label: "Follicle", category: "Organic" },
+
   { mode: "kelp", label: "Kelp", category: "Organic" },
   { mode: "mangrove", label: "Mangrove", category: "Organic" },
-  { mode: "cocoon", label: "Cocoon", category: "Organic" },
-  { mode: "blossom", label: "Blossom", category: "Organic" },
-  { mode: "metamorph", label: "Metamorph", category: "Organic" },
-  { mode: "peristalsis", label: "Peristalsis", category: "Organic" },
+
   // Geometry
   { mode: "sacred", label: "Sacred", category: "Geometry" },
   { mode: "tesseract", label: "Tesseract", category: "Geometry" },
   { mode: "neon", label: "Neon", category: "Geometry" },
-  { mode: "meridian", label: "Meridian", category: "Geometry" },
   { mode: "lattice", label: "Lattice", category: "Geometry" },
-  { mode: "helix", label: "Helix", category: "Geometry" },
-  { mode: "weave", label: "Weave", category: "Geometry" },
-  { mode: "prism", label: "Prism", category: "Geometry" },
+
   { mode: "spiral", label: "Spiral", category: "Geometry" },
-  { mode: "torus", label: "Torus", category: "Geometry" },
+
   { mode: "fibonacci", label: "Fibonacci", category: "Geometry" },
   { mode: "geodesic", label: "Geodesic", category: "Geometry" },
-  { mode: "penrose", label: "Penrose", category: "Geometry" },
+
   { mode: "moire", label: "Moire", category: "Geometry" },
-  { mode: "cells", label: "Cells", category: "Geometry" },
-  { mode: "quasicrystal", label: "Quasicrystal", category: "Geometry" },
-  { mode: "tensegrity", label: "Tensegrity", category: "Geometry" },
+
   { mode: "catenary", label: "Catenary", category: "Geometry" },
-  { mode: "hyperbolic", label: "Hyperbolic", category: "Geometry" },
-  { mode: "interference", label: "Interference", category: "Geometry" },
-  { mode: "tessellation", label: "Tessellation", category: "Geometry" },
-  { mode: "origami", label: "Origami", category: "Geometry" },
   { mode: "astroid", label: "Astroid", category: "Geometry" },
   { mode: "cardioid", label: "Cardioid", category: "Geometry" },
   { mode: "lissajous", label: "Lissajous", category: "Geometry" },
   { mode: "cymatic", label: "Cymatic", category: "Geometry" },
-  { mode: "chladni", label: "Chladni", category: "Geometry" },
   { mode: "guilloche", label: "Guilloche", category: "Geometry" },
-  { mode: "kolam", label: "Kolam", category: "Geometry" },
   { mode: "trefoil", label: "Trefoil", category: "Geometry" },
   { mode: "quatrefoil", label: "Quatrefoil", category: "Geometry" },
   { mode: "involute", label: "Involute", category: "Geometry" },
-  { mode: "caustic", label: "Caustic", category: "Geometry" },
-  { mode: "frieze", label: "Frieze", category: "Geometry" },
   { mode: "rosette", label: "Rosette", category: "Geometry" },
   { mode: "roulette", label: "Roulette", category: "Geometry" },
   { mode: "deltoid", label: "Deltoid", category: "Geometry" },
@@ -684,32 +435,21 @@ export const MODE_META: ModeMeta[] = [
   { mode: "ocean",     label: "Ocean",     category: "Elemental" },
   { mode: "cascade",   label: "Cascade",   category: "Elemental" },
   { mode: "whirlpool", label: "Whirlpool", category: "Elemental" },
-  { mode: "current",   label: "Current",   category: "Elemental" },
-  { mode: "delta",     label: "Delta",     category: "Elemental" },
   { mode: "flux",      label: "Flux",      category: "Elemental" },
   { mode: "monsoon",   label: "Monsoon",   category: "Elemental" },
   { mode: "haze",      label: "Haze",      category: "Elemental" },
   { mode: "geyser",    label: "Geyser",    category: "Elemental" },
   { mode: "magma",     label: "Magma",     category: "Elemental" },
-  { mode: "permafrost", label: "Permafrost", category: "Elemental" },
   { mode: "sandstorm", label: "Sandstorm", category: "Elemental" },
   { mode: "typhoon",   label: "Typhoon",   category: "Elemental" },
   { mode: "vapor",     label: "Vapor",     category: "Elemental" },
   { mode: "chinook", label: "Chinook", category: "Elemental" },
-  { mode: "caldera", label: "Caldera", category: "Elemental" },
   { mode: "thermal", label: "Thermal", category: "Elemental" },
-  { mode: "tsunami", label: "Tsunami", category: "Elemental" },
   { mode: "lightning", label: "Lightning", category: "Elemental" },
   { mode: "maelstrom", label: "Maelstrom", category: "Elemental" },
-  { mode: "blizzard", label: "Blizzard", category: "Elemental" },
-  { mode: "avalanche", label: "Avalanche", category: "Elemental" },
   { mode: "riptide", label: "Riptide", category: "Elemental" },
-  { mode: "pyroclast", label: "Pyroclast", category: "Elemental" },
-  { mode: "tempest", label: "Tempest", category: "Elemental" },
   { mode: "deluge", label: "Deluge", category: "Elemental" },
   { mode: "squall", label: "Squall", category: "Elemental" },
-  { mode: "erosion", label: "Erosion", category: "Elemental" },
-  { mode: "fumarole", label: "Fumarole", category: "Elemental" },
   { mode: "river", label: "River", category: "Elemental" },
   { mode: "rain", label: "Rain", category: "Elemental" },
   { mode: "ripple", label: "Ripple", category: "Elemental" },
@@ -717,7 +457,6 @@ export const MODE_META: ModeMeta[] = [
   { mode: "zephyr", label: "Zephyr", category: "Elemental" },
   // Nature (fire / cellular / light)
   { mode: "flame", label: "Flame", category: "Elemental" },
-  { mode: "wildfire", label: "Wildfire", category: "Elemental" },
   { mode: "amoeba", label: "Amoeba", category: "Organic" },
   { mode: "cytoplasm", label: "Cytoplasm", category: "Organic" },
   { mode: "firefly", label: "Firefly", category: "Organic" },
@@ -725,72 +464,42 @@ export const MODE_META: ModeMeta[] = [
   { mode: "reef", label: "Reef", category: "Elemental" },
   { mode: "abyssal", label: "Abyssal", category: "Elemental" },
   { mode: "starfield", label: "Starfield", category: "Cosmic" },
-  { mode: "shimmer", label: "Shimmer", category: "Elemental" },
   { mode: "radiance", label: "Radiance", category: "Elemental" },
   // 3D Worlds
   { mode: "orb", label: "Orb", category: "3D Worlds" },
   { mode: "field", label: "Field", category: "3D Worlds" },
-  { mode: "rings", label: "Rings", category: "3D Worlds" },
   { mode: "aurora", label: "Aurora", category: "3D Worlds" },
-  { mode: "totem", label: "Totem", category: "3D Worlds" },
-  { mode: "wormhole", label: "Wormhole", category: "3D Worlds" },
+
   { mode: "galaxy", label: "Galaxy", category: "3D Worlds" },
   { mode: "depths", label: "Depths", category: "3D Worlds" },
   { mode: "bonfire", label: "Bonfire", category: "3D Worlds" },
   { mode: "crystal", label: "Crystal", category: "3D Worlds" },
-  { mode: "dna", label: "DNA", category: "3D Worlds" },
+
   { mode: "swarm", label: "Swarm", category: "3D Worlds" },
   { mode: "lotus", label: "Lotus", category: "3D Worlds" },
   { mode: "cloud", label: "Cloud", category: "3D Worlds" },
   { mode: "waterfall", label: "Waterfall", category: "3D Worlds" },
-  { mode: "terrain", label: "Terrain", category: "3D Worlds" },
-  { mode: "obelisk", label: "Obelisk", category: "3D Worlds" },
+
   { mode: "wave", label: "Wave", category: "3D Worlds" },
-  { mode: "silk", label: "Silk", category: "3D Worlds" },
-  { mode: "orbit", label: "Orbit", category: "3D Worlds" },
-  { mode: "pillar", label: "Pillar", category: "3D Worlds" },
+
   { mode: "seabed", label: "Seabed", category: "3D Worlds" },
-  { mode: "molecule", label: "Molecule", category: "3D Worlds" },
-  { mode: "blackhole", label: "Black Hole", category: "3D Worlds" },
+
   { mode: "cage", label: "Cage", category: "3D Worlds" },
   { mode: "pendulum", label: "Pendulum", category: "3D Worlds" },
   // Dark
-  { mode: "monolith", label: "Monolith", category: "Dark" },
   { mode: "obsidian", label: "Obsidian", category: "Dark" },
-  { mode: "crypt",    label: "Crypt",    category: "Dark" },
-  { mode: "phantom",  label: "Phantom",  category: "Dark" },
-  { mode: "wraith",   label: "Wraith",   category: "Dark" },
   { mode: "umbra",    label: "Umbra",    category: "Dark" },
-  { mode: "chasm",    label: "Chasm",    category: "Dark" },
   { mode: "inferno",  label: "Inferno",  category: "Dark" },
   { mode: "plasma",   label: "Plasma",   category: "Dark" },
-  { mode: "torrent",  label: "Torrent",  category: "Dark" },
-  { mode: "entropy",  label: "Entropy",  category: "Dark" },
   { mode: "vortex",   label: "Vortex",   category: "Dark" },
-  { mode: "glitch",   label: "Glitch",   category: "Dark" },
-  { mode: "corrosion", label: "Corrosion", category: "Dark" },
-  { mode: "smother",  label: "Smother",  category: "Dark" },
-  { mode: "fracture", label: "Fracture", category: "Dark" },
   { mode: "aether",   label: "Aether",   category: "Dark" },
-  { mode: "miasma",   label: "Miasma",   category: "Dark" },
-  { mode: "cinder",   label: "Cinder",   category: "Dark" },
-  { mode: "requiem",  label: "Requiem",  category: "Dark" },
   { mode: "specter", label: "Specter", category: "Dark" },
   { mode: "blight", label: "Blight", category: "Dark" },
   { mode: "necrosis", label: "Necrosis", category: "Dark" },
-  { mode: "pyre", label: "Pyre", category: "Dark" },
   { mode: "dirge", label: "Dirge", category: "Dark" },
   { mode: "revenant", label: "Revenant", category: "Dark" },
-  { mode: "banshee", label: "Banshee", category: "Dark" },
-  { mode: "omen", label: "Omen", category: "Dark" },
-  { mode: "harbinger", label: "Harbinger", category: "Dark" },
-  { mode: "dolmen", label: "Dolmen", category: "Dark" },
-  { mode: "cairn", label: "Cairn", category: "Dark" },
-  { mode: "ossuary", label: "Ossuary", category: "Dark" },
-  { mode: "oblivion", label: "Oblivion", category: "Dark" },
   { mode: "lament", label: "Lament", category: "Dark" },
   { mode: "hollow", label: "Hollow", category: "Dark" },
-  { mode: "perdition", label: "Perdition", category: "Dark" },
   // AI Imagery — no shader, pure AI-generated visuals
   { mode: "dreamscape", label: "Dreamscape", category: "AI Imagery" },
   { mode: "visions", label: "Visions", category: "AI Imagery" },
@@ -842,11 +551,11 @@ export const MODE_META: ModeMeta[] = [
 export const MODE_CATEGORIES = ["Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"] as const;
 
 export const MODES_3D: Set<string> = new Set([
-  "orb", "field", "rings", "aurora", "totem", "wormhole",
-  "galaxy", "depths", "bonfire", "crystal", "dna", "swarm",
-  "lotus", "cloud", "waterfall", "terrain",
-  "obelisk", "wave", "silk", "orbit", "pillar", "seabed",
-  "molecule", "blackhole", "cage", "pendulum",
+  "orb", "field", "aurora",
+  "galaxy", "depths", "bonfire", "crystal", "swarm",
+  "lotus", "cloud", "waterfall",
+  "wave", "seabed",
+  "cage", "pendulum",
 ]);
 
 /** AI-only modes — no shader rendered, AI images are the sole visual */

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Wand2, Loader2, RefreshCw } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { toast } from "sonner";
+import { useAudioStore } from "@/lib/audio/audio-store";
+import { runAnalysis } from "@/lib/audio/analysis-runner";
 
 interface AnalyzeButtonProps {
   recordingId: string;
@@ -17,83 +17,24 @@ interface AnalyzeButtonProps {
 }
 
 export function AnalyzeButton({ recordingId, recordingTitle, audioUrl, onComplete, hasExisting }: AnalyzeButtonProps) {
-  const [analyzing, setAnalyzing] = useState(false);
-  const [stage, setStage] = useState("");
-  const [progress, setProgress] = useState(0);
+  const inProgress = useAudioStore((s) => s.analysisInProgress);
+  const completed = useAudioStore((s) => s.analysisComplete);
 
-  async function handleAnalyze() {
-    setAnalyzing(true);
-    setStage("Starting analysis...");
-    setProgress(0);
-
-    try {
-      const { transcribeAudio } = await import("@/lib/audio/transcribe");
-      const { analyzeNotes } = await import("@/lib/audio/analyze");
-
-      const notes = await transcribeAudio(audioUrl, (stageMsg, prog) => {
-        setStage(stageMsg);
-        setProgress(prog);
-      });
-
-      setStage("Analyzing music theory...");
-      setProgress(90);
-
-      const result = analyzeNotes(notes);
-
-      setStage("Saving results...");
-      setProgress(95);
-
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("analyses")
-        .upsert({
-          recording_id: recordingId,
-          status: result.status,
-          key_signature: result.key_signature,
-          tempo: result.tempo,
-          time_signature: result.time_signature,
-          chords: result.chords,
-          notes: result.notes,
-          midi_data: result.midi_data,
-        }, { onConflict: "recording_id" })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setStage("Generating teaching summary...");
-      setProgress(97);
-
-      // Generate AI teaching summary
-      try {
-        const res = await fetch("/api/analysis/summarize", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            analysisId: data.id,
-            analysis: data,
-            title: recordingTitle,
-          }),
-        });
-        if (res.ok) {
-          const { summary } = await res.json();
-          data.summary = summary;
-        }
-      } catch (summaryErr) {
-        console.error("Summary generation failed:", summaryErr);
-        // Non-fatal — analysis still works without summary
-      }
-
-      setProgress(100);
-      toast.success("Analysis complete!");
-      onComplete(data);
-    } catch (err) {
-      console.error("Analysis failed:", err);
-      toast.error("Analysis failed. Please try again.");
-    } finally {
-      setAnalyzing(false);
-    }
+  // Check if completed result is waiting for this recording
+  const completedForThis = completed?.recordingId === recordingId ? completed.data : null;
+  if (completedForThis) {
+    // Pick up the result and clear it
+    onComplete(completedForThis);
+    useAudioStore.getState().setAnalysisComplete(null);
   }
+
+  const analyzing = inProgress?.recordingId === recordingId;
+  const stage = analyzing ? inProgress.stage : "";
+  const progress = analyzing ? inProgress.progress : 0;
+
+  const handleAnalyze = useCallback(() => {
+    runAnalysis(recordingId, audioUrl, recordingTitle);
+  }, [recordingId, audioUrl, recordingTitle]);
 
   if (analyzing) {
     return (

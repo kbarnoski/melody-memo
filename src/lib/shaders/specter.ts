@@ -38,29 +38,29 @@ void main() {
   float dist = ghostShape(ghostUV + warp * (1.0 + u_bass * 0.5), t);
 
   // Layered translucency — multiple soft edges
-  float innerGlow = exp(-max(dist, 0.0) * 8.0) * 0.12;
-  float midGlow = exp(-max(dist, 0.0) * 3.0) * 0.08;
-  float outerGlow = exp(-max(dist, 0.0) * 1.2) * 0.05;
+  float innerGlow = exp(-max(dist, 0.0) * 8.0) * 0.5;
+  float midGlow = exp(-max(dist, 0.0) * 3.0) * 0.3;
+  float outerGlow = exp(-max(dist, 0.0) * 1.2) * 0.15;
 
   // Background: near-black with faint noise texture
   float bgNoise = fbm(uv * 2.0 + t * 0.05) * 0.02;
   vec3 bgColor = palette(0.7,
-    vec3(0.005, 0.005, 0.01),
-    vec3(0.01, 0.008, 0.02),
+    vec3(0.025, 0.025, 0.04),
+    vec3(0.04, 0.035, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.6, 0.7, 0.85));
   bgColor += bgNoise;
 
   // Ghost colors: cold, pale, barely visible
   vec3 ghostCore = palette(0.55 + u_amplitude * 0.15,
-    vec3(0.02, 0.02, 0.03),
-    vec3(0.06, 0.05, 0.08),
+    vec3(0.07, 0.06, 0.1),
+    vec3(0.15, 0.12, 0.2),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.6, 0.8));
 
   vec3 ghostEdge = palette(0.4 + u_mid * 0.1,
-    vec3(0.01, 0.01, 0.02),
-    vec3(0.03, 0.025, 0.06),
+    vec3(0.05, 0.05, 0.08),
+    vec3(0.1, 0.08, 0.16),
     vec3(1.0, 1.0, 1.0),
     vec3(0.55, 0.65, 0.9));
 
@@ -72,7 +72,7 @@ void main() {
   // Treble: faint particle sparkle in the ghost's wake
   float wake = smoothstep(0.1, 0.4, -ghostUV.y) * exp(-max(dist, 0.0) * 2.0);
   float sparkle = snoise(uv * 20.0 + t * 3.0);
-  color += ghostEdge * smoothstep(0.7, 0.95, sparkle) * wake * u_treble * 0.06;
+  color += ghostEdge * smoothstep(0.7, 0.95, sparkle) * wake * u_treble * 0.15;
 
   // Trailing afterimage — ghost leaves faint traces behind
   float trail = 0.0;
@@ -80,7 +80,7 @@ void main() {
     float fi = float(i);
     vec2 pastDrift = vec2(sin((t - fi * 0.4) * 0.3) * 0.15, cos((t - fi * 0.4) * 0.2) * 0.08);
     float pastDist = ghostShape(uv - pastDrift + warp * 0.5, t - fi * 0.4);
-    trail += exp(-max(pastDist, 0.0) * 4.0) * 0.02 / fi;
+    trail += exp(-max(pastDist, 0.0) * 4.0) * 0.08 / fi;
   }
   color += ghostEdge * trail;
 

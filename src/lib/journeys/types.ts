@@ -155,4 +155,6 @@ export interface JourneyFrame {
   halation: number;
   /** Optional second shader to layer underneath during peak moments */
   dualShaderMode?: string;
+  /** Optional third shader for even richer layering */
+  tertiaryShaderMode?: string;
 }

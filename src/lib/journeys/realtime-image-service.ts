@@ -16,7 +16,7 @@ interface RealtimeImageOptions {
 type FrameCallback = (imageUrl: string) => void;
 
 const STYLE_SUFFIX = "mystical art, luminous, sacred, transcendent, visionary, otherworldly beauty";
-const DEFAULT_COST_CAP = 5.0;
+const DEFAULT_COST_CAP = 10.0;
 
 // ─── LRU Image Cache ───
 const IMAGE_CACHE_MAX = 20;
@@ -70,9 +70,10 @@ class RealtimeImageService {
   private costPerFrame = 0.002;
   private pendingFrames = 0;
   private maxPendingFrames = 2;
-  private restInFlight = false;
+  private restInFlight = 0; // number of concurrent REST requests
+  private maxRestConcurrent = 2; // allow 2 parallel REST requests
   private imageCache = new ImageCache();
-  private abortController: AbortController | null = null;
+  private abortControllers = new Set<AbortController>();
 
   /** Check if AI image generation is available (5s timeout) */
   async checkAvailability(): Promise<boolean> {
@@ -194,19 +195,21 @@ class RealtimeImageService {
     }
   }
 
-  /** Generate frame via REST API (server-side proxy) */
+  /** Generate frame via REST API (server-side proxy) — allows concurrent requests */
   async generateFrameREST(options: RealtimeImageOptions): Promise<string | null> {
     if (this.sessionCost >= this.costCap) return null;
-    if (this.restInFlight) return null; // Only one REST request at a time
-    this.restInFlight = true;
+    if (this.restInFlight >= this.maxRestConcurrent) return null;
+    this.restInFlight++;
+
+    const controller = new AbortController();
+    this.abortControllers.add(controller);
 
     try {
-      this.abortController = new AbortController();
-      const timeout = setTimeout(() => this.abortController?.abort(), 45000);
+      const timeout = setTimeout(() => controller.abort(), 45000);
       const res = await fetch("/api/ai-image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        signal: this.abortController.signal,
+        signal: controller.signal,
         body: JSON.stringify({
           prompt: options.prompt,
           denoisingStrength: options.denoisingStrength,
@@ -225,7 +228,8 @@ class RealtimeImageService {
     } catch {
       return null;
     } finally {
-      this.restInFlight = false;
+      this.restInFlight = Math.max(0, this.restInFlight - 1);
+      this.abortControllers.delete(controller);
     }
   }
 
@@ -245,19 +249,19 @@ class RealtimeImageService {
     this.imageCache.set(prompt, img);
   }
 
-  /** Cancel in-flight REST request */
+  /** Cancel all in-flight REST requests */
   cancelInFlight(): void {
-    if (this.abortController) {
-      this.abortController.abort();
-      this.abortController = null;
+    for (const c of this.abortControllers) {
+      c.abort();
     }
+    this.abortControllers.clear();
   }
 
   resetSession(): void {
     this.sessionCost = 0;
     this.pendingFrames = 0;
     this.available = null;
-    this.restInFlight = false;
+    this.restInFlight = 0;
     this.imageCache.clear();
     this.cancelInFlight();
   }

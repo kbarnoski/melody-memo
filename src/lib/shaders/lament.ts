@@ -76,22 +76,22 @@ void main() {
   // Background: dark with very subtle gradient
   float bgGrad = smoothstep(0.8, -0.8, uv.y) * 0.01;
   vec3 bgColor = palette(0.7,
-    vec3(0.004, 0.004, 0.007),
-    vec3(0.006, 0.005, 0.01),
+    vec3(0.02, 0.02, 0.03),
+    vec3(0.04, 0.04, 0.06),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.55, 0.75));
   bgColor += bgGrad;
 
   // Droplet colors: cool, watery, sad
   vec3 dropColor = palette(0.5 + u_amplitude * 0.12,
-    vec3(0.015, 0.018, 0.03),
-    vec3(0.03, 0.04, 0.07),
+    vec3(0.08, 0.09, 0.12),
+    vec3(0.15, 0.18, 0.25),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.55, 0.75));
 
   vec3 trailColor = palette(0.6 + u_mid * 0.08,
-    vec3(0.008, 0.01, 0.018),
-    vec3(0.015, 0.02, 0.035),
+    vec3(0.04, 0.05, 0.08),
+    vec3(0.08, 0.10, 0.15),
     vec3(1.0, 1.0, 1.0),
     vec3(0.45, 0.5, 0.7));
 
@@ -103,7 +103,7 @@ void main() {
 
   // Subtle background rain texture — very fine
   float rain = snoise(vec2(uv.x * 40.0, uv.y * 4.0 - t * 5.0));
-  rain = smoothstep(0.92, 0.98, rain) * 0.01;
+  rain = smoothstep(0.92, 0.98, rain) * 0.04;
   color += trailColor * rain;
 
   // Vignette

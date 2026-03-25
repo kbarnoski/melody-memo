@@ -30,20 +30,20 @@ void main() {
 
   // Colors: deep ocean-dark, mournful blues and purples
   vec3 troughColor = palette(0.7 + u_amplitude * 0.12,
-    vec3(0.003, 0.003, 0.008),
-    vec3(0.008, 0.006, 0.018),
+    vec3(0.025, 0.025, 0.05),
+    vec3(0.05, 0.04, 0.08),
     vec3(1.0, 1.0, 1.0),
     vec3(0.55, 0.6, 0.8));
 
   vec3 midColor = palette(0.5 + u_mid * 0.1,
-    vec3(0.008, 0.007, 0.015),
-    vec3(0.015, 0.012, 0.03),
+    vec3(0.04, 0.035, 0.06),
+    vec3(0.08, 0.065, 0.12),
     vec3(1.0, 1.0, 1.0),
     vec3(0.5, 0.55, 0.75));
 
   vec3 crestColor = palette(0.3 + u_treble * 0.08,
-    vec3(0.015, 0.012, 0.025),
-    vec3(0.025, 0.02, 0.05),
+    vec3(0.06, 0.05, 0.09),
+    vec3(0.12, 0.1, 0.18),
     vec3(1.0, 1.0, 1.0),
     vec3(0.45, 0.5, 0.7));
 
@@ -55,7 +55,7 @@ void main() {
 
   // Surface texture — fine ripples
   float ripple = snoise(uv * 15.0 + t * 0.5 + field * 2.0);
-  ripple = smoothstep(0.3, 0.5, ripple) * 0.02;
+  ripple = smoothstep(0.3, 0.5, ripple) * 0.1;
   color += crestColor * ripple * (1.0 + u_treble * 0.5);
 
   // Depth gradient — darker toward bottom, as if looking into abyss
@@ -68,7 +68,7 @@ void main() {
 
   // Faint foam on wave crests
   float foam = snoise(uv * 20.0 + t * 0.8) * crest;
-  foam = smoothstep(0.5, 0.8, foam) * 0.02;
+  foam = smoothstep(0.5, 0.8, foam) * 0.1;
   color += vec3(foam * 0.5, foam * 0.4, foam * 0.6);
 
   // Vignette

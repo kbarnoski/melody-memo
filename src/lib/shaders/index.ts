@@ -1,5 +1,5 @@
 import { FRAG as FOG_FRAG } from "./fog";
-import { FRAG as STORM_FRAG } from "./storm";
+// storm import removed
 import { FRAG as DUSK_FRAG } from "./dusk";
 import { FRAG as SNOW_FRAG } from "./snow";
 import { FRAG as OCEAN_FRAG } from "./ocean";
@@ -8,25 +8,24 @@ import { FRAG as WHIRLPOOL_FRAG } from "./whirlpool";
 import { FRAG as FLUX_FRAG } from "./flux";
 // Elemental (new)
 import { FRAG as MONSOON_FRAG } from "./monsoon";
-import { FRAG as HAZE_FRAG } from "./haze";
+// haze import removed
 import { FRAG as GEYSER_FRAG } from "./geyser";
 import { FRAG as MAGMA_FRAG } from "./magma";
-import { FRAG as SANDSTORM_FRAG } from "./sandstorm";
+// sandstorm import removed
 import { FRAG as TYPHOON_FRAG } from "./typhoon";
-import { FRAG as VAPOR_FRAG } from "./vapor";
+// vapor import removed
 import { FRAG as COSMOS_FRAG } from "./cosmos";
 import { FRAG as NEON_FRAG } from "./neon";
 
 import { FRAG as SACRED_FRAG } from "./sacred";
 import { FRAG as ETHEREAL_FRAG } from "./ethereal";
-import { FRAG as PRISMATIC_FRAG } from "./prismatic";
 
 import { FRAG as TESSERACT_FRAG } from "./tesseract";
 import { FRAG as ASTRAL_FRAG } from "./astral";
-import { FRAG as ABYSS_FRAG } from "./abyss";
+// abyss import removed
 import { FRAG as EMBER_FRAG } from "./ember";
 import { FRAG as TIDE_FRAG } from "./tide";
-import { FRAG as OBSIDIAN_FRAG } from "./obsidian";
+// obsidian import removed
 import { FRAG as UMBRA_FRAG } from "./umbra";
 import { FRAG as INFERNO_FRAG } from "./inferno";
 import { FRAG as PLASMA_FRAG } from "./plasma";
@@ -43,7 +42,7 @@ import { FRAG as MAGNETAR_FRAG } from "./magnetar";
 import { FRAG as PROTOSTAR_FRAG } from "./protostar";
 
 import { FRAG as REDSHIFT_FRAG } from "./redshift";
-import { FRAG as PERIHELION_FRAG } from "./perihelion";
+// perihelion import removed
 import { FRAG as APHELION_FRAG } from "./aphelion";
 // Visionary
 
@@ -51,29 +50,29 @@ import { FRAG as PORTAL_FRAG } from "./portal";
 import { FRAG as ORACLE_FRAG } from "./oracle";
 import { FRAG as REVELATION_FRAG } from "./revelation";
 import { FRAG as THRESHOLD_FRAG } from "./threshold";
-import { FRAG as ASCENSION_FRAG } from "./ascension";
+// ascension import removed
 import { FRAG as RAPTURE_FRAG } from "./rapture";
 import { FRAG as MANDORLA_FRAG } from "./mandorla";
 import { FRAG as SERAPH_FRAG } from "./seraph";
 
 // Organic
-import { FRAG as MOSS_FRAG } from "./moss";
+// moss import removed
 
 import { FRAG as SPORE_FRAG } from "./spore";
 import { FRAG as CHRYSALIS_FRAG } from "./chrysalis";
 import { FRAG as PLANKTON_FRAG } from "./plankton";
 import { FRAG as LICHEN_FRAG } from "./lichen";
 
-import { FRAG as MEMBRANE_FRAG } from "./membrane";
+// membrane import removed
 import { FRAG as GROWTH_FRAG } from "./growth";
 // Organic (new)
 import { FRAG as ENZYME_FRAG } from "./enzyme";
 
-import { FRAG as MITOSIS_FRAG } from "./mitosis";
+// mitosis import removed
 import { FRAG as POLLEN_FRAG } from "./pollen";
 import { FRAG as SYMBIOSIS_FRAG } from "./symbiosis";
 
-import { FRAG as RHIZOME_FRAG } from "./rhizome";
+// rhizome import removed
 import { FRAG as CHITIN_FRAG } from "./chitin";
 // Organic (biological)
 
@@ -87,7 +86,7 @@ import { FRAG as LATTICE_FRAG } from "./lattice";
 
 import { FRAG as SPIRAL_FRAG } from "./spiral";
 
-import { FRAG as FIBONACCI_FRAG } from "./fibonacci";
+// fibonacci import removed
 import { FRAG as GEODESIC_FRAG } from "./geodesic";
 
 import { FRAG as MOIRE_FRAG } from "./moire";
@@ -97,9 +96,9 @@ import { FRAG as CATENARY_FRAG } from "./catenary";
 
 // Dark (new)
 import { FRAG as VORTEX_FRAG } from "./vortex";
-import { FRAG as AETHER_FRAG } from "./aether";
+// aether import removed
 // Visionary (new)
-import { FRAG as ROSETTA_FRAG } from "./rosetta";
+// rosetta import removed
 import { FRAG as HALO_FRAG } from "./halo";
 import { FRAG as NIMBUS_FRAG } from "./nimbus";
 // Cosmic (new)
@@ -107,12 +106,12 @@ import { FRAG as NADIR_FRAG } from "./nadir";
 import { FRAG as PARSEC_FRAG } from "./parsec";
 import { FRAG as NOVA_FRAG } from "./nova";
 import { FRAG as PHOTON_FRAG } from "./photon";
-import { FRAG as HELIOS_FRAG } from "./helios";
+// helios import removed
 import { FRAG as SELENE_FRAG } from "./selene";
 import { FRAG as KEPLER_FRAG } from "./kepler";
 import { FRAG as CASSINI_FRAG } from "./cassini";
 import { FRAG as HUBBLE_FRAG } from "./hubble";
-import { FRAG as TYCHO_FRAG } from "./tycho";
+// tycho import removed
 import { FRAG as DOPPLER_FRAG } from "./doppler";
 // Geometry (new)
 import { FRAG as ASTROID_FRAG } from "./astroid";
@@ -128,43 +127,45 @@ import { FRAG as ROULETTE_FRAG } from "./roulette";
 import { FRAG as DELTOID_FRAG } from "./deltoid";
 import { FRAG as NEPHROID_FRAG } from "./nephroid";
 import { FRAG as EPICYCLE_FRAG } from "./epicycle";
+import { FRAG as AURORA_TRAIL_FRAG } from "./aurora-trail";
+import { FRAG as CONSTELLATION_FRAG } from "./constellation";
 // Elemental (new)
 import { FRAG as CHINOOK_FRAG } from "./chinook";
 import { FRAG as THERMAL_FRAG } from "./thermal";
 import { FRAG as LIGHTNING_FRAG } from "./lightning";
 import { FRAG as MAELSTROM_FRAG } from "./maelstrom";
-import { FRAG as RIPTIDE_FRAG } from "./riptide";
+// riptide import removed
 import { FRAG as DELUGE_FRAG } from "./deluge";
 import { FRAG as SQUALL_FRAG } from "./squall";
 // Elemental (nature)
 import { FRAG as RIVER_FRAG } from "./river";
 import { FRAG as RAIN_FRAG } from "./rain";
 import { FRAG as RIPPLE_FRAG } from "./ripple";
-import { FRAG as BREEZE_FRAG } from "./breeze";
-import { FRAG as ZEPHYR_FRAG } from "./zephyr";
+// breeze import removed
+// zephyr import removed
 // Nature (fire / cellular / light)
 import { FRAG as FLAME_FRAG } from "./flame";
-import { FRAG as AMOEBA_FRAG } from "./amoeba";
-import { FRAG as CYTOPLASM_FRAG } from "./cytoplasm";
-import { FRAG as FIREFLY_FRAG } from "./firefly";
+// amoeba import removed
+// cytoplasm import removed
+// firefly import removed
 // Nature (smooth motion)
-import { FRAG as REEF_FRAG } from "./reef";
-import { FRAG as ABYSSAL_FRAG } from "./abyssal";
+// reef import removed
+// abyssal import removed
 import { FRAG as STARFIELD_FRAG } from "./starfield";
 import { FRAG as RADIANCE_FRAG } from "./radiance";
 // Dark (new)
-import { FRAG as SPECTER_FRAG } from "./specter";
-import { FRAG as BLIGHT_FRAG } from "./blight";
-import { FRAG as NECROSIS_FRAG } from "./necrosis";
-import { FRAG as DIRGE_FRAG } from "./dirge";
-import { FRAG as REVENANT_FRAG } from "./revenant";
+// specter import removed
+// blight import removed
+// necrosis import removed
+// dirge import removed
+// revenant import removed
 import { FRAG as LAMENT_FRAG } from "./lament";
 import { FRAG as HOLLOW_FRAG } from "./hollow";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
 export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   fog: FOG_FRAG,
-  storm: STORM_FRAG,
+  // storm removed
   dusk: DUSK_FRAG,
   snow: SNOW_FRAG,
   ocean: OCEAN_FRAG,
@@ -172,30 +173,30 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   whirlpool: WHIRLPOOL_FRAG,
   flux: FLUX_FRAG,
   monsoon: MONSOON_FRAG,
-  haze: HAZE_FRAG,
+  // haze removed
   geyser: GEYSER_FRAG,
   magma: MAGMA_FRAG,
-  sandstorm: SANDSTORM_FRAG,
+  // sandstorm removed
   typhoon: TYPHOON_FRAG,
-  vapor: VAPOR_FRAG,
+  // vapor removed
   cosmos: COSMOS_FRAG,
   neon: NEON_FRAG,
 
   sacred: SACRED_FRAG,
   ethereal: ETHEREAL_FRAG,
-  prismatic: PRISMATIC_FRAG,
+  // prismatic removed — user request
 
   tesseract: TESSERACT_FRAG,
   astral: ASTRAL_FRAG,
-  abyss: ABYSS_FRAG,
+  // abyss removed
   ember: EMBER_FRAG,
   tide: TIDE_FRAG,
-  obsidian: OBSIDIAN_FRAG,
+  // obsidian removed
   umbra: UMBRA_FRAG,
   inferno: INFERNO_FRAG,
   plasma: PLASMA_FRAG,
   vortex: VORTEX_FRAG,
-  aether: AETHER_FRAG,
+  // aether removed
   pulsar: PULSAR_FRAG,
   quasar: QUASAR_FRAG,
   supernova: SUPERNOVA_FRAG,
@@ -209,7 +210,7 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   protostar: PROTOSTAR_FRAG,
 
   redshift: REDSHIFT_FRAG,
-  perihelion: PERIHELION_FRAG,
+  // perihelion removed
   aphelion: APHELION_FRAG,
   // Visionary
 
@@ -217,28 +218,28 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   oracle: ORACLE_FRAG,
   revelation: REVELATION_FRAG,
   threshold: THRESHOLD_FRAG,
-  ascension: ASCENSION_FRAG,
+  // ascension removed
   rapture: RAPTURE_FRAG,
   mandorla: MANDORLA_FRAG,
   seraph: SERAPH_FRAG,
 
   // Organic
-  moss: MOSS_FRAG,
+  // moss removed
 
   spore: SPORE_FRAG,
   chrysalis: CHRYSALIS_FRAG,
   plankton: PLANKTON_FRAG,
   lichen: LICHEN_FRAG,
 
-  membrane: MEMBRANE_FRAG,
+  // membrane removed
   growth: GROWTH_FRAG,
   enzyme: ENZYME_FRAG,
 
-  mitosis: MITOSIS_FRAG,
+  // mitosis removed
   pollen: POLLEN_FRAG,
   symbiosis: SYMBIOSIS_FRAG,
 
-  rhizome: RHIZOME_FRAG,
+  // rhizome removed
   chitin: CHITIN_FRAG,
 
   phylum: PHYLUM_FRAG,
@@ -251,14 +252,14 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
 
   spiral: SPIRAL_FRAG,
 
-  fibonacci: FIBONACCI_FRAG,
+  // fibonacci removed
   geodesic: GEODESIC_FRAG,
 
   moire: MOIRE_FRAG,
 
   catenary: CATENARY_FRAG,
   // Visionary (new)
-  rosetta: ROSETTA_FRAG,
+  // rosetta removed
   halo: HALO_FRAG,
   nimbus: NIMBUS_FRAG,
   // Cosmic (new)
@@ -266,12 +267,12 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   parsec: PARSEC_FRAG,
   nova: NOVA_FRAG,
   photon: PHOTON_FRAG,
-  helios: HELIOS_FRAG,
+  // helios removed
   selene: SELENE_FRAG,
   kepler: KEPLER_FRAG,
   cassini: CASSINI_FRAG,
   hubble: HUBBLE_FRAG,
-  tycho: TYCHO_FRAG,
+  // tycho removed
   doppler: DOPPLER_FRAG,
   // Geometry (new)
   astroid: ASTROID_FRAG,
@@ -287,36 +288,38 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   deltoid: DELTOID_FRAG,
   nephroid: NEPHROID_FRAG,
   epicycle: EPICYCLE_FRAG,
+  "aurora-trail": AURORA_TRAIL_FRAG,
+  constellation: CONSTELLATION_FRAG,
   // Elemental (new)
   chinook: CHINOOK_FRAG,
   thermal: THERMAL_FRAG,
   lightning: LIGHTNING_FRAG,
   maelstrom: MAELSTROM_FRAG,
-  riptide: RIPTIDE_FRAG,
+  // riptide removed
   deluge: DELUGE_FRAG,
   squall: SQUALL_FRAG,
   // Elemental (nature)
   river: RIVER_FRAG,
   rain: RAIN_FRAG,
   ripple: RIPPLE_FRAG,
-  breeze: BREEZE_FRAG,
-  zephyr: ZEPHYR_FRAG,
+  // breeze removed
+  // zephyr removed
   // Nature (fire / cellular / light)
   flame: FLAME_FRAG,
-  amoeba: AMOEBA_FRAG,
-  cytoplasm: CYTOPLASM_FRAG,
-  firefly: FIREFLY_FRAG,
+  // amoeba removed
+  // cytoplasm removed
+  // firefly removed
   // Nature (smooth motion)
-  reef: REEF_FRAG,
-  abyssal: ABYSSAL_FRAG,
+  // reef removed
+  // abyssal removed
   starfield: STARFIELD_FRAG,
   radiance: RADIANCE_FRAG,
   // Dark (new)
-  specter: SPECTER_FRAG,
-  blight: BLIGHT_FRAG,
-  necrosis: NECROSIS_FRAG,
-  dirge: DIRGE_FRAG,
-  revenant: REVENANT_FRAG,
+  // specter removed
+  // blight removed
+  // necrosis removed
+  // dirge removed
+  // revenant removed
   lament: LAMENT_FRAG,
   hollow: HOLLOW_FRAG,
 };
@@ -329,24 +332,20 @@ export interface ModeMeta {
 
 export const MODE_META: ModeMeta[] = [
   // Visionary
-  { mode: "prismatic", label: "Prismatic", category: "Visionary" },
   { mode: "astral", label: "Astral", category: "Visionary" },
 
   { mode: "portal", label: "Portal", category: "Visionary" },
   { mode: "oracle", label: "Oracle", category: "Visionary" },
   { mode: "revelation", label: "Revelation", category: "Visionary" },
   { mode: "threshold", label: "Threshold", category: "Visionary" },
-  { mode: "ascension", label: "Ascension", category: "Visionary" },
   { mode: "rapture", label: "Rapture", category: "Visionary" },
   { mode: "mandorla", label: "Mandorla", category: "Visionary" },
   { mode: "seraph", label: "Seraph", category: "Visionary" },
 
-  { mode: "rosetta", label: "Rosetta", category: "Visionary" },
   { mode: "halo", label: "Halo", category: "Visionary" },
   { mode: "nimbus", label: "Nimbus", category: "Visionary" },
   // Cosmic
   { mode: "cosmos", label: "Cosmos", category: "Cosmic" },
-  { mode: "abyss", label: "Abyss", category: "Cosmic" },
   { mode: "pulsar", label: "Pulsar", category: "Cosmic" },
   { mode: "quasar", label: "Quasar", category: "Cosmic" },
   { mode: "supernova", label: "Supernova", category: "Cosmic" },
@@ -360,40 +359,33 @@ export const MODE_META: ModeMeta[] = [
   { mode: "protostar", label: "Protostar", category: "Cosmic" },
 
   { mode: "redshift", label: "Redshift", category: "Cosmic" },
-  { mode: "perihelion", label: "Perihelion", category: "Cosmic" },
   { mode: "aphelion", label: "Aphelion", category: "Cosmic" },
   { mode: "nadir", label: "Nadir", category: "Cosmic" },
   { mode: "parsec", label: "Parsec", category: "Cosmic" },
   { mode: "nova", label: "Nova", category: "Cosmic" },
   { mode: "photon", label: "Photon", category: "Cosmic" },
-  { mode: "helios", label: "Helios", category: "Cosmic" },
   { mode: "selene", label: "Selene", category: "Cosmic" },
   { mode: "kepler", label: "Kepler", category: "Cosmic" },
   { mode: "cassini", label: "Cassini", category: "Cosmic" },
   { mode: "hubble", label: "Hubble", category: "Cosmic" },
-  { mode: "tycho", label: "Tycho", category: "Cosmic" },
   { mode: "doppler", label: "Doppler", category: "Cosmic" },
   // Organic
 
   { mode: "ethereal", label: "Entity", category: "Organic" },
   { mode: "ember", label: "Ember", category: "Organic" },
   { mode: "tide", label: "Tide", category: "Organic" },
-  { mode: "moss", label: "Moss", category: "Organic" },
 
   { mode: "spore", label: "Spore", category: "Organic" },
   { mode: "chrysalis", label: "Chrysalis", category: "Organic" },
   { mode: "plankton", label: "Plankton", category: "Organic" },
   { mode: "lichen", label: "Lichen", category: "Organic" },
 
-  { mode: "membrane", label: "Membrane", category: "Organic" },
   { mode: "growth", label: "Growth", category: "Organic" },
   { mode: "enzyme", label: "Enzyme", category: "Organic" },
 
-  { mode: "mitosis", label: "Mitosis", category: "Organic" },
   { mode: "pollen", label: "Pollen", category: "Organic" },
   { mode: "symbiosis", label: "Symbiosis", category: "Organic" },
 
-  { mode: "rhizome", label: "Rhizome", category: "Organic" },
   { mode: "chitin", label: "Chitin", category: "Organic" },
   { mode: "phylum", label: "Phylum", category: "Organic" },
 
@@ -408,7 +400,6 @@ export const MODE_META: ModeMeta[] = [
 
   { mode: "spiral", label: "Spiral", category: "Geometry" },
 
-  { mode: "fibonacci", label: "Fibonacci", category: "Geometry" },
   { mode: "geodesic", label: "Geodesic", category: "Geometry" },
 
   { mode: "moire", label: "Moire", category: "Geometry" },
@@ -427,9 +418,10 @@ export const MODE_META: ModeMeta[] = [
   { mode: "deltoid", label: "Deltoid", category: "Geometry" },
   { mode: "nephroid", label: "Nephroid", category: "Geometry" },
   { mode: "epicycle", label: "Epicycle", category: "Geometry" },
+  { mode: "aurora-trail", label: "Aurora Trail", category: "Geometry" },
+  { mode: "constellation", label: "Constellation", category: "Geometry" },
   // Elemental
   { mode: "fog",       label: "Fog",       category: "Elemental" },
-  { mode: "storm",     label: "Storm",     category: "Elemental" },
   { mode: "dusk",      label: "Dusk",      category: "Elemental" },
   { mode: "snow",      label: "Snow",      category: "Elemental" },
   { mode: "ocean",     label: "Ocean",     category: "Elemental" },
@@ -437,37 +429,25 @@ export const MODE_META: ModeMeta[] = [
   { mode: "whirlpool", label: "Whirlpool", category: "Elemental" },
   { mode: "flux",      label: "Flux",      category: "Elemental" },
   { mode: "monsoon",   label: "Monsoon",   category: "Elemental" },
-  { mode: "haze",      label: "Haze",      category: "Elemental" },
   { mode: "geyser",    label: "Geyser",    category: "Elemental" },
   { mode: "magma",     label: "Magma",     category: "Elemental" },
-  { mode: "sandstorm", label: "Sandstorm", category: "Elemental" },
   { mode: "typhoon",   label: "Typhoon",   category: "Elemental" },
-  { mode: "vapor",     label: "Vapor",     category: "Elemental" },
   { mode: "chinook", label: "Chinook", category: "Elemental" },
   { mode: "thermal", label: "Thermal", category: "Elemental" },
   { mode: "lightning", label: "Lightning", category: "Elemental" },
   { mode: "maelstrom", label: "Maelstrom", category: "Elemental" },
-  { mode: "riptide", label: "Riptide", category: "Elemental" },
   { mode: "deluge", label: "Deluge", category: "Elemental" },
   { mode: "squall", label: "Squall", category: "Elemental" },
   { mode: "river", label: "River", category: "Elemental" },
   { mode: "rain", label: "Rain", category: "Elemental" },
   { mode: "ripple", label: "Ripple", category: "Elemental" },
-  { mode: "breeze", label: "Breeze", category: "Elemental" },
-  { mode: "zephyr", label: "Zephyr", category: "Elemental" },
   // Nature (fire / cellular / light)
   { mode: "flame", label: "Flame", category: "Elemental" },
-  { mode: "amoeba", label: "Amoeba", category: "Organic" },
-  { mode: "cytoplasm", label: "Cytoplasm", category: "Organic" },
-  { mode: "firefly", label: "Firefly", category: "Organic" },
   // Nature (smooth motion)
-  { mode: "reef", label: "Reef", category: "Elemental" },
-  { mode: "abyssal", label: "Abyssal", category: "Elemental" },
   { mode: "starfield", label: "Starfield", category: "Cosmic" },
   { mode: "radiance", label: "Radiance", category: "Elemental" },
   // 3D Worlds
   { mode: "orb", label: "Orb", category: "3D Worlds" },
-  { mode: "field", label: "Field", category: "3D Worlds" },
   { mode: "aurora", label: "Aurora", category: "3D Worlds" },
 
   { mode: "galaxy", label: "Galaxy", category: "3D Worlds" },
@@ -487,17 +467,10 @@ export const MODE_META: ModeMeta[] = [
   { mode: "cage", label: "Cage", category: "3D Worlds" },
   { mode: "pendulum", label: "Pendulum", category: "3D Worlds" },
   // Dark
-  { mode: "obsidian", label: "Obsidian", category: "Dark" },
   { mode: "umbra",    label: "Umbra",    category: "Dark" },
   { mode: "inferno",  label: "Inferno",  category: "Dark" },
   { mode: "plasma",   label: "Plasma",   category: "Dark" },
   { mode: "vortex",   label: "Vortex",   category: "Dark" },
-  { mode: "aether",   label: "Aether",   category: "Dark" },
-  { mode: "specter", label: "Specter", category: "Dark" },
-  { mode: "blight", label: "Blight", category: "Dark" },
-  { mode: "necrosis", label: "Necrosis", category: "Dark" },
-  { mode: "dirge", label: "Dirge", category: "Dark" },
-  { mode: "revenant", label: "Revenant", category: "Dark" },
   { mode: "lament", label: "Lament", category: "Dark" },
   { mode: "hollow", label: "Hollow", category: "Dark" },
   // AI Imagery — no shader, pure AI-generated visuals
@@ -551,7 +524,7 @@ export const MODE_META: ModeMeta[] = [
 export const MODE_CATEGORIES = ["Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"] as const;
 
 export const MODES_3D: Set<string> = new Set([
-  "orb", "field", "aurora",
+  "orb", "aurora",
   "galaxy", "depths", "bonfire", "crystal", "swarm",
   "lotus", "cloud", "waterfall",
   "wave", "seabed",

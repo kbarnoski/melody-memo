@@ -12,21 +12,9 @@ import { createClient } from "@/lib/supabase/client";
 import { CreateJourneyDialog } from "@/components/journeys/create-journey-dialog";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import type { Journey } from "@/lib/journeys/types";
+import { PAIRED_TRACKS, PAIRED_STORAGE } from "@/lib/journeys/paired-tracks";
 
 const FEATURED_JOURNEY_ID = "first-snow";
-
-// Journeys paired with specific tracks — always load from the beginning
-const PAIRED_TRACKS: Record<string, string> = {
-  "first-snow": "%KB_SFLAKE%",
-  "inferno": "%KB_REALIZED%",
-  "cosmic-drift": "%17th St 61%",
-  "folsom-street": "%Folsom St 5%",
-};
-
-// Storage file search patterns — fallback when track isn't in recordings table
-const PAIRED_STORAGE: Record<string, string> = {
-  "folsom-street": "Folsom St 5",
-};
 
 interface JourneySelectorProps {
   open: boolean;

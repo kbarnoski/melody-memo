@@ -83,7 +83,7 @@ export function VisualizerClient({
   // Local analyser state (for VisualizerCore)
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array<ArrayBuffer> | null>(null);
-  const [shareSheet, setShareSheet] = useState<{ url: string; title: string } | null>(null);
+  const [shareSheet, setShareSheet] = useState<{ url: string; title: string; text?: string } | null>(null);
 
   // Fullscreen / immersive mode
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -243,7 +243,7 @@ export function VisualizerClient({
       const isBuiltIn = !!getJourney(activeJourney.id);
       const endpoint = isBuiltIn ? "/api/journeys/share-builtin" : "/api/journeys/share";
       const body = isBuiltIn
-        ? { journeyId: activeJourney.id }
+        ? { journeyId: activeJourney.id, recordingId: currentTrack?.id ?? null }
         : { journeyId: activeJourney.id };
       const res = await fetch(endpoint, {
         method: "POST",
@@ -253,13 +253,17 @@ export function VisualizerClient({
       if (!res.ok) throw new Error("Failed to share");
       const { token } = await res.json();
       const url = `${window.location.origin}/journey/${token}`;
-      setShareSheet({ url, title: `${activeJourney.name} — a Resonance journey` });
-    } catch {
-      // Silently fail — user sees no share sheet
+      setShareSheet({
+        url,
+        title: `${activeJourney.name} — Resonance`,
+        text: `Check out ${activeJourney.name} on Resonance`,
+      });
+    } catch (err) {
+      console.error("Share journey failed:", err);
     } finally {
       setSharingJourney(false);
     }
-  }, [activeJourney, sharingJourney]);
+  }, [activeJourney, sharingJourney, currentTrack]);
 
   // Live speech
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -697,28 +701,35 @@ export function VisualizerClient({
             </p>
             <div className="flex items-center justify-center gap-4">
               <button
-                onClick={handleEnterRoom}
-                className="px-6 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                style={{
-                  fontFamily: "var(--font-geist-mono)",
-                  fontSize: "0.9rem",
-                  border: "1px solid rgba(255,255,255,0.20)",
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                }}
-              >
-                Explore Visuals
-              </button>
-              <button
                 onClick={() => setJourneyOpen(true)}
-                className="px-6 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                className="px-7 py-3.5 rounded-xl text-white transition-all"
                 style={{
                   fontFamily: "var(--font-geist-mono)",
                   fontSize: "0.9rem",
-                  border: "1px solid rgba(255,255,255,0.20)",
-                  backgroundColor: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  backgroundColor: "rgba(255,255,255,0.12)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.22)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.40)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)";
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
                 }}
               >
                 Start a Journey
+              </button>
+              <button
+                onClick={handleEnterRoom}
+                className="px-5 py-3 rounded-xl text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                style={{
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.8rem",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                Explore Visuals
               </button>
             </div>
             <div
@@ -798,7 +809,7 @@ export function VisualizerClient({
         onClose={() => setShareSheet(null)}
         url={shareSheet?.url ?? ""}
         title={shareSheet?.title ?? ""}
-        text="Check out this experience on Resonance"
+        text={shareSheet?.text ?? "Check out this experience on Resonance"}
       />
     </div>
   );

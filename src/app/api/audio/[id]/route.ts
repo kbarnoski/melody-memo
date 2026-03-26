@@ -94,6 +94,25 @@ async function resolveRecording(id: string) {
     .single();
 
   if (shared) return { recording: shared as RecordingRow, client: anonClient, owned: false };
+
+  // Fallback for recordings attached to shared journeys
+  const { data: journeyRef } = await anonClient
+    .from("journeys")
+    .select("recording_id")
+    .eq("recording_id", id)
+    .not("share_token", "is", null)
+    .limit(1)
+    .maybeSingle();
+
+  if (journeyRef) {
+    const { data: journeyRec } = await anonClient
+      .from("recordings")
+      .select(RECORDING_COLUMNS)
+      .eq("id", id)
+      .single();
+    if (journeyRec) return { recording: journeyRec as RecordingRow, client: anonClient, owned: false };
+  }
+
   return null;
 }
 

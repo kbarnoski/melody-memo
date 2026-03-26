@@ -16,7 +16,7 @@ export type { VisualizerMode } from "@/lib/audio/vibe-detection";
 // Ambient shaders used as backdrop underneath AI imagery modes
 const AI_BACKDROP_SHADERS: VisualizerMode[] = [
   "cosmos", "ethereal", "fog", "nebula", "drift",
-  "haze", "vapor", "abyss", "tide", "dusk",
+  "tide", "dusk",
   "stardust", "ember",
 ];
 

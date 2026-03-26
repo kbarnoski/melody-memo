@@ -46,20 +46,10 @@ export default async function SharedJourneyPage({
 
   if (!journeyRow) notFound();
 
-  // Load associated recording if available
-  let audioUrl: string | null = null;
-  let recordingTitle: string | null = null;
-  if (journeyRow.recording_id) {
-    const { data: rec } = await supabase
-      .from("recordings")
-      .select("id, title")
-      .eq("id", journeyRow.recording_id)
-      .single();
-    if (rec) {
-      audioUrl = `/api/audio/${rec.id}`;
-      recordingTitle = rec.title;
-    }
-  }
+  // Build audio URL directly from recording_id (audio API handles access for shared journeys)
+  const audioUrl = journeyRow.recording_id
+    ? `/api/audio/${journeyRow.recording_id}`
+    : null;
 
   return (
     <SharedJourneyClient
@@ -73,7 +63,6 @@ export default async function SharedJourneyPage({
         aiEnabled: true,
       }}
       audioUrl={audioUrl}
-      recordingTitle={recordingTitle}
       shareToken={token}
       playbackSeed={journeyRow.playback_seed ?? null}
     />

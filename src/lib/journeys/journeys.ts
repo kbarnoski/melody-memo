@@ -6,44 +6,43 @@ import { seededShuffle } from "./seeded-random";
 // ─── Full shader library: ALL registered shaders ───
 // Every journey draws from this pool — balanced across all categories.
 const ALL_SHADERS_RAW: string[] = [
-  // Elemental (22)
-  "fog", "storm", "dusk", "snow", "ocean", "cascade", "whirlpool", "flux",
-  "monsoon", "haze", "geyser", "magma", "sandstorm", "typhoon", "vapor",
+  // Elemental (16)
+  "fog", "dusk", "snow", "ocean", "cascade", "whirlpool", "flux",
+  "monsoon", "geyser", "magma", "typhoon",
   "chinook", "thermal", "lightning", "maelstrom",
-  "riptide", "deluge", "squall",
-  // Visionary (13)
-  "prismatic", "astral", "portal", "oracle",
-  "revelation", "threshold", "ascension", "rapture",
+  "deluge", "squall",
+  // Visionary (11)
+  "astral", "portal", "oracle",
+  "revelation", "threshold", "rapture",
   "mandorla", "seraph",
-  "rosetta", "halo",
+  "halo",
   "nimbus",
-  // Cosmic (26)
-  "cosmos", "abyss", "pulsar", "quasar", "supernova",
+  // Cosmic (22)
+  "cosmos", "pulsar", "quasar", "supernova",
   "nebula", "singularity", "stardust", "drift", "expanse",
-  "comet", "magnetar", "protostar", "redshift", "perihelion", "aphelion",
+  "comet", "magnetar", "protostar", "redshift", "aphelion",
   "nadir", "parsec", "nova", "photon",
-  "helios", "selene", "kepler", "cassini", "hubble", "tycho", "doppler",
-  // Organic (19)
-  "ethereal", "ember", "tide", "moss", "spore",
-  "chrysalis", "plankton", "lichen", "membrane", "growth",
-  "enzyme", "mitosis", "pollen", "symbiosis", "rhizome", "chitin",
+  "selene", "kepler", "cassini", "hubble", "doppler",
+  // Organic (15)
+  "ethereal", "ember", "tide", "spore",
+  "chrysalis", "plankton", "lichen", "growth",
+  "enzyme", "pollen", "symbiosis", "chitin",
   "phylum", "kelp", "mangrove",
-  // Geometry (22)
+  // Geometry (21)
   "sacred", "tesseract", "neon", "lattice", "spiral",
-  "fibonacci", "geodesic", "moire",
+  "geodesic", "moire",
   "catenary",
   "astroid", "cardioid", "lissajous", "cymatic", "guilloche",
   "trefoil", "quatrefoil", "involute", "rosette", "roulette", "deltoid", "nephroid", "epicycle",
-  // Dark (13)
-  "obsidian", "umbra", "inferno", "plasma",
-  "vortex", "aether",
-  "specter", "blight", "necrosis", "dirge", "revenant",
+  // Dark (6)
+  "umbra", "inferno", "plasma",
+  "vortex",
   "lament", "hollow",
-  // Nature (13)
-  "river", "rain", "ripple", "breeze", "zephyr", "flame",
-  "amoeba", "cytoplasm", "firefly", "reef", "abyssal", "starfield", "radiance",
-  // 3D Worlds (16)
-  "orb", "field", "aurora",
+  // Nature (4)
+  "river", "rain", "ripple", "flame",
+  "starfield", "radiance",
+  // 3D Worlds (15)
+  "orb", "aurora",
   "galaxy", "depths", "bonfire", "crystal", "swarm", "lotus", "cloud", "waterfall",
   "wave", "seabed", "cage", "pendulum",
 ];
@@ -96,8 +95,10 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "magma", "inferno", "bonfire", "flame", // fire
     "aurora", "orb", // wrong vibe
     "neon", "moire", "lattice", "sacred", // solid/geometric
-    "mangrove", "rhizome", // tree/botanical 2D
-    "helios", "perihelion", "supernova", "nova", "photon", "pulsar", // yellow sun/hot graphics
+    "mangrove", // tree/botanical 2D
+    "rain", // wrong weather
+    "tesseract", "cage", // geometric/cube — wrong vibe
+    "supernova", "nova", "photon", "pulsar", // yellow sun/hot graphics
     "thermal", "geyser", "lightning", // warm/fiery elemental
     "ember", // warm organic tones
     "redshift", "comet", "magnetar", // warm cosmic
@@ -110,23 +111,20 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
   ],
   ocean: [
     "rain", // wrong climate
-    "sandstorm", // land-based
     "bonfire", "flame", "inferno", // fire
   ],
   garden: [
     "rain", // wrong climate
-    "sandstorm", // land-based
     "bonfire", "inferno", // fire
   ],
   temple: [
-    "prismatic", // wrong vibe for sacred geometry
   ],
 };
 
 /** Per-realm must-include shaders — always present in the journey pool */
 const REALM_SHADER_MUSTINCLUDE: Record<string, string[]> = {
   winter: ["spiral", "snow"],
-  hell: ["lightning", "flame", "magma", "inferno"],
+  hell: ["lightning", "flame", "magma", "inferno", "vortex"],
 };
 
 function pickJourneyShaders(realmId: string, random: () => number = Math.random): string[] {
@@ -432,7 +430,7 @@ export const JOURNEYS: Journey[] = [
         voice: "onyx",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — cascading ash-fall structure sweeping diagonally from upper left toward lower right, thousands of dark charcoal flakes and fine grey particles in fibonacci descent patterns against brilliant pale ground, the densest ash cluster in the upper third with designed geometric drift-paths trailing into scattered particles and open white space below, faint ember-orange glow where the freshest ash still carries heat, cool ash-grey shadows defining the fall-pattern against boundless white, infinite depth through layered translucent smoke-haze, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP CHARCOAL-BLACK BACKGROUND — cascading ash-fall structure sweeping diagonally from upper left toward lower right, thousands of dark charcoal flakes and fine grey particles in fibonacci descent patterns against deep smoke-black void, the densest ash cluster in the upper third with designed geometric drift-paths trailing into scattered particles and open darkness below, faint ember-orange glow where the freshest ash still carries heat, cool ash-grey shadows defining the fall-pattern against boundless dark, infinite depth through layered translucent smoke-haze, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["deeper...", "the walls are burning...", "no one is coming..."],
         poetryMood: "intense",
         voice: "onyx",
@@ -444,7 +442,7 @@ export const JOURNEYS: Journey[] = [
         voice: "onyx",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate obsidian glass forms and dark charred lattice arranged along the left edge and lower third of an immense soft ash-white field, the blackened structures architectural and beautiful like the skeleton of something that burned — internal geometric facets catching faint amber light at the seams, fine grey ash particles trailing rightward into open pale space, the design clusters asymmetrically leaving the upper right vast and still, quiet aftermath power in the contrast of dark burnt intricacy against boundless cool white, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP EMBER-BLACK BACKGROUND — intricate obsidian glass forms and dark charred lattice arranged along the left edge and lower third of an immense deep charcoal-black void, the blackened structures architectural and beautiful like the skeleton of something that burned — internal geometric facets catching faint amber light at the seams, fine grey ash particles trailing rightward into open dark space, the design clusters asymmetrically leaving the upper right vast and still, quiet aftermath power in the contrast of glowing burnt intricacy against boundless deep darkness, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see what survives the fire...", "even here there is truth...", "the ashes glow..."],
         poetryMood: "intense",
         voice: "onyx",
@@ -480,7 +478,7 @@ export const JOURNEYS: Journey[] = [
         poetryMood: "mystical",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — designed mycelial architecture sweeping diagonally from upper left toward lower right, connected filament forms in fibonacci branching geometry with subtle brown-grey shadows and fine phosphorescent green edges defining the interwoven network against brilliant pale ground, warm gold bioluminescent nodes glowing at the densest intersections in the upper third trailing into scattered spore particles and open white space below, infinite depth through layered translucent threads, no mushrooms no plants no landscape, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP BROWN-BLACK BACKGROUND — designed mycelial architecture sweeping diagonally from upper left toward lower right, connected filament forms in fibonacci branching geometry with subtle brown-grey shadows and fine phosphorescent green edges defining the interwoven network against deep earthy darkness, warm gold bioluminescent nodes glowing at the densest intersections in the upper third trailing into scattered spore particles and open dark void below, infinite depth through layered translucent threads, no mushrooms no plants no landscape, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["it's growing...", "everything connects...", "feel the network..."],
         poetryMood: "mystical",
       },
@@ -490,7 +488,7 @@ export const JOURNEYS: Journey[] = [
         poetryMood: "transcendent",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate dark filament threads and connected bioluminescent node forms arranged along the left edge and lower third of an immense soft white field, designed mycelial detail like phosphorescent wireframes with dispersed spore particles trailing rightward into open pale space, warm gold light at the network junctions, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of dark interwoven organic intricacy against boundless white, no mushrooms no plants no landscape, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP SOIL-BLACK BACKGROUND — intricate dark filament threads and connected bioluminescent node forms arranged along the left edge and lower third of an immense deep brown-black void, designed mycelial detail like phosphorescent wireframes with dispersed spore particles trailing rightward into open dark space, warm gold light at the network junctions, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of glowing interwoven organic intricacy against boundless darkness, no mushrooms no plants no landscape, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the garden knows you...", "every leaf is aware...", "this intelligence is ancient..."],
         poetryMood: "mystical",
       },
@@ -522,7 +520,7 @@ export const JOURNEYS: Journey[] = [
         poetryMood: "flowing",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — designed siphonophore colonial chain sweeping diagonally from upper left toward lower right, the organism impossibly long and architectural with repeating geometric bell-chambers connected by translucent filaments in fibonacci spacing, subtle blue-grey shadows and fine cyan bioluminescent edges defining the chain-structure against brilliant pale ground, warm amber pulsing from the densest cluster in the upper third trailing into scattered luminous zooids and open white space below, infinite depth through layered translucency, no fish no coral reefs no surface water no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP OCEAN-BLACK BACKGROUND — designed siphonophore colonial chain sweeping diagonally from upper left toward lower right, the organism impossibly long and architectural with repeating geometric bell-chambers connected by translucent filaments in fibonacci spacing, subtle blue-grey shadows and fine cyan bioluminescent edges defining the chain-structure against deep abyssal darkness, warm amber pulsing from the densest cluster in the upper third trailing into scattered luminous zooids and open dark void below, infinite depth through layered translucency, no fish no coral reefs no surface water no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["deeper...", "the light changes here...", "pressure becomes peace..."],
         poetryMood: "dreamy",
       },
@@ -532,7 +530,7 @@ export const JOURNEYS: Journey[] = [
         poetryMood: "mystical",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate radiolarian glass-skeleton forms and connected diatom lattice arranged along the left edge and lower third of an immense soft blue-white field, microscopic deep-water organisms rendered at cosmic scale with impossible geometric precision — hexagonal silica chambers, spiraling internal architecture, fine spines radiating outward, dispersed crystal particles trailing rightward into open pale space, faint cyan bioluminescence at the lattice joints, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of dark geometric marine intricacy against boundless white, no fish no coral reefs no surface water no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP ABYSSAL-BLACK BACKGROUND — intricate radiolarian glass-skeleton forms and connected diatom lattice arranged along the left edge and lower third of an immense deep ocean-black void, microscopic deep-water organisms rendered at cosmic scale with impossible geometric precision — hexagonal silica chambers, spiraling internal architecture, fine spines radiating outward, dispersed crystal particles trailing rightward into open dark space, faint cyan bioluminescence at the lattice joints, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of glowing geometric marine intricacy against boundless deep water darkness, no fish no coral reefs no surface water no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the bottom is quiet...", "listen to the deep...", "ancient water holds ancient truth..."],
         poetryMood: "flowing",
       },
@@ -613,7 +611,7 @@ export const JOURNEYS: Journey[] = [
         voice: "alloy",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — designed cosmic dust architecture sweeping diagonally from upper left toward lower right, dissolving particle forms in fibonacci dispersal geometry with subtle silver-grey shadows and fine violet edges defining the unraveling structure against brilliant pale ground, warm gold starlight condensation glowing at the densest remnant regions in the upper third trailing into scattered motes and open white space below, infinite depth through layered translucent dissolution, no planets no earth no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP BLACK VOID BACKGROUND — designed cosmic dust architecture sweeping diagonally from upper left toward lower right, dissolving particle forms in fibonacci dispersal geometry with subtle silver-grey shadows and fine violet edges defining the unraveling structure against infinite black void, warm gold starlight condensation glowing at the densest remnant regions in the upper third trailing into scattered motes and open darkness below, infinite depth through layered translucent dissolution, no planets no earth no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are dissolving...", "this is not loss...", "let the edges go..."],
         poetryMood: "mystical",
         voice: "alloy",
@@ -626,7 +624,7 @@ export const JOURNEYS: Journey[] = [
         shaderOpacity: 0.50,
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate dark cosmic dust threads and connected starlight condensation nodes arranged along the left edge and lower third of an immense soft white field, designed particle-rebirth detail like silver constellations reforming with dispersed motes trailing rightward into open pale space, warm gold light emerging at the new junctions, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of dark interwoven cosmic intricacy against boundless white, no planets no earth no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP BLACK VOID BACKGROUND — intricate dark cosmic dust threads and connected starlight condensation nodes arranged along the left edge and lower third of an immense deep black void, designed particle-rebirth detail like silver constellations reforming with dispersed motes trailing rightward into open dark space, warm gold light emerging at the new junctions, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of luminous interwoven cosmic intricacy against boundless darkness, no planets no earth no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["something stirs...", "light returns...", "you are being born again..."],
         poetryMood: "mystical",
         voice: "alloy",
@@ -710,7 +708,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — impossibly designed nebula architecture sweeping diagonally from upper left toward lower right, the gas formations sculptural with fibonacci spiral arms and voronoi cell-walls visible in the luminous vapor, subtle blue-grey shadows and prismatic cyan edges defining the nebula structure against brilliant pale ground, warm gold and rose light glowing from the densest star-forming regions, the upper third dense with sculptural gas detail trailing into scattered luminous particles and open white space below, infinite cosmic depth through layered translucency, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP COSMIC-BLACK BACKGROUND — impossibly designed nebula architecture sweeping diagonally from upper left toward lower right, the gas formations sculptural with fibonacci spiral arms and voronoi cell-walls visible in the luminous vapor, subtle blue-grey shadows and prismatic cyan edges defining the nebula structure against deep interstellar darkness, warm gold and rose light glowing from the densest star-forming regions, the upper third dense with sculptural gas detail trailing into scattered luminous particles and open dark void below, infinite cosmic depth through layered translucency, no planets no earth no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["stars are being born...", "creation is happening now...", "feel the scale..."],
         poetryMood: "dreamy",
         voice: "fable",
@@ -722,7 +720,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate dark filament structures and connected luminous gas-forms arranged along the left edge and lower third of an immense soft blue-white field, supernova remnant architecture with geometric internal structure, dispersed golden star-particles trailing rightward into open pale space, cool indigo shadows on the filament surfaces, an infinite cosmic quality to the vast emptiness above, the design clusters asymmetrically leaving the upper right open and boundless, quiet power in the contrast of dark intricacy against infinite white light, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP COSMIC-BLACK BACKGROUND — intricate dark filament structures and connected luminous gas-forms arranged along the left edge and lower third of an immense deep indigo-black void, supernova remnant architecture with geometric internal structure, dispersed golden star-particles trailing rightward into open dark space, cool indigo shadows on the filament surfaces, an infinite cosmic quality to the vast darkness above, the design clusters asymmetrically leaving the upper right open and boundless, quiet power in the contrast of luminous intricacy against infinite deep darkness, no planets no earth no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["everything came from this...", "your atoms were forged in stars...", "cosmic recycling..."],
         poetryMood: "dreamy",
         voice: "fable",
@@ -752,32 +750,32 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Entry", expansion: "Branching", transcendence: "Infinite", illumination: "Pattern", return: "Simplifying", integration: "Exit" },
     phases: defaultPhases("labyrinth", {
       threshold: {
-        aiPrompt: "interconnected luminous corridor-lattice entering from the lower-right corner and radiating into deep black void, the maze impossibly designed with recursive branching architecture glowing faint emerald and cyan at the passage walls, fine motes of light dispersed along the corridor pathways trailing into vast dark negative space above and left, photorealistic crystalline surface texture at impossible cosmic scale where each corridor could be light-years wide, asymmetric composition with visual weight low and right, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "massive dark stone archway floating in deep black void, the doorway impossibly tall and narrow with worn edges and faint emerald light spilling from beyond the threshold, the arch anchored in the lower-right third of the frame tilted slightly as if gravity works differently here, fine dust motes drifting through the opening caught in the green light, beyond the doorway a second smaller doorway visible and beyond that a third — each one offset at a different angle suggesting a path that keeps turning, vast empty darkness surrounding the lone arch on all sides, photorealistic weathered stone texture at cosmic scale where the doorway is light-years tall, asymmetric composition with the arch low-right and generous void upper-left, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["enter...", "every direction is the same...", "the walls are listening..."],
         poetryMood: "hypnotic",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — fractal corridor architecture sweeping diagonally from upper left toward lower right, the maze-lattice sculptural and designed with fibonacci branching curves and voronoi cell-walls defining the passage structure, subtle grey shadows and fine emerald edges defining the labyrinth design against brilliant pale ground, warm amber light glowing from the deepest junctions, the upper third dense with recursive corridor detail trailing into scattered luminous particles and open white space below, infinite depth through layered translucent passage-walls, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
-        guidancePhrases: ["you are lost...", "this is where you belong...", "deeper into the maze..."],
+        aiPrompt: "dozens of doorways and tunnel openings of vastly different sizes scattered across deep charcoal-black infinite space, some doorways massive and close with warm amber light pouring from them, others tiny and distant with cold cyan glow, the openings are round arched rectangular oval — no two alike — floating at impossible angles some upside-down some sideways, dark tunnels visible receding behind several of the larger openings curving away into unseen depths, each doorway seems to lead somewhere different but you cannot tell where, fine luminous particles streaming in conflicting directions between the openings as if each doorway has its own gravity, the cluster of doorways densest in the left third trailing into scattered distant openings and vast dark void rightward, photorealistic stone and light textures at impossible scale, asymmetric composition offset left with generous darkness right, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        guidancePhrases: ["you are lost...", "this is where you belong...", "deeper..."],
         poetryMood: "hypnotic",
       },
       transcendence: {
-        aiPrompt: "cosmic-scale recursive maze-lattice sweeping across infinite black in a vast spiral of interconnected corridors, emerald and electric violet light pulsing through the passage nodes where corridors intersect, the structure impossibly dense and intricate where it crosses the upper-right frame but dissolving into luminous particle trails and open void at both edges, fractal corridor bridges and geometric rays stretching toward infinite darkness, the topology of pure recursion at galactic scale, composition not centered with the spiral core upper right and maze-streamers reaching across, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "infinite tunnel within tunnel within tunnel — looking through a massive dark archway that frames a second archway that frames a third and a fourth receding into impossible recursive depth against deep indigo-black cosmos, each tunnel a different shape and material so the nesting feels surreal not repetitive — rough stone then smooth obsidian then translucent glass then living shadow, emerald and violet light pulsing at different depths creating a rhythmic glow that draws the eye inward, the outermost arch entering from the upper-right edge of the frame at an angle with the recursive tunnel-sequence spiraling slightly as it recedes, fine particles orbiting the tunnel mouths in confused spirals, vast open void filling the lower-left two thirds with only scattered light-motes, photorealistic detail at galactic scale where each tunnel opening could swallow solar systems, asymmetric composition with the tunnel sequence cropped upper-right, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are the labyrinth...", "there is no exit because there is no inside...", "the center is everywhere..."],
         poetryMood: "mystical",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate dark maze-thread forms and connected corridor nodes arranged along the left edge and lower third of an immense soft white field, the labyrinth seen from above as unified geometric architecture revealing the hidden order, dispersed emerald particles trailing rightward into open pale space, the design clusters asymmetrically leaving the upper right vast and open, quiet revelation in the contrast of dark recursive intricacy against boundless white light, every path part of one brilliant form, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "vast network of translucent doorways connected by faintly glowing passage-threads in deep black-violet infinite space, the doorways now transparent glass-like arches revealing that every opening leads to every other opening through curving tunnel-threads that bend through hidden dimensions, warm gold light flowing along the connecting threads like signals traveling between portals, the network stretching in all directions with the nearest doorways large and detailed in the left third and the farthest ones microscopic points of light in the distant right void, the revelation that being lost was an illusion — every threshold connects, emerald and amber light at the major portal-nodes with fine particle threads tracing paths between them, photorealistic glass and light textures at impossible cosmic scale, asymmetric composition with density left and generous dark space right, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the pattern reveals itself...", "you were never lost...", "the maze is the map of your mind..."],
         poetryMood: "mystical",
       },
       return: {
-        aiPrompt: "dissolving maze-lattice arcing from lower-left corner across deep indigo space, the recursive corridor structure thinning and simplifying with warm amber light replacing emerald at the remaining junctions, dispersed luminous particles carrying faint gold trailing upward into generous dark negative space above and right, the geometry of resolution — complexity surrendering to clarity, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "doorways fading — several translucent archways in the right third of the frame losing their solidity and becoming smoke-like outlines of emerald and amber drifting apart in deep blue-black void, the tunnel-threads between them dissolving into wisps, one doorway still solid with warm golden light beyond it — the way through — while the others evaporate around it, fine particles of dissolved portal-material dispersing upward into vast dark space, the openings that once multiplied now simplifying down to this single clear threshold, vast open darkness filling the left two thirds, photorealistic smoke and light textures at cosmic scale, asymmetric composition weighted right with generous void left, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the walls are thinning...", "you chose a direction and it is right...", "the path appears..."],
         poetryMood: "flowing",
       },
       integration: {
-        aiPrompt: "sparse remnant corridor-filaments and fading maze traces clustered small in the lower-left corner of vast grey-black space, a single emerald glow at the last junction point, fine particles scattering diagonally toward infinite upper darkness carrying the labyrinth's memory, asymmetric and quiet — the maze folded into one simple luminous form against everything, no buildings no rooms no doors no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single faint archway of soft emerald light hovering small in the lower-left region of absolute black infinite void, the last doorway — its edges barely visible like a memory of a threshold, the faintest suggestion of golden warmth beyond it fading, gossamer wisps trailing from its outline upward-right and dissolving into nothing, nearly the entire frame vast empty silent cosmos with only microscopic luminous motes scattered like distant stars, the doorway not an exit but the quiet knowledge that you passed through something immense, photorealistic light-edge detail against infinite dark, asymmetric composition with the archway small and anchored lower-left, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you carry the maze...", "the labyrinth lives in you..."],
         poetryMood: "flowing",
       },
@@ -800,7 +798,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — impossible crystalline ridge architecture sweeping diagonally from lower left toward upper right in a steep ascending arc, the formations sculptural and designed with fibonacci stacking layers and voronoi fracture-patterns visible in the translucent ice-stone, subtle blue-grey shadows and fine dark edges defining the ascending structure against brilliant pale ground, the densest detail in the lower third trailing into scattered mineral particles and open white space above, infinite atmospheric depth through layered translucency, the visual sensation of climbing without earth, no trees no ground no horizon no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP MIDNIGHT-BLACK BACKGROUND — impossible crystalline ridge architecture sweeping diagonally from lower left toward upper right in a steep ascending arc, the formations sculptural and designed with fibonacci stacking layers and voronoi fracture-patterns visible in the translucent ice-stone, subtle blue-grey shadows and fine dark edges defining the ascending structure against deep alpine darkness, the densest detail in the lower third trailing into scattered mineral particles and open dark void above, infinite atmospheric depth through layered translucency, the visual sensation of climbing without earth, no trees no ground no horizon no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["higher...", "the air thins and thoughts clarify...", "don't look down..."],
         poetryMood: "transcendent",
         voice: "fable",
@@ -812,7 +810,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — intricate dark crystal-thread forms and connected atmospheric ridge-structures arranged along the left edge and lower third of an immense soft ice-white field, the summit-architecture sculptural and impossible with internal geometric facets, dispersed golden particles trailing rightward into open pale space, cool blue shadows on the crystalline surfaces, an infinite quality to the vast emptiness above like altitude made visible, the design clusters asymmetrically leaving the upper right open and boundless, no trees no ground no horizon no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP ALPINE-BLACK BACKGROUND — intricate dark crystal-thread forms and connected atmospheric ridge-structures arranged along the left edge and lower third of an immense deep midnight-black void, the summit-architecture sculptural and impossible with internal geometric facets, dispersed golden particles trailing rightward into open dark space, cool blue shadows on the crystalline surfaces, an infinite quality to the vast darkness above like altitude made visible, the design clusters asymmetrically leaving the upper right open and boundless, no trees no ground no horizon no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see how far you've come...", "the view is the reward...", "everything is below you..."],
         poetryMood: "transcendent",
         voice: "fable",
@@ -848,19 +846,19 @@ export const JOURNEYS: Journey[] = [
         voice: "nova",
       },
       expansion: {
-        aiPrompt: "WHITE PALE BACKGROUND, delicate rose-gold and warm amber voronoi lattice stretching from the right edge inward occupying only the right third of the frame, each voronoi cell contains fine copper wire substructure, tiny amber particles drift leftward along horizontal paths dissolving into vast creamy white negative space, photorealistic gossamer metallic mesh at nebula scale floating in bright emptiness, expansive openness with structure receding, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP WARM DARK VOID BACKGROUND, delicate rose-gold and warm amber voronoi lattice stretching from the right edge inward occupying only the right third of the frame, each voronoi cell contains fine copper wire substructure, tiny amber particles drift leftward along horizontal paths dissolving into vast deep warm dark negative space, photorealistic gossamer metallic mesh at nebula scale floating in deep warm darkness, expansive openness with structure receding, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the horizon retreats...", "emptiness is freedom...", "the sand knows your footsteps..."],
         poetryMood: "mystical",
         voice: "nova",
       },
       transcendence: {
-        aiPrompt: "WHITE PALE BACKGROUND, near-total dissolution into blazing white void, only the faintest trace of a single copper-amber filament curving from the upper-left corner downward in a fibonacci arc, the filament breaks apart into microscopic bone-white and pale gold particles that scatter and vanish into pure luminous whiteness, photorealistic impossible brightness, the most abstract phase pure radiant emptiness with almost nothing remaining, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP WARM DARK VOID BACKGROUND, near-total dissolution into deep warm dark void, only the faintest trace of a single copper-amber filament curving from the upper-left corner downward in a fibonacci arc, the filament breaks apart into microscopic ember-warm and pale gold particles that scatter and vanish into pure deep darkness, photorealistic impossible depth, the most abstract phase pure dark emptiness with almost nothing remaining, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are the desert...", "emptiness is fullness...", "the light is everything..."],
         poetryMood: "transcendent",
         voice: "nova",
       },
       illumination: {
-        aiPrompt: "WHITE PALE BACKGROUND, constellation of tiny deep indigo and copper points clustered in the upper-right corner connected by hairline rose-gold bridges forming a sparse connected lattice, fine indigo particles trail downward-left along curving paths into vast pale ivory negative space filling three-quarters of the frame, photorealistic crystalline points like distant stars seen through bright atmosphere, reversal from void into first points of structure, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP WARM DARK VOID BACKGROUND, constellation of tiny deep indigo and copper points clustered in the upper-right corner connected by hairline rose-gold bridges forming a sparse connected lattice, fine indigo particles trail downward-left along curving paths into vast deep warm dark negative space filling three-quarters of the frame, photorealistic crystalline points like distant stars seen through dark atmosphere, reversal from void into first points of structure, no sand dunes no desert no landscape no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the stars emerge...", "the desert and the sky are the same infinity...", "silence speaks..."],
         poetryMood: "dreamy",
         voice: "nova",
@@ -896,7 +894,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       expansion: {
-        aiPrompt: "WHITE PALE BACKGROUND, hexagonal honeycomb lattice of fine brown-black wireframe stretching from the left edge inward occupying only the left third, each hexagonal cell contains smaller recursive hexagons at fractal depth with warm amber light at the deepest centers, faint blue-green luminescence at sparse junction points, fine aged-ivory particles drift rightward along horizontal paths dissolving into vast creamy white negative space, photorealistic architectural wireframe at cathedral scale, recursive geometric chambers receding infinitely, no books no text no pages no shelves no figures no letters no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP DARK INDIGO-BLACK BACKGROUND, hexagonal honeycomb lattice of fine brown-black wireframe stretching from the left edge inward occupying only the left third, each hexagonal cell contains smaller recursive hexagons at fractal depth with warm amber light at the deepest centers, faint blue-green luminescence at sparse junction points, fine aged-ivory particles drift rightward along horizontal paths dissolving into vast deep indigo-black negative space, photorealistic architectural wireframe at cathedral scale, recursive geometric chambers receding infinitely, no books no text no pages no shelves no figures no letters no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the library unfolds...", "every thought ever thought is here...", "read deeper..."],
         poetryMood: "dreamy",
         voice: "fable",
@@ -908,7 +906,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       illumination: {
-        aiPrompt: "WHITE PALE BACKGROUND, symmetrical pair of small intricate lattice-forms mirroring each other across a vertical axis anchored in the lower-left third, each form built from interwoven copper and deep brown geometric threads with faint blue-green light at the mirroring plane between them, fine amber particles dispersing upward-right along curving fibonacci paths into vast pale ivory negative space filling three-quarters of the frame, photorealistic polished bronze textures reflecting each other at impossible scale, the pattern recognizing itself, no books no text no pages no shelves no figures no letters no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP DARK INDIGO-BLACK BACKGROUND, symmetrical pair of small intricate lattice-forms mirroring each other across a vertical axis anchored in the lower-left third, each form built from interwoven copper and deep brown geometric threads with faint blue-green light at the mirroring plane between them, fine amber particles dispersing upward-right along curving fibonacci paths into vast deep indigo-black negative space filling three-quarters of the frame, photorealistic polished bronze textures reflecting each other at impossible scale, the pattern recognizing itself, no books no text no pages no shelves no figures no letters no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you found your book...", "the text is you...", "the library is your mind..."],
         poetryMood: "mystical",
         voice: "fable",
@@ -944,7 +942,7 @@ export const JOURNEYS: Journey[] = [
         voice: "echo",
       },
       expansion: {
-        aiPrompt: "WHITE PALE BACKGROUND, branching fractal lightning structure entering from the lower-left corner and arcing diagonally toward upper-right, each branch a designed fibonacci-bifurcating filament of electric blue-white energy with silver edges, the main trunk dense with sub-branches that thin into hair-fine threads, cool green-grey particles scattering outward from each branch tip into vast bright white negative space filling two-thirds of the frame, photorealistic electrical discharge at cosmic scale where the lightning could be a galaxy-spanning nervous system, no clouds no rain no sky no landscape no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP STORM-DARK CHARCOAL-BLACK BACKGROUND, branching fractal lightning structure entering from the lower-left corner and arcing diagonally toward upper-right, each branch a designed fibonacci-bifurcating filament of electric blue-white energy with silver edges, the main trunk dense with sub-branches that thin into hair-fine threads, cool green-grey particles scattering outward from each branch tip into vast deep storm-dark negative space filling two-thirds of the frame, photorealistic electrical discharge at cosmic scale where the lightning could be a galaxy-spanning nervous system, no clouds no rain no sky no landscape no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["let the storm take you...", "every lightning is a thought...", "the rain is washing everything..."],
         poetryMood: "chaotic",
         voice: "echo",
@@ -956,7 +954,7 @@ export const JOURNEYS: Journey[] = [
         voice: "echo",
       },
       illumination: {
-        aiPrompt: "WHITE PALE BACKGROUND, sparse ring of faint grey-violet and cool green-grey filaments forming a distant broken circle in the upper-left third of the frame, the ring structure architectural with designed gaps and fine electric blue points at the remaining nodes, the vast center and lower-right of the frame completely open pale silver-white negative space, a single warm amber point glowing at the geometric center of the broken ring, fine charged particles drifting inward along gentle curved paths, photorealistic ozone-washed atmosphere at infinite scale, the perfect calm at the eye of all force, no clouds no rain no sky no landscape no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP STORM-DARK CHARCOAL-BLACK BACKGROUND, sparse ring of faint grey-violet and cool green-grey filaments forming a distant broken circle in the upper-left third of the frame, the ring structure architectural with designed gaps and fine electric blue points at the remaining nodes, the vast center and lower-right of the frame completely open deep charcoal-black negative space, a single warm amber point glowing at the geometric center of the broken ring, fine charged particles drifting inward along gentle curved paths, photorealistic ozone-washed atmosphere at infinite scale, the perfect calm at the eye of all force, no clouds no rain no sky no landscape no figures no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the eye...", "perfect calm inside infinite fury...", "the center holds..."],
         poetryMood: "mystical",
         voice: "echo",
@@ -1034,37 +1032,37 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Crack", expansion: "Unfurling", transcendence: "Canopy", illumination: "Garden", return: "Settling", integration: "Dew" },
     phases: defaultPhases("spring", {
       threshold: {
-        aiPrompt: "DARK BACKGROUND, tight cluster of interlocking voronoi cells in deep brown-black anchored to the lower-right third of the frame, hairline fractures of luminous spring green light splitting through the cell walls, fine green particles escaping along a diagonal drift toward the upper left, the rest of the frame is vast empty black-brown void, photorealistic cracked-earth texture at impossible macro scale, connected filaments of warm gold threading between the fracture lines like underground mycelia, the pressure of something alive pressing outward from designed geometric containment, cosmic scale as if viewing tectonic emergence from orbit, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "massive seed pod splitting open in the lower-right third of deep brown-black void, the pod designed with intricate geometric chambers visible through the widening fracture — internal honeycomb nursery cells glowing luminous spring green from within, the outer shell rendered in photorealistic dark bark-like texture cracked along fibonacci spiral lines, bright chartreuse light spilling from the fracture into the surrounding darkness, fine spores and seed particles ejecting from the opening along diagonal paths upward-left into vast dark space, the pod architecture impossibly detailed with spiraling internal corridors and nested growth-chambers like a designed incubator at cosmic scale, two thirds of the frame open dark void above and left, asymmetric composition with the pod anchored low-right, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["wait for it...", "feel the thaw beginning...", "something stirs beneath..."],
         poetryMood: "melancholic",
         voice: "nova",
       },
       expansion: {
-        aiPrompt: "WHITE/PALE BACKGROUND, fibonacci spiral of unfurling filaments in luminous spring green and warm gold radiating from the upper-left corner outward across a vast pale cream-white field, the spiral structure built from interwoven threads that branch and bifurcate with photorealistic capillary detail, fine rose-pink particles dispersing along the spiral arms trailing into the enormous open white space that fills the right two-thirds of the frame, each filament connected by gossamer bridges of pale gold, the unfurling accelerating outward from tight dense coil to loose airy tendrils, impossible botanical scale like viewing cell division from within, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "enormous fiddlehead fern spiral unfurling from a tight coil in the upper-left corner of deep verdant black-green void, the frond rendered with photorealistic detail — hundreds of tiny curled pinnae along the main rachis each at a different stage of unfurling from tight scroll to open fan, the spiral structure following a perfect golden ratio with luminous spring green at the newest growth and deeper emerald at the mature sections, delicate translucent hairs along the stem catching warm gold backlight, fine pollen-like particles of pale rose and chartreuse dispersing from the unfurling tips rightward and downward into the vast dark void filling the right two thirds of the frame, the frond architecture impossibly detailed as if viewing a fern the size of a galaxy, asymmetric composition with the coil anchored upper-left and the unfurling reaching toward center, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["it's happening...", "the green is unstoppable...", "everything at once..."],
         poetryMood: "dreamy",
         voice: "nova",
       },
       transcendence: {
-        aiPrompt: "DARK BACKGROUND, dense fractal lattice of branching corridors in luminous green-gold and soft rose-pink sweeping diagonally from the lower-left corner to the upper-right third of the frame against deep black-brown void, the lattice built from spiraling connected tubes with photorealistic translucent membrane surfaces, internal bioluminescent glow of warm gold pulsing through the branching network, particle trails of spring green dust streaming off the lattice edges into the surrounding darkness, the upper-left and lower-right corners are open black void creating dramatic asymmetric negative space, fibonacci branching ratios governing every fork, cosmic scale like a living nebula constructing itself, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "vast cross-section of a plant stem rendered at impossible microscopic scale against deep black-green void — the vascular bundles visible as dozens of luminous circular xylem vessels and phloem tubes arranged in a designed ring pattern, each vessel a different size with photorealistic cell-wall detail and internal green-gold bioluminescent fluid flowing through them, the vascular ring sweeping diagonally from the lower-left third toward upper-right with the largest vessels closest and the smallest receding into depth, between the vessels a matrix of parenchyma cells glowing soft rose-pink and warm gold, fine particles of luminous sap streaming from severed vessel-ends into the surrounding darkness like green-gold blood, the living architecture of a plant's circulatory system at cosmic scale where each vessel could be a tunnel through a galaxy, asymmetric composition with the cross-section offset lower-left and generous dark void upper-right, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["this is what was waiting...", "every cell remembers this...", "the bloom is you..."],
         poetryMood: "transcendent",
         voice: "nova",
       },
       illumination: {
-        aiPrompt: "WHITE/PALE BACKGROUND, delicate connected lattice of spring green and warm gold geometric cells floating in the upper-right quadrant of a vast luminous white field, the lattice has photorealistic crystalline surfaces catching pale rose-pink refractions, fine particle bridges of gold dust connecting the lattice clusters across open white space, the lower-left two-thirds of the frame is pure breathing white emptiness, scattered individual green-gold particles drifting downward like spores in still air, the lattice interior reveals nested hexagonal chambers with warm bioluminescent glow, serene mathematical harmony at impossible scale as if a living cathedral seen from miles away, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single immense pollen grain floating in deep black-green infinite space, the grain rendered as a designed sphere with impossibly detailed surface architecture — geometric spines and ridges and apertures arranged in precise mathematical patterns across its surface, each spine tipped with a luminous droplet of warm gold, the surface texture photorealistic with sculpted echinate ornamentation in spring green and rose-pink and pale amber, the grain anchored in the right third of the frame at a slight tilt revealing its three-dimensional surface complexity, fine particles of pollen dust shedding from the spines and drifting leftward into vast dark void filling two thirds of the frame, warm bioluminescent glow from the aperture openings where the grain's interior is visible — nested chambers of golden light, atmospheric scale where this single pollen grain is the size of a planet, asymmetric composition weighted right with generous dark space left, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the garden is complete...", "everything is alive...", "rest here in the green..."],
         poetryMood: "flowing",
         voice: "nova",
       },
       return: {
-        aiPrompt: "DARK BACKGROUND, sparse cluster of cooling green-gold filaments gathered along the right edge of the frame trailing leftward into vast deep brown-black space, the filaments losing their luminosity and settling into muted olive and warm brown tones, fine particles of pale gold detaching and drifting downward in slow diagonal paths, photorealistic texture of silk threads going slack, connected bridges between filament groups thinning and stretching, the left three-quarters of the frame is quiet dark void with only scattered individual particles catching faint residual light, the geometry of settling and dimming at atmospheric scale, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "cluster of seed-parachute structures — dandelion-clock-like forms — drifting apart across deep brown-black void, each parachute a designed radial structure of impossibly fine silver-white filaments radiating from a central seed in a perfect sphere, seven or eight parachutes at different distances and scales scattered across the right half of the frame, the nearest one large and detailed showing individual filament barbs catching faint spring green and warm gold light, the farthest ones tiny luminous points dissolving into the darkness, fine individual filaments detaching and floating free as the structures slowly disintegrate, photorealistic silk-thread texture on each filament, the left half of the frame vast quiet dark void with only scattered drifting filament-motes, the beautiful dispersal of everything the bloom created, asymmetric composition weighted right with generous darkness left, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the day was full...", "the garden sleeps...", "carry the pollen with you..."],
         poetryMood: "dreamy",
         voice: "nova",
       },
       integration: {
-        aiPrompt: "DARK BACKGROUND, single small cluster of interwoven filaments in muted spring green and warm gold anchored near the bottom-left corner of an enormous dark brown-black void, the cluster quiet and still with photorealistic dew-like droplets of pale light condensed along its threads, faint particle trail of luminous points ascending diagonally from the cluster toward the upper right dissolving into darkness, the frame is almost entirely negative space with only this one designed structure and its dispersing memory, each dew point catching a different hue from soft rose to pale gold, the geometry of one opening preserved in miniature against infinite stillness, no flowers no leaves no trees no plants no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single thin plant stem with one closed bud at its tip rising from the lower-left corner of absolute black void, the stem rendered in muted olive-green with photorealistic cellular texture, the bud a small tight spiral of pale green and faint rose holding everything the bloom was inside its folded layers, a single dewdrop of luminous warm gold light clinging to the bud tip refracting the faintest prismatic spectrum, one gossamer spider-silk thread extending from the bud diagonally upward-right and dissolving into nothing, nearly the entire frame vast dark silence with only this single living form and its single drop of light, the quiet promise that what bloomed will bloom again at infinite scale, asymmetric composition with the stem small and anchored lower-left, no landscape no ground no soil no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you bloomed...", "the spring is in you now..."],
         poetryMood: "flowing",
         voice: "nova",
@@ -1088,7 +1086,7 @@ export const JOURNEYS: Journey[] = [
         voice: "alloy",
       },
       expansion: {
-        aiPrompt: "WHITE/PALE BACKGROUND, vast heat-shimmer lattice of interwoven amber and deep gold filaments radiating from the lower-right corner across a brilliant warm white field, the structure built from voronoi tessellation with photorealistic molten-metal texture at each cell wall, copper light refracting through the thinnest membranes, fine burnt-orange particles dispersing along the lattice arms trailing upward-left into the enormous open pale cream space that fills the upper two-thirds of the frame, each node pulsing with internal golden warmth, the shimmer distortion rendered as geometric wavefront interference patterns, impossible atmospheric scale like viewing solar convection from within, no sun no sky no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP WARM AMBER-BLACK VOID BACKGROUND, vast heat-shimmer lattice of interwoven amber and deep gold filaments radiating from the lower-right corner across a deep warm amber-black void, the structure built from voronoi tessellation with photorealistic molten-metal texture at each cell wall, copper light refracting through the thinnest membranes, fine burnt-orange particles dispersing along the lattice arms trailing upward-left into the enormous open deep amber-dark space that fills the upper two-thirds of the frame, each node pulsing with internal golden warmth, the shimmer distortion rendered as geometric wavefront interference patterns, impossible atmospheric scale like viewing solar convection from within, no sun no sky no landscape no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the heat carries you...", "let the light fill everything...", "time is slow and golden..."],
         poetryMood: "dreamy",
         voice: "alloy",
@@ -1100,7 +1098,7 @@ export const JOURNEYS: Journey[] = [
         voice: "alloy",
       },
       illumination: {
-        aiPrompt: "WHITE/PALE BACKGROUND, delicate web of golden-hour filaments in warm amber and soft copper arranged along the lower-left edge and bottom third of an immense luminous warm-white field, the web designed with fibonacci curve geometry and photorealistic spun-glass texture catching pale rose and gold refractions, fine particles of amber dust settling downward from the web into gentle vertical drift paths, the upper-right two-thirds of the frame is vast breathing warm-white emptiness with only scattered individual gold motes suspended in stillness, connected bridges of the thinnest copper thread spanning between web clusters, the peace after intensity rendered as delicate mathematical architecture at atmospheric scale, no sun no sky no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP WARM AMBER-BLACK VOID BACKGROUND, delicate web of golden-hour filaments in warm amber and soft copper arranged along the lower-left edge and bottom third of an immense deep warm amber-black void, the web designed with fibonacci curve geometry and photorealistic spun-glass texture catching pale rose and gold refractions, fine particles of amber dust settling downward from the web into gentle vertical drift paths, the upper-right two-thirds of the frame is vast breathing amber-dark emptiness with only scattered individual gold motes suspended in stillness, connected bridges of the thinnest copper thread spanning between web clusters, the peace after intensity rendered as delicate mathematical architecture at atmospheric scale, no sun no sky no landscape no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the storm passed...", "golden hour...", "the longest light of the year..."],
         poetryMood: "transcendent",
         voice: "alloy",
@@ -1130,37 +1128,37 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Turning", expansion: "Color", transcendence: "Release", illumination: "Skeleton", return: "Quiet", integration: "Frost" },
     phases: defaultPhases("autumn", {
       threshold: {
-        aiPrompt: "DARK BACKGROUND, designed lattice of interlocking hexagonal cells anchored along the left edge and lower-left third of the frame against deep warm brown-black void, the cells transitioning in color from muted green at the dense core to amber and sienna at the outermost edges where they begin to dissolve, photorealistic patina texture like aged copper developing verdigris in reverse, fine particles of burnt orange detaching from the lattice perimeter and drifting rightward along gentle diagonal paths into the vast open darkness filling two-thirds of the frame, connected filaments of warm brown threading between the cells, the first chromatic shift rendered as designed structures beginning to change their internal chemistry, cosmic scale as if viewing molecular transformation from impossible distance, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "dense cluster of thin branching capillary-like filaments in deep green and muted olive anchored in the lower-right third of deep umber-black void, the filaments designed with fractal branching — each major vein splitting into finer and finer tributaries like a circulatory system, the very tips of the outermost branches just beginning to flush warm amber at their extremities while the core remains green, fine particles of the first golden pigment detaching from the branch-tips and drifting leftward along diagonal paths into vast open darkness filling two thirds of the frame, photorealistic texture like oxidized copper wire at cosmic scale, asymmetric composition with visual weight low and right, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the change begins...", "feel the first cool...", "something is ending beautifully..."],
         poetryMood: "melancholic",
         voice: "fable",
       },
       expansion: {
-        aiPrompt: "WHITE/PALE BACKGROUND, dense spiraling structure of interwoven filaments in deep crimson and amber and sienna radiating from the lower-right corner upward across a vast pale warm-cream field, the spiral built from voronoi cells with photorealistic oxidized metal and burnt-wood textures, each cell a different autumn tone from deep copper to bright amber to sienna, fine particles of burnt orange dispersing along the spiral arms trailing into the enormous open white space that fills the upper-left two-thirds of the frame, connected bridges of warm gold dust spanning between the densest color clusters, peak chromatic intensity before release rendered as architectural structures saturated to bursting, impossible scale like viewing a dying star shedding its chromatic layers, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "sweeping diagonal cascade of thousands of individual color-particles in deep crimson and burnt sienna and bright amber falling from the upper-left corner toward lower-right across deep brown-black infinite space, each particle a tiny irregular shard with photorealistic cracked-pigment texture — no two the same size or shape, the cascade dense and vivid where it enters the frame but spreading and scattering as it falls with increasing gaps between particles, the particles tumbling and rotating catching warm side-light that reveals copper and gold facets, the lower-right third of the frame open dark void with only the most distant scattered particles reaching into it, the ecstasy of color released into freefall at atmospheric scale, asymmetric composition with the cascade sweeping corner to corner, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["look at what it becomes...", "the dying is the beauty...", "every leaf is a flame..."],
         poetryMood: "mystical",
         voice: "fable",
       },
       transcendence: {
-        aiPrompt: "DARK BACKGROUND, massive fractal release-structure where designed crimson and amber and copper lattice is actively shedding its particles in a sweeping diagonal cascade from the upper-right third of the frame downward-left into deep brown-black void, the lattice skeleton still visible as interwoven geometric corridors but its surfaces dissolving into streams of descending color particles — deep crimson becoming amber becoming gold becoming fine sienna dust, photorealistic shattered-glass and peeling-paint textures on the disintegrating cell walls, the lower-left and upper-left corners are open black void creating dramatic asymmetric negative space, connected filaments stretching and snapping as the structure releases, the ecstasy of designed forms choosing to let go of their color at cosmic scale, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "massive spiraling smoke-column of warm pigment dust rising from the lower-left edge of the frame and curving rightward through deep charcoal-black void, the smoke rendered as billions of microscopic color particles — deep crimson at the dense base transitioning through amber and gold to pale sienna at the dispersing top, the spiral has internal turbulence with darker eddies and brighter vortices creating designed structure within the chaos, photorealistic volumetric smoke texture with subsurface light scattering turning the thinnest wisps translucent and glowing, the upper-right two thirds of the frame open dark atmosphere with only the finest color-dust reaching into it, the release rendered as a vast atmospheric event at cosmic scale, asymmetric composition with the spiral anchored low-left and blooming toward upper-right, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["this is the peak...", "everything releasing at once...", "let go with the leaves..."],
         poetryMood: "transcendent",
         voice: "fable",
       },
       illumination: {
-        aiPrompt: "WHITE/PALE BACKGROUND, spare skeletal framework of stripped geometric corridors in cool grey-blue and pale silver arranged along the upper-left edge and top third of an immense soft white field, the skeleton rendered with photorealistic bare-wire and bleached-bone texture revealing the designed architecture that was hidden beneath the color, faint traces of amber and copper clinging at the joints like residual warmth, fine particles of pale grey dispersing downward-right from the skeleton into vast breathing white emptiness filling the lower two-thirds of the frame, the elegant geometry of what remains after chromatic release — connected lattice stripped to its mathematical essence, atmospheric scale as if viewing the architecture of a dissolved nebula, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "bare skeletal tree-like branching structure in pale silver-grey and cool bone-white against deep grey-black void, the branches stripped of all color revealing their underlying architecture — thin forking limbs with photorealistic weathered-driftwood texture, the branching pattern mathematically precise like a Lindenmayer system frozen in space, the structure anchored along the right edge with branches reaching leftward into generous dark emptiness, at every fork-joint the faintest trace of residual warm copper like the last memory of pigment, fine particles of pale ash drifting downward from the branch-tips in slow vertical paths, two thirds of the frame open darkness with only scattered silver dust, the elegant geometry of what remains after everything beautiful has been released, asymmetric composition weighted right with vast void left, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see the structure...", "what remains is essential...", "the beauty of less..."],
         poetryMood: "melancholic",
         voice: "fable",
       },
       return: {
-        aiPrompt: "DARK BACKGROUND, scattered remnant nodes of warm amber and sienna connected by fading brown filaments gathered loosely in the lower-left quarter of the frame against vast cool grey-brown darkness, the nodes dimming with photorealistic ash-over-ember texture, fine particles of cool grey and faint copper drifting upward in slow vertical paths from the remnant cluster into the enormous dark void above, connected threads between nodes thinning to near invisibility, the right two-thirds of the frame is quiet open space with deep grey-blue undertones and only the faintest scattered warm motes, the visual quiet of completion rendered as designed structures accepting their dissolution at atmospheric scale, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "thin layer of settled color-sediment along the bottom edge of an enormous deep brown-black void, the sediment a compressed stratum of all the autumn tones — crimson and amber and sienna and copper pressed into a narrow horizontal band with photorealistic geological-layer texture, from this settled layer a few last fine particles of warm gold still rising in slow upward drift-paths like the final exhalation, the vast majority of the frame is quiet open darkness above with deep grey-brown atmospheric undertones, a single thin crack of amber light visible within the sediment layer where warmth still persists, the visual silence of completion at infinite scale, asymmetric composition with the sediment anchored at the very bottom and nearly the entire frame open void above, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the earth is resting...", "rain completes it...", "nothing is lost, only changed..."],
         poetryMood: "flowing",
         voice: "fable",
       },
       integration: {
-        aiPrompt: "DARK BACKGROUND, single small cluster of crystalline frost-edged geometric forms in cool silver-blue and pale copper anchored near the upper-right corner of an enormous deep brown-black void, the forms designed with sharp faceted surfaces catching faint cold light, photorealistic ice-crystal texture forming over the last warm remnant tones at the joints, one thin filament extending downward-left and dissolving into the faintest particle trail of frost-silver dust, the frame is nearly all negative space — vast quiet darkness with only this final designed remnant and its dispersing crystalline memory, the silence before dormancy rendered as architecture surrendering to cold at infinite scale, no leaves no trees no landscape no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single sharp crystalline frost-form growing over a small dark remnant of warm copper in the upper-right corner of absolute black void, the frost rendered as precise geometric ice-needles radiating outward from the warm remnant in a starburst pattern — each needle photorealistic with internal prismatic refraction catching cold blue-white light, the copper remnant beneath glowing its last faint amber warmth through the translucent ice, one hair-thin trail of frost-crystal dust extending diagonally downward-left and dissolving into the faintest particle motes, nearly the entire frame vast black silence with only this small frozen memory, the first frost claiming the last warmth at cosmic scale, asymmetric composition with the form small and anchored upper-right, no leaves no trees no landscape no honeycomb no hexagons no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["winter is near...", "you carry the harvest..."],
         poetryMood: "melancholic",
         voice: "fable",
@@ -1179,7 +1177,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Numbness", expansion: "Weight", transcendence: "Fracture", illumination: "Thaw", return: "Aftermath", integration: "Scar" },
     phases: defaultPhases("pain", {
       threshold: {
-        aiPrompt: "WHITE BACKGROUND — a single thin fracture-line structure in bruise violet drifting in the lower-right corner, fine hair-like filaments trailing leftward into generous white emptiness, photorealistic crystalline pressure-texture at impossible scale, no blood no tears no faces no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP DARK VOID BACKGROUND — a single thin fracture-line structure in bruise violet drifting in the lower-right corner, fine hair-like filaments trailing leftward into generous dark emptiness, photorealistic crystalline pressure-texture at impossible scale, no blood no tears no faces no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["be still...", "let it come...", "you don't have to be strong here..."],
         poetryMood: "melancholic",
         voice: "onyx",
@@ -1197,7 +1195,7 @@ export const JOURNEYS: Journey[] = [
         voice: "onyx",
       },
       illumination: {
-        aiPrompt: "PALE BACKGROUND — cluster of dark fracture-forms along the left edge with warm amber light glowing through their internal seams, the wound-structures interwoven and designed like damaged architecture healing, fine particles of amber and violet dispersing rightward into vast pale emptiness, quiet sculptural power against boundless soft white, no blood no tears no faces no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP DARK VOID BACKGROUND — cluster of dark fracture-forms along the left edge with warm amber light glowing through their internal seams, the wound-structures interwoven and designed like damaged architecture healing, fine particles of amber and violet dispersing rightward into vast dark emptiness, quiet sculptural power against boundless deep darkness, no blood no tears no faces no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["something shifted...", "the weight is lighter now...", "breathe..."],
         poetryMood: "melancholic",
         voice: "onyx",

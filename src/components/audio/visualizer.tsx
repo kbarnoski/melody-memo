@@ -370,6 +370,9 @@ export function VisualizerCore({
 
   const inJourneyMode = journeyActive || journeyBrowsing;
 
+  // Skip shader rendering when journey browser covers everything (saves GPU)
+  const shadersHidden = journeyBrowsing && !journeyActive;
+
   // Transport state — only read when transport is shown
   const currentTrack = useAudioStore((s) => showTransport ? s.currentTrack : null);
   const isPlaying = useAudioStore((s) => showTransport ? s.isPlaying : false);
@@ -596,10 +599,10 @@ export function VisualizerCore({
   return (
     <>
       {/* Previous shader (fading out) */}
-      {prevRenderMode && renderShaderLayer(prevRenderMode, 0, prevLayerRef)}
+      {!shadersHidden && prevRenderMode && renderShaderLayer(prevRenderMode, 0, prevLayerRef)}
 
       {/* Current shader (fading in, or full opacity when no crossfade) */}
-      {renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined)}
+      {!shadersHidden && renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined)}
 
       {/* Dual shader — second layer during peak journey moments (smooth fade).
           Outer div applies --shader-opacity; inner div handles the crossfade animation. */}

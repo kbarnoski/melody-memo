@@ -19,7 +19,7 @@ import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { getJourney } from "@/lib/journeys/journeys";
 import { createClient } from "@/lib/supabase/client";
 import { ShareSheet } from "@/components/ui/share-sheet";
-import { Mic, ArrowLeft } from "lucide-react";
+import { Mic } from "lucide-react";
 
 // ─── Speech Recognition types ───
 
@@ -283,7 +283,7 @@ export function VisualizerClient({
   const closeRoom = useAudioStore((s) => s.closeRoom);
   useEffect(() => {
     openRoom();
-    localStorage.setItem("resonance-last-experience", "room");
+    localStorage.setItem("resonance-last-experience", "chosen");
     return () => closeRoom();
   }, [openRoom, closeRoom]);
 
@@ -699,80 +699,6 @@ export function VisualizerClient({
           )}
         </VisualizerCore>
       </JourneyCompositor>}
-
-      {/* Dark scrim over ambient viz — fades out when track starts */}
-      <div
-        className="absolute inset-0 transition-opacity duration-1000"
-        style={{
-          zIndex: 5,
-          backgroundColor: "rgba(0,0,0,0.75)",
-          opacity: (!currentTrack && !journeyActive && !installationMode) ? 1 : 0,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Welcome overlay — shown when no track and no journey */}
-      {!currentTrack && !journeyActive && !installationMode && (
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center"
-          style={{ zIndex: 6, pointerEvents: "none" }}
-        >
-          <div className="text-center max-w-lg px-8" style={{ pointerEvents: "auto" }}>
-            <h1
-              className="text-white/90 mb-4"
-              style={{
-                fontFamily: "var(--font-geist-sans)",
-                fontWeight: 100,
-                fontSize: "3.2rem",
-                letterSpacing: "-0.03em",
-                lineHeight: 1.1,
-              }}
-            >
-              The Room
-            </h1>
-            <p
-              className="text-white/50 mb-10"
-              style={{
-                fontFamily: "var(--font-geist-mono)",
-                fontSize: "0.95rem",
-                lineHeight: 1.7,
-              }}
-            >
-              An immersive space for your music. Play a track
-              from your library, or start a journey to experience
-              AI-driven visuals, ambient soundscapes, and poetry.
-            </p>
-            <button
-              onClick={handleEnterRoom}
-              className="px-7 py-3.5 rounded-xl text-white transition-all"
-              style={{
-                fontFamily: "var(--font-geist-mono)",
-                fontSize: "0.9rem",
-                border: "1px solid rgba(255,255,255,0.25)",
-                backgroundColor: "rgba(255,255,255,0.12)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.22)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.40)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.12)";
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
-              }}
-            >
-              Enter
-            </button>
-          </div>
-          {/* Back button */}
-          <button
-            onClick={handleExit}
-            className="absolute top-6 left-6 p-2.5 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors"
-            style={{ pointerEvents: "auto" }}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        </div>
-      )}
 
       {/* Journey phase indicator — hidden in fullscreen/immersive mode and when browsing */}
       {journeyActive && activeJourney && !isFullscreen && !journeyOpen && (

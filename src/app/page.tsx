@@ -12,10 +12,9 @@ export default function Home() {
 
   useEffect(() => {
     const pref = localStorage.getItem(PREF_KEY);
-    if (pref === "studio") {
+    if (pref) {
+      // After first-time choice, always default to Studio
       router.replace("/library");
-    } else if (pref === "room") {
-      router.replace("/room");
     } else {
       setShowChooser(true);
     }
@@ -24,7 +23,7 @@ export default function Home() {
   if (!showChooser) return null;
 
   function handleChoose(experience: "studio" | "room") {
-    localStorage.setItem(PREF_KEY, experience);
+    localStorage.setItem(PREF_KEY, "chosen");
     router.push(experience === "studio" ? "/library" : "/room");
   }
 

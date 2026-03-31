@@ -803,8 +803,15 @@ export function VisualizerCore({
           pointerEvents: controlsVisible ? "auto" : "none",
         }}
       >
+        {/* Subtle top separator — visible when journey selector is open */}
         <div
-          className="flex items-center px-4"
+          className="h-px w-full"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)" }}
+        />
+
+        {/* Desktop bar — full layout, unchanged */}
+        <div
+          className="room-bar-desktop items-center px-4"
           style={{
             background: "#000",
             height: "56px",
@@ -1103,6 +1110,214 @@ export function VisualizerCore({
             </button>
           )}
           </div>
+        </div>
+
+        {/* Mobile bar — two-row layout when playing, single row when browsing */}
+        <div
+          className="room-bar-mobile flex-col"
+          style={{
+            background: "#000",
+            paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          }}
+        >
+          {/* Row 1: Mode identity + track info */}
+          <div className="flex items-center justify-between px-3" style={{ height: "32px" }}>
+            {/* Left: mode toggle or journey pill */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {showJourneyButton && onJourneyToggle && !journeyActive && (
+                <div
+                  className="flex items-center rounded-lg"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  <button
+                    onClick={onJourneyToggle}
+                    className={`px-2.5 py-1.5 rounded-l-[7px] transition-colors duration-75 ${
+                      inJourneyMode
+                        ? "bg-white/10 text-white/90"
+                        : "text-white/35 hover:text-white/60 hover:bg-white/10"
+                    }`}
+                    style={{ fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)", lineHeight: 1 }}
+                  >
+                    Journeys
+                  </button>
+                  <button
+                    onClick={inJourneyMode ? onSwitchToVisualize : undefined}
+                    className={`px-2.5 py-1.5 rounded-r-[7px] transition-colors duration-75 ${
+                      !inJourneyMode
+                        ? "bg-white/10 text-white/90"
+                        : "text-white/35 hover:text-white/60 hover:bg-white/10"
+                    }`}
+                    style={{ fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)", lineHeight: 1 }}
+                  >
+                    Viz
+                  </button>
+                </div>
+              )}
+              {journeyActive && journeyName && (
+                <div
+                  className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-lg min-w-0"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <button
+                    onClick={onStopJourney}
+                    className="flex-shrink-0 p-1 rounded text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
+                    title="End journey"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                  <span
+                    className="rounded-full flex-shrink-0"
+                    style={{
+                      width: "6px",
+                      height: "6px",
+                      backgroundColor: journeyAccent ?? "rgba(255,255,255,0.5)",
+                    }}
+                  />
+                  <span
+                    className="text-white/70 truncate"
+                    style={{
+                      fontSize: "0.68rem",
+                      fontFamily: "var(--font-geist-mono)",
+                      maxWidth: "120px",
+                    }}
+                  >
+                    {journeyName}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* Right: track title + time */}
+            {currentTrack && (
+              <div className="flex items-center gap-1.5 min-w-0 ml-2">
+                <span
+                  className="text-white/50 truncate"
+                  style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-sans)", maxWidth: "140px" }}
+                >
+                  {currentTrack.title}
+                </span>
+                <span
+                  className="text-white/25 flex-shrink-0"
+                  style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)", fontVariantNumeric: "tabular-nums" }}
+                >
+                  {formatTime(currentTime)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Row 2: Transport controls + actions (only when not in journey browsing without active journey) */}
+          {(!journeyBrowsing || journeyActive) && (
+            <div className="flex items-center justify-between px-2" style={{ height: "44px" }}>
+              {/* Left: prev / play / next */}
+              <div className="flex items-center">
+                {showTransport && currentTrack && !journeyActive && queue.length > 1 && (
+                  <button
+                    onClick={playPrev}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/40 hover:text-white/80 transition-colors duration-75"
+                    title="Previous track"
+                  >
+                    <SkipBack className="h-3.5 w-3.5" fill="currentColor" />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    ensureResumed();
+                    isPlaying ? storePause() : storeResume();
+                  }}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors duration-75"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-4.5 w-4.5" fill="currentColor" />
+                  ) : (
+                    <Play className="h-4.5 w-4.5" fill="currentColor" />
+                  )}
+                </button>
+                {showTransport && currentTrack && !journeyActive && queue.length > 1 && (
+                  <button
+                    onClick={playNext}
+                    className={`min-w-[44px] min-h-[44px] flex items-center justify-center transition-colors duration-75 ${
+                      queueIndex < queue.length - 1
+                        ? "text-white/40 hover:text-white/80"
+                        : "text-white/15 cursor-default"
+                    }`}
+                    disabled={queueIndex >= queue.length - 1}
+                    title="Next track"
+                  >
+                    <SkipForward className="h-3.5 w-3.5" fill="currentColor" />
+                  </button>
+                )}
+              </div>
+
+              {/* Right: library + share + studio/exit */}
+              <div className="flex items-center gap-0.5">
+                {showLibraryButton && onLibraryToggle && !journeyActive && (
+                  <button
+                    onClick={onLibraryToggle}
+                    className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors duration-75 ${
+                      libraryOpen ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
+                    }`}
+                    title="Library"
+                  >
+                    <Library className="h-4 w-4" />
+                  </button>
+                )}
+                {(journeyActive ? onShareJourney : onShareRoom) && (
+                  <button
+                    onClick={journeyActive ? onShareJourney : onShareRoom}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors duration-75"
+                    title={journeyActive ? "Share Journey" : "Share"}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
+                )}
+                {exitLabel === "back" ? (
+                  <button
+                    onClick={onExit}
+                    className="flex items-center px-3 py-2 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+                    style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)" }}
+                    title="Studio"
+                  >
+                    Studio
+                  </button>
+                ) : (
+                  <button
+                    onClick={onExit}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors"
+                    title="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Journey browsing without active journey — single row with just studio/exit */}
+          {journeyBrowsing && !journeyActive && (
+            <div className="flex items-center justify-end px-2" style={{ height: "44px" }}>
+              {exitLabel === "back" ? (
+                <button
+                  onClick={onExit}
+                  className="flex items-center px-3 py-2 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+                  style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)" }}
+                  title="Studio"
+                >
+                  Studio
+                </button>
+              ) : (
+                <button
+                  onClick={onExit}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors"
+                  title="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>}
     </>

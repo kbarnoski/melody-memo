@@ -210,3 +210,11 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Room bottom bar — desktop/mobile visibility */
+.room-bar-desktop { display: none; }
+.room-bar-mobile { display: flex; }
+@media (min-width: 768px) {
+  .room-bar-desktop { display: flex; }
+  .room-bar-mobile { display: none; }
+}

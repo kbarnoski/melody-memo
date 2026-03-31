@@ -588,9 +588,9 @@ export function VisualizerClient({
 
   if (!analyser || !dataArray) return null;
 
-  // Show viz unless journey browser is open from viz mode (no active journey)
-  // This prevents the shader from running behind the opaque journey picker
-  const showViz = !(journeyOpen && !activeJourney);
+  // Always render — compositor contains the bottom bar; journey selector
+  // covers shaders with its own solid black background at z-index 7
+  const showViz = true;
 
   return (
     <div

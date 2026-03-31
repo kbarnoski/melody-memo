@@ -839,15 +839,22 @@ export function VisualizerCore({
                 </button>
               </div>
             )}
-            {/* Journey name pill */}
+            {/* Journey name pill with close */}
             {journeyActive && journeyName && (
               <div
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg"
+                className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-lg"
                 style={{
                   backgroundColor: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
+                <button
+                  onClick={onStopJourney}
+                  className="flex-shrink-0 p-1 rounded text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
+                  title="End journey"
+                >
+                  <X className="h-3 w-3" />
+                </button>
                 <span
                   className="rounded-full flex-shrink-0"
                   style={{
@@ -1072,17 +1079,6 @@ export function VisualizerCore({
               >
                 <Share2 className="h-3.5 w-3.5" />
                 Share
-              </button>
-            )}
-            {journeyActive && onStopJourney && (
-              <button
-                onClick={onStopJourney}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
-                style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)" }}
-                title="End journey"
-              >
-                <X className="h-3.5 w-3.5" />
-                End
               </button>
             )}
           {exitLabel === "back" ? (

@@ -421,7 +421,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               {/* <button onClick={handleAutoGenerate} ...>Generate</button> */}
               <button
                 onClick={() => setCreateDialogOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/10 transition-colors duration-150"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
                 style={{
                   fontSize: "0.72rem",
                   fontFamily: "var(--font-geist-mono)",

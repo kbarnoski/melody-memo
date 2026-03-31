@@ -778,7 +778,7 @@ export function VisualizerCore({
       {!installationMode && onFullscreenToggle && !journeyBrowsing && (currentTrack || journeyActive) && (
         <button
           onClick={onFullscreenToggle}
-          className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-150"
+          className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
           style={{
             zIndex: 10,
             opacity: controlsVisible ? 1 : 0,
@@ -817,7 +817,7 @@ export function VisualizerCore({
               >
                 <button
                   onClick={onJourneyToggle}
-                  className={`px-3 py-2 rounded-l-[7px] transition-colors duration-150 ${
+                  className={`px-3 py-2 rounded-l-[7px] transition-colors duration-75 ${
                     inJourneyMode
                       ? "bg-white/10 text-white/90"
                       : "text-white/35 hover:text-white/60 hover:bg-white/10"
@@ -828,7 +828,7 @@ export function VisualizerCore({
                 </button>
                 <button
                   onClick={inJourneyMode ? onSwitchToVisualize : undefined}
-                  className={`px-3 py-2 rounded-r-[7px] transition-colors duration-150 ${
+                  className={`px-3 py-2 rounded-r-[7px] transition-colors duration-75 ${
                     !inJourneyMode
                       ? "bg-white/10 text-white/90"
                       : "text-white/35 hover:text-white/60 hover:bg-white/10"
@@ -871,7 +871,7 @@ export function VisualizerCore({
                 {onShareJourney && (
                   <button
                     onClick={onShareJourney}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-150"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
                     style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)" }}
                     title="Share Journey"
                   >
@@ -881,7 +881,7 @@ export function VisualizerCore({
                 )}
                 <button
                   onClick={onStopJourney}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-150"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
                   style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)" }}
                   title="End journey"
                 >
@@ -894,7 +894,7 @@ export function VisualizerCore({
             {!inJourneyMode && (
               <button
                 onClick={() => setModePaletteOpen((v) => !v)}
-                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-colors duration-150 ${
+                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-colors duration-75 ${
                   modePaletteOpen ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
                 }`}
                 style={{ border: "1px solid rgba(255,255,255,0.1)" }}
@@ -919,7 +919,7 @@ export function VisualizerCore({
                       setTextOverlayMode("poetry");
                     }
                   }}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-150 ${poetryEnabled || storyEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-75 ${poetryEnabled || storyEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
                   style={{ border: poetryEnabled || storyEnabled ? "1px solid transparent" : "1px solid rgba(255,255,255,0.1)" }}
                   title={poetryEnabled || storyEnabled ? "Poetry: On" : "Poetry: Off"}
                 >
@@ -930,12 +930,12 @@ export function VisualizerCore({
                 </button>
                 <button
                   onClick={() => setWhisperEnabled(!whisperEnabled)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-150 ${whisperEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-75 ${whisperEnabled ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
                   style={{
                     border: whisperEnabled ? "1px solid transparent" : "1px solid rgba(255,255,255,0.1)",
                     opacity: poetryEnabled || storyEnabled ? 1 : 0,
                     pointerEvents: poetryEnabled || storyEnabled ? "auto" : "none",
-                    transition: "background-color 150ms, color 150ms, border-color 150ms, opacity 150ms",
+                    transition: "background-color 75ms, color 75ms, border-color 75ms, opacity 75ms",
                   }}
                   title={whisperEnabled ? "Voice: On" : "Voice: Off"}
                 >
@@ -947,11 +947,11 @@ export function VisualizerCore({
                 <div className="relative" style={{
                   opacity: poetryEnabled || storyEnabled ? 1 : 0,
                   pointerEvents: poetryEnabled || storyEnabled ? "auto" : "none",
-                  transition: "opacity 150ms",
+                  transition: "opacity 75ms",
                 }}>
                   <button
                     onClick={() => setLangPickerOpen((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-150 ${langPickerOpen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
+                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-75 ${langPickerOpen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
                     style={{ border: langPickerOpen ? "1px solid transparent" : "1px solid rgba(255,255,255,0.1)" }}
                     title="Language"
                   >
@@ -1001,7 +1001,7 @@ export function VisualizerCore({
               {queue.length > 1 && (
                 <button
                   onClick={playPrev}
-                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-150"
+                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                   title="Previous track"
                 >
                   <SkipBack className="h-3.5 w-3.5" fill="currentColor" />
@@ -1012,7 +1012,7 @@ export function VisualizerCore({
                   ensureResumed();
                   isPlaying ? storePause() : storeResume();
                 }}
-                className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-150"
+                className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-75"
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" fill="currentColor" />
@@ -1023,7 +1023,7 @@ export function VisualizerCore({
               {queue.length > 1 && (
                 <button
                   onClick={playNext}
-                  className={`flex items-center justify-center p-2 transition-colors duration-150 ${
+                  className={`flex items-center justify-center p-2 transition-colors duration-75 ${
                     queueIndex < queue.length - 1
                       ? "text-white/40 hover:text-white/80"
                       : "text-white/15 cursor-default"
@@ -1049,7 +1049,7 @@ export function VisualizerCore({
               {showLibraryButton && onLibraryToggle && (
                 <button
                   onClick={onLibraryToggle}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-150 ml-3 ${libraryOpen ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70 hover:bg-white/10"}`}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors duration-75 ml-3 ${libraryOpen ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70 hover:bg-white/10"}`}
                   style={{ border: libraryOpen ? "1px solid transparent" : "1px solid rgba(255,255,255,0.1)" }}
                   title="Library"
                 >
@@ -1087,7 +1087,7 @@ export function VisualizerCore({
           {exitLabel === "back" ? (
             <button
               onClick={onExit}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-150"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
               style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)" }}
               title="Studio"
             >

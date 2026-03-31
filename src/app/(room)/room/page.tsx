@@ -4,12 +4,13 @@ import { VisualizerClient } from "@/components/audio/visualizer-client";
 export default async function VisualizerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ recording?: string; live?: string; journey?: string }>;
+  searchParams: Promise<{ recording?: string; live?: string; journey?: string; autoplay?: string }>;
 }) {
   const params = await searchParams;
   const recordingId = params.recording;
   const liveMode = params.live === "true";
   const journey = params.journey;
+  const autoplay = params.autoplay !== "0";
 
   let recording: { id: string; title?: string; audio_url: string } | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,6 +39,7 @@ export default async function VisualizerPage({
       analysis={analysis}
       initialLive={liveMode}
       initialJourney={journey}
+      autoplay={autoplay}
     />
   );
 }

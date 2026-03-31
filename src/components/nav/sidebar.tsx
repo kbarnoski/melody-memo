@@ -110,15 +110,23 @@ export function Sidebar() {
       </nav>
 
       <div className="px-3 pb-2">
-        <Link
-          href="/room"
-          className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all
+        <button
+          onClick={() => {
+            // If viewing a recording detail page, carry that track into the Room
+            const match = pathname.match(/^\/recording\/([^/]+)/);
+            if (match) {
+              router.push(`/room?recording=${match[1]}&autoplay=0`);
+            } else {
+              router.push("/room");
+            }
+          }}
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all
             bg-white/[0.05] border border-white/10 text-white/60 hover:text-white
             hover:bg-white/10 hover:border-white/15"
         >
           <Disc3 className="h-4 w-4" />
           Enter The Room
-        </Link>
+        </button>
       </div>
 
       <div className="border-t border-white/[0.06] px-2 py-2">

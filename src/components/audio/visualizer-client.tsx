@@ -53,6 +53,7 @@ interface VisualizerClientProps {
   analysis?: any | null;
   initialLive?: boolean;
   initialJourney?: string;
+  autoplay?: boolean;
 }
 
 export function VisualizerClient({
@@ -60,6 +61,7 @@ export function VisualizerClient({
   analysis: initialAnalysis,
   initialLive = false,
   initialJourney,
+  autoplay = true,
 }: VisualizerClientProps) {
   const router = useRouter();
 
@@ -336,11 +338,17 @@ export function VisualizerClient({
       return;
     }
     // Fresh load from URL
-    play({
+    const trackData = {
       id: recording.id,
       title: recording.title ?? "Untitled",
       audioUrl: recording.audio_url,
-    });
+    };
+    if (autoplay) {
+      play(trackData);
+    } else {
+      // Load track without starting playback
+      useAudioStore.setState({ currentTrack: trackData, currentTime: 0, isPlaying: false });
+    }
     if (initialAnalysis) {
       setAnalysis(initialAnalysis);
     }

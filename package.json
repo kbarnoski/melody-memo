@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",
@@ -22,6 +24,7 @@
     "@spotify/basic-pitch": "^1.0.1",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@tauri-apps/api": "^2.10.1",
     "@tensorflow/tfjs": "^4.22.0",
     "@tonejs/midi": "^2.0.28",
     "@types/three": "^0.182.0",
@@ -52,6 +55,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tauri-apps/cli": "^2.10.1",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

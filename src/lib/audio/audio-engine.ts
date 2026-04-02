@@ -11,6 +11,11 @@
  * The singleton pattern enforces this constraint.
  */
 
+import { NativeAnalyserNode } from "./native-analyser";
+
+/** Union type: either browser AnalyserNode or native NativeAnalyserNode */
+export type AnalyserLike = AnalyserNode | NativeAnalyserNode;
+
 let audioContext: AudioContext | null = null;
 let audioElement: HTMLAudioElement | null = null;
 let sourceNode: MediaElementAudioSourceNode | null = null;
@@ -105,4 +110,19 @@ export function stopAmbient(): void {
     try { ambientGain.disconnect(); } catch {}
     ambientGain = null;
   }
+}
+
+// ─── Native analyser singleton (desktop mode) ───
+
+let nativeAnalyser: NativeAnalyserNode | null = null;
+
+export function initNativeAnalyser(): NativeAnalyserNode {
+  if (!nativeAnalyser) {
+    nativeAnalyser = new NativeAnalyserNode();
+  }
+  return nativeAnalyser;
+}
+
+export function getNativeAnalyser(): NativeAnalyserNode | null {
+  return nativeAnalyser;
 }

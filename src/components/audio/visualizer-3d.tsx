@@ -7,6 +7,7 @@ import * as THREE from "three";
 import {
   WaveScene, SeabedScene, CageScene, PendulumScene,
 } from "./visualizer-3d-extra";
+import type { AnalyserLike } from "@/lib/audio/audio-engine";
 
 // ─── Audio data hook — reads analyser every frame ───
 
@@ -18,7 +19,7 @@ interface AudioData {
 }
 
 function useAudioData(
-  _analyser: AnalyserNode,
+  _analyser: AnalyserLike,
   _dataArray: Uint8Array<ArrayBuffer>
 ): React.MutableRefObject<AudioData> {
   const ref = useRef<AudioData>({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
@@ -134,7 +135,7 @@ const orbFragmentShader = `
   }
 `;
 
-function OrbScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function OrbScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const meshRef = useRef<THREE.Mesh>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -173,7 +174,7 @@ function OrbScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: 
 
 // ─── Field scene — particle nebula (fixed: darker, less washed out) ───
 
-function FieldScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function FieldScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -397,7 +398,7 @@ const auroraFragmentShader = `
   }
 `;
 
-function AuroraScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function AuroraScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
 
   const RIBBON_COUNT = 5;
@@ -458,7 +459,7 @@ function AuroraScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArra
 
 // ─── Galaxy scene — spiral galaxy of 10000 particles ───
 
-function GalaxyScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function GalaxyScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -597,7 +598,7 @@ function GalaxyScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArra
 
 // ─── Depths scene — deep underwater bioluminescent particles ───
 
-function DepthsScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function DepthsScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -732,7 +733,7 @@ function DepthsScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArra
 
 // ─── Bonfire scene — fire particle system ───
 
-function BonfireScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function BonfireScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -877,7 +878,7 @@ function BonfireScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArr
 
 // ─── Crystal scene — cluster of elongated crystal shapes ───
 
-function CrystalScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function CrystalScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const groupRef = useRef<THREE.Group>(null);
   const meshRefs = useRef<THREE.Mesh[]>([]);
@@ -978,7 +979,7 @@ function CrystalScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArr
 
 // ─── Swarm scene — murmuration of 6000 particles ───
 
-function SwarmScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function SwarmScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -1121,7 +1122,7 @@ function SwarmScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray
 
 // ─── Lotus scene — blooming geometric flower ───
 
-function LotusScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function LotusScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const groupRef = useRef<THREE.Group>(null);
   const petalRefs = useRef<THREE.Mesh[]>([]);
@@ -1227,7 +1228,7 @@ function LotusScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray
 
 // ─── Cloud scene — volumetric cloud effect ───
 
-function CloudScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function CloudScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -1360,7 +1361,7 @@ function CloudScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray
 
 // ─── Waterfall scene — cascading water particles ───
 
-function WaterfallScene({ analyser, dataArray }: { analyser: AnalyserNode; dataArray: Uint8Array<ArrayBuffer> }) {
+function WaterfallScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
   const audio = useAudioData(analyser, dataArray);
   const pointsRef = useRef<THREE.Points>(null);
   const materialRef = useRef<THREE.ShaderMaterial>(null);
@@ -1556,7 +1557,7 @@ export function Visualizer3D({
   dataArray,
   mode,
 }: {
-  analyser: AnalyserNode;
+  analyser: AnalyserLike;
   dataArray: Uint8Array<ArrayBuffer>;
   mode: Visualizer3DMode;
 }) {

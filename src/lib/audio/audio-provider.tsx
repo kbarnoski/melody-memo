@@ -2,8 +2,17 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import { useAudioStore } from "./audio-store";
-import { getAudioEngine, ensureResumed, startAmbient, stopAmbient } from "./audio-engine";
+import { getAudioEngine, ensureResumed, startAmbient, stopAmbient, initNativeAnalyser } from "./audio-engine";
 import { resolveAudioUrl } from "./resolve-audio-url";
+import {
+  isDesktopApp,
+  nativeAudioLoad,
+  nativeAudioPlay,
+  nativeAudioPause,
+  nativeAudioSetVolume,
+  nativeAudioSubscribe,
+  type AudioDataPayload,
+} from "@/lib/tauri";
 
 /**
  * AudioProvider bridges the Zustand store to the audio engine singleton.
@@ -19,6 +28,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   const lastSrcRef = useRef<string>("");
   const loadingNewSrc = useRef(false);
 
+  // Native audio mode (desktop app)
+  const nativeMode = useRef(false);
+  const nativeSubscribed = useRef(false);
+  const nativeFailedTracks = useRef(new Set<string>());
+
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const currentTrack = useAudioStore((s) => s.currentTrack);
   const volume = useAudioStore((s) => s.volume);
@@ -33,9 +47,90 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // ─── Native audio setup (desktop mode) ───
+  useEffect(() => {
+    if (!isDesktopApp()) return;
+    nativeMode.current = true;
+
+    // Initialize the NativeAnalyserNode + subscribe to Rust FFT data
+    const analyser = initNativeAnalyser();
+
+    if (!nativeSubscribed.current) {
+      nativeSubscribed.current = true;
+      nativeAudioSubscribe((data: AudioDataPayload) => {
+        analyser.updateFromNative(data.bins);
+        // Sync time/duration from Rust to store (throttled by Rust's ~60Hz emit rate)
+        const store = useAudioStore.getState();
+        if (data.isPlaying && Math.abs(store.currentTime - data.currentTime) > 0.1) {
+          store.setCurrentTime(data.currentTime);
+        }
+        if (data.duration > 0 && Math.abs(store.duration - data.duration) > 0.5) {
+          store.setDuration(data.duration);
+        }
+      }).catch((err) => {
+        console.warn("Native audio subscribe failed:", err);
+        nativeMode.current = false;
+      });
+    }
+
+    // Listen for track-ended event from Rust
+    let unlisten: (() => void) | null = null;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("native-audio-ended", () => {
+        const { installationMode } = useAudioStore.getState();
+        if (installationMode) {
+          useAudioStore.getState().playNext();
+        } else {
+          useAudioStore.getState().pause();
+        }
+      }).then((fn) => { unlisten = fn; });
+    });
+
+    return () => { unlisten?.(); };
+  }, []);
+
   // ─── Track changes — load new src, wait for canplay, then seek + play ───
   useEffect(() => {
     if (!currentTrack) return;
+
+    // ── Native audio path (desktop) ──
+    if (nativeMode.current && !nativeFailedTracks.current.has(currentTrack.id)) {
+      const newSrc = currentTrack.audioUrl;
+      const isNewSrc = lastSrcRef.current !== newSrc;
+
+      if (isNewSrc) {
+        const shouldSkip = useAudioStore.getState()._skipLoad;
+        if (shouldSkip) {
+          lastSrcRef.current = newSrc;
+          useAudioStore.setState({ _skipLoad: false });
+          stopAmbient();
+          return;
+        }
+
+        stopAmbient();
+        lastSrcRef.current = newSrc;
+
+        // Resolve URL then load via Rust
+        resolveAudioUrl(newSrc, currentTrack.id)
+          .then((resolvedUrl) => nativeAudioLoad(resolvedUrl, currentTrack.id))
+          .then(() => {
+            // Auto-play if the store says we should be playing
+            if (useAudioStore.getState().isPlaying) {
+              return nativeAudioPlay();
+            }
+          })
+          .catch((err) => {
+            console.warn("Native audio failed for", currentTrack.id, err);
+            nativeFailedTracks.current.add(currentTrack.id);
+            // Fall through to browser path on next render
+            lastSrcRef.current = "";
+            useAudioStore.setState({ currentTrack: { ...currentTrack } });
+          });
+      }
+      return; // Native handles the rest via Channel callback
+    }
+
+    // ── Browser audio path (original logic) ──
     // Ensure engine is ready (may already be initialized from a click handler)
     initEngine();
     if (!engineReady.current) return;
@@ -129,7 +224,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Play / pause sync (for same-track pause/resume only) ───
   useEffect(() => {
-    if (!engineReady.current || !currentTrack) return;
+    if (!currentTrack) return;
+
+    if (nativeMode.current && !nativeFailedTracks.current.has(currentTrack.id)) {
+      if (isPlaying) {
+        nativeAudioPlay().catch(() => {});
+      } else {
+        nativeAudioPause().catch(() => {});
+      }
+      return;
+    }
+
+    if (!engineReady.current) return;
     // Skip if we're in the middle of loading a new src — canplay handler will play
     if (loadingNewSrc.current) return;
 
@@ -146,13 +252,19 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
   // ─── Volume sync ───
   useEffect(() => {
+    if (nativeMode.current) {
+      nativeAudioSetVolume(volume).catch(() => {});
+      return;
+    }
     if (!engineReady.current) return;
     const { gainNode } = getAudioEngine();
     gainNode.gain.setValueAtTime(volume, 0);
   }, [volume]);
 
   // ─── RAF loop — sync currentTime from engine → store at ~15Hz ───
+  // In native mode, time sync is handled by the Rust Channel callback above
   useEffect(() => {
+    if (nativeMode.current) return;
     if (!engineReady.current) return;
 
     let lastUpdate = 0;

@@ -4,6 +4,7 @@ import { useRef, useMemo } from "react";
 import { useFrame } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
+import type { AnalyserLike } from "@/lib/audio/audio-engine";
 
 // ─── Audio data hook (self-contained copy — avoids coupling to main file internals) ───
 
@@ -15,7 +16,7 @@ interface AudioData {
 }
 
 function useAudioData(
-  _analyser: AnalyserNode,
+  _analyser: AnalyserLike,
   _dataArray: Uint8Array<ArrayBuffer>
 ): React.MutableRefObject<AudioData> {
   const ref = useRef<AudioData>({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
@@ -34,7 +35,7 @@ function useAudioData(
 
 // Props type shared by all scenes
 interface SceneProps {
-  analyser: AnalyserNode;
+  analyser: AnalyserLike;
   dataArray: Uint8Array<ArrayBuffer>;
 }
 

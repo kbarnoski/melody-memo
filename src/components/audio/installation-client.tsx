@@ -5,6 +5,7 @@ import { VisualizerClient } from "./visualizer-client";
 import { useAudioStore, type Track } from "@/lib/audio/audio-store";
 import { getAudioEngine, ensureResumed } from "@/lib/audio/audio-engine";
 import { JOURNEYS } from "@/lib/journeys/journeys";
+import { isDesktopApp, enterKioskMode, exitKioskMode, setCursorVisible } from "@/lib/tauri";
 
 interface InstallationClientProps {
   tracks: Track[];
@@ -41,9 +42,17 @@ export function InstallationClient({ tracks, journey }: InstallationClientProps)
       }
     }
 
+    // Native kiosk mode for desktop app
+    if (isDesktopApp()) {
+      enterKioskMode().catch(() => {});
+    }
+
     return () => {
       setInstallationMode(false);
       stopJourney();
+      if (isDesktopApp()) {
+        exitKioskMode().catch(() => {});
+      }
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -54,10 +63,12 @@ export function InstallationClient({ tracks, journey }: InstallationClientProps)
 
     const hideCursor = () => {
       container.style.cursor = "none";
+      setCursorVisible(false).catch(() => {});
     };
 
     const showCursor = () => {
       container.style.cursor = "default";
+      setCursorVisible(true).catch(() => {});
       if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current);
       cursorTimerRef.current = setTimeout(hideCursor, 3000);
     };
@@ -68,6 +79,7 @@ export function InstallationClient({ tracks, journey }: InstallationClientProps)
     return () => {
       container.removeEventListener("mousemove", showCursor);
       if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current);
+      setCursorVisible(true).catch(() => {});
     };
   }, []);
 

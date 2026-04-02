@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getAudioEngine } from "./audio-engine";
+import { isDesktopApp, nativeAudioSeek } from "@/lib/tauri";
 import type { Journey, JourneyPhaseId } from "@/lib/journeys/types";
 import type { Realm } from "@/lib/journeys/types";
 import { getJourney } from "@/lib/journeys/journeys";
@@ -168,7 +169,12 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     set({ isPlaying: !isPlaying });
   },
 
-  seek: (time) => set({ currentTime: time }),
+  seek: (time) => {
+    set({ currentTime: time });
+    if (isDesktopApp()) {
+      nativeAudioSeek(time).catch(() => {});
+    }
+  },
   setVolume: (vol) => set({ volume: Math.max(0, Math.min(1, vol)) }),
   setCurrentTime: (time) => set({ currentTime: time }),
   setDuration: (duration) => set({ duration }),
@@ -235,7 +241,11 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     const { queue, queueIndex, currentTime, isPlaying } = get();
     // If more than 3s in, restart current track
     if (currentTime > 3) {
-      try { getAudioEngine().audioElement.currentTime = 0; } catch {}
+      if (isDesktopApp()) {
+        nativeAudioSeek(0).catch(() => {});
+      } else {
+        try { getAudioEngine().audioElement.currentTime = 0; } catch {}
+      }
       set({ currentTime: 0 });
       return;
     }

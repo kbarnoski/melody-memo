@@ -1,0 +1,31 @@
+[package]
+name = "resonance"
+version = "0.1.0"
+description = "Resonance — personal audio workspace for pianists and composers"
+authors = ["Karel Barnoski"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.10.3", features = [] }
+tauri-plugin-log = "2"
+symphonia = { version = "0.5", features = ["aac", "mp3", "pcm", "wav", "isomp4", "ogg", "vorbis", "flac"] }
+rodio = { version = "0.19", default-features = false, features = ["symphonia-all"] }
+rustfft = "6.2"
+ringbuf = "0.4"
+reqwest = { version = "0.12", features = ["rustls-tls"] }
+tokio = { version = "1", features = ["rt-multi-thread", "fs", "io-util"] }
+crossbeam-channel = "0.5"
+parking_lot = "0.12"
+thiserror = "2"
+dirs = "6"

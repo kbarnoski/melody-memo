@@ -202,6 +202,12 @@
   100% { opacity: 0; }
 }
 
+/* Journey completion overlay fade-in */
+@keyframes journeyEndFadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

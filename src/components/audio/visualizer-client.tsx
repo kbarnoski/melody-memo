@@ -11,7 +11,7 @@ import { JourneyCompositor } from "./journey-compositor";
 import { JourneyPhaseIndicator } from "./journey-phase-indicator";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
-import { getAudioEngine, getAnalyserNode, ensureResumed } from "@/lib/audio/audio-engine";
+import { getAudioEngine, getAnalyserNode, getNativeAnalyser, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
 import { useInstallationMode } from "@/lib/audio/use-installation-mode";
 import { useJourney, usePhaseChange } from "@/lib/journeys/use-journey";
 import { useStoryGeneration } from "@/lib/journeys/use-story";
@@ -20,6 +20,7 @@ import { getJourney } from "@/lib/journeys/journeys";
 import { createClient } from "@/lib/supabase/client";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import { Mic } from "lucide-react";
+import { isDesktopApp, enterKioskMode, exitKioskMode, nativeAudioSeek } from "@/lib/tauri";
 
 // ─── Speech Recognition types ───
 
@@ -83,7 +84,7 @@ export function VisualizerClient({
   const aiImageEnabled = useAudioStore((s) => s.aiImageEnabled);
 
   // Local analyser state (for VisualizerCore)
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
+  const [analyser, setAnalyser] = useState<AnalyserLike | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array<ArrayBuffer> | null>(null);
   const [shareSheet, setShareSheet] = useState<{ url: string; title: string; text?: string } | null>(null);
 
@@ -96,8 +97,12 @@ export function VisualizerClient({
   }, []);
 
   // Journey system
-  const { frame: journeyFrame, active: journeyActive, phase: journeyPhase } = useJourney();
+  const { frame: journeyFrame, active: journeyActive, phase: journeyPhase, progress: journeyProgress } = useJourney();
   const audioFeaturesRef = useRef({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
+
+  // Journey completion state
+  const [journeyCompleted, setJourneyCompleted] = useState(false);
+  const completedJourneyRef = useRef<string | null>(null);
 
   // Story mode generation
   useStoryGeneration();
@@ -125,6 +130,25 @@ export function VisualizerClient({
       setGuidancePhaseId(null);
     }
   }, [journeyActive, activeJourney, guidancePhrase]);
+
+  // Detect journey completion — when audio ends and journey is active
+  useEffect(() => {
+    if (!journeyActive || !activeJourney) {
+      if (!journeyActive) {
+        setJourneyCompleted(false);
+        completedJourneyRef.current = null;
+      }
+      return;
+    }
+    // Journey completes when audio reaches the end (progress >= ~0.99)
+    // or when audio pauses and we're past 95% of the track
+    if (duration > 0 && currentTime > 0 && currentTime >= duration - 0.5) {
+      if (!journeyCompleted && completedJourneyRef.current !== activeJourney.id) {
+        setJourneyCompleted(true);
+        completedJourneyRef.current = activeJourney.id;
+      }
+    }
+  }, [journeyActive, activeJourney, currentTime, duration, journeyCompleted]);
 
   // Detect AI-only viz mode
   const storeVizMode = useAudioStore((s) => s.vizMode);
@@ -314,8 +338,17 @@ export function VisualizerClient({
   }, [libraryOpen, journeyOpen]);
 
   // Initialize: connect to the global audio engine's AnalyserNode
+  // In desktop mode, use the NativeAnalyserNode instead
   useEffect(() => {
     try {
+      if (isDesktopApp()) {
+        const native = getNativeAnalyser();
+        if (native) {
+          setAnalyser(native);
+          setDataArray(new Uint8Array(native.frequencyBinCount));
+          return;
+        }
+      }
       const engine = getAudioEngine();
       setAnalyser(engine.analyserNode);
       setDataArray(new Uint8Array(engine.analyserNode.frequencyBinCount));
@@ -478,6 +511,33 @@ export function VisualizerClient({
     await loadLibraryQueue(true);
   }, [loadLibraryQueue]);
 
+  // Replay the current journey from the beginning
+  const handleReplayJourney = useCallback(() => {
+    const journey = useAudioStore.getState().activeJourney;
+    if (!journey) return;
+    setJourneyCompleted(false);
+    completedJourneyRef.current = null;
+    // Seek to start and replay
+    seek(0);
+    useAudioStore.getState().stopJourney();
+    // Restart after a tick so the engine resets
+    setTimeout(() => {
+      useAudioStore.getState().startJourney(journey.id);
+    }, 50);
+  }, [seek]);
+
+  // End the journey after completion
+  const handleEndJourney = useCallback(() => {
+    setJourneyCompleted(false);
+    completedJourneyRef.current = null;
+    useAudioStore.getState().stopJourney();
+    setJourneyOpen(false);
+    const LIGHT_SHADERS = ["cosmos", "fog", "nebula", "drift", "dusk", "tide", "ember"];
+    useAudioStore.getState().setVizMode(
+      LIGHT_SHADERS[Math.floor(Math.random() * LIGHT_SHADERS.length)]
+    );
+  }, []);
+
   const handleSwitchToVisualize = useCallback(() => {
     if (useAudioStore.getState().activeJourney) {
       useAudioStore.getState().stopJourney();
@@ -488,6 +548,8 @@ export function VisualizerClient({
         LIGHT_SHADERS[Math.floor(Math.random() * LIGHT_SHADERS.length)]
       );
     }
+    setJourneyCompleted(false);
+    completedJourneyRef.current = null;
     useAudioStore.setState({ textOverlayMode: "off" });
     setJourneyOpen(false);
     // If no track is loaded, load the full library (paused) so the user
@@ -498,6 +560,8 @@ export function VisualizerClient({
   }, [loadLibraryQueue]);
 
   const handleExit = useCallback(() => {
+    setJourneyCompleted(false);
+    completedJourneyRef.current = null;
     const state = useAudioStore.getState();
     if (state.activeJourney) {
       state.stopJourney();
@@ -511,6 +575,13 @@ export function VisualizerClient({
 
   // Seek by offset
   const seekBy = useCallback((offset: number) => {
+    if (isDesktopApp()) {
+      const state = useAudioStore.getState();
+      const newTime = Math.max(0, Math.min(state.duration || 0, state.currentTime + offset));
+      nativeAudioSeek(newTime).catch(() => {});
+      seek(newTime);
+      return;
+    }
     const engine = getAudioEngine();
     const audio = engine.audioElement;
     const newTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + offset));
@@ -523,6 +594,15 @@ export function VisualizerClient({
     if (isIOS) {
       // iOS doesn't support Fullscreen API on non-video elements — toggle immersive mode
       setIsFullscreen((v) => !v);
+      return;
+    }
+    if (isDesktopApp()) {
+      // Native kiosk mode — no browser chrome, no "Press Escape" overlay
+      setIsFullscreen((prev) => {
+        const next = !prev;
+        (next ? enterKioskMode() : exitKioskMode()).catch(() => {});
+        return next;
+      });
       return;
     }
     if (document.fullscreenElement) {
@@ -686,9 +766,15 @@ export function VisualizerClient({
           journeyName={activeJourney?.name ?? null}
           onStopJourney={() => {
             if (useAudioStore.getState().activeJourney) {
-              // Stop journey but stay on / open the journey browser
+              // Stop journey and return to viz mode
               useAudioStore.getState().stopJourney();
-              setJourneyOpen(true);
+              setJourneyOpen(false);
+              setJourneyCompleted(false);
+              // Pick a lightweight shader so exit feels instant
+              const LIGHT_SHADERS = ["cosmos", "fog", "nebula", "drift", "dusk", "tide", "ember"];
+              useAudioStore.getState().setVizMode(
+                LIGHT_SHADERS[Math.floor(Math.random() * LIGHT_SHADERS.length)]
+              );
             } else {
               // No active journey — close browser, return to viz
               setJourneyOpen(false);
@@ -729,6 +815,57 @@ export function VisualizerClient({
           guidancePhrase={guidancePhrase}
           guidancePhaseId={guidancePhaseId}
         />
+      )}
+
+      {/* Journey completion overlay — replay or end */}
+      {journeyCompleted && journeyActive && activeJourney && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center pointer-events-none"
+          style={{
+            animation: "journeyEndFadeIn 2s ease-out forwards",
+          }}
+        >
+          <div className="flex flex-col items-center gap-6 pointer-events-auto">
+            <p
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontWeight: 300,
+                fontSize: "clamp(1rem, 2vw, 1.4rem)",
+                letterSpacing: "0.04em",
+                color: "rgba(255, 255, 255, 0.5)",
+                textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+              }}
+            >
+              journey complete
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleReplayJourney}
+                className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                Replay
+              </button>
+              <button
+                onClick={handleEndJourney}
+                className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.15)",
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                End Journey
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Live listening indicator — hidden in fullscreen/immersive mode */}

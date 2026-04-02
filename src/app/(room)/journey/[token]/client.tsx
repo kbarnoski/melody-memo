@@ -65,6 +65,7 @@ export function SharedJourneyClient({
 
   // Time display — direct DOM updates, no re-renders
   const timeDisplayRef = useRef<HTMLSpanElement>(null);
+  const timeDisplayMobileRef = useRef<HTMLSpanElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
 
   // Frame throttle
@@ -362,9 +363,9 @@ export function SharedJourneyClient({
 
       // When song has ended, show 0:00 / duration and full progress, freeze frames
       if (endedRef.current) {
-        if (timeDisplayRef.current) {
-          timeDisplayRef.current.textContent = `${formatTime(0)} / ${formatTime(dur)}`;
-        }
+        const endText = `${formatTime(0)} / ${formatTime(dur)}`;
+        if (timeDisplayRef.current) timeDisplayRef.current.textContent = endText;
+        if (timeDisplayMobileRef.current) timeDisplayMobileRef.current.textContent = endText;
         if (progressBarRef.current) {
           progressBarRef.current.style.width = "100%";
         }
@@ -373,9 +374,9 @@ export function SharedJourneyClient({
       }
 
       // Update time display + progress bar via DOM (no React re-render)
-      if (timeDisplayRef.current) {
-        timeDisplayRef.current.textContent = `${formatTime(ct)} / ${formatTime(dur)}`;
-      }
+      const timeText = `${formatTime(ct)} / ${formatTime(dur)}`;
+      if (timeDisplayRef.current) timeDisplayRef.current.textContent = timeText;
+      if (timeDisplayMobileRef.current) timeDisplayMobileRef.current.textContent = timeText;
       if (progressBarRef.current) {
         progressBarRef.current.style.width = `${progress * 100}%`;
       }
@@ -571,7 +572,22 @@ export function SharedJourneyClient({
         guidancePhaseId={guidancePhaseId}
       />
 
-      {/* Bottom transport — matches main app layout */}
+      {/* Fullscreen toggle — top-right (matching main app) */}
+      <button
+        onClick={toggleFullscreen}
+        className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+        style={{
+          zIndex: 10,
+          opacity: controlsVisible ? 1 : 0,
+          pointerEvents: controlsVisible ? "auto" : "none",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+      >
+        {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+      </button>
+
+      {/* Bottom bar — solid black, matching main app journey mode */}
       <div
         className="absolute inset-x-0 bottom-0 transition-opacity duration-500 ease-out"
         style={{
@@ -580,111 +596,218 @@ export function SharedJourneyClient({
           pointerEvents: controlsVisible ? "auto" : "none",
         }}
       >
-        {/* Progress bar — 2px visual, 24px hit area */}
+        {/* Subtle top separator */}
         <div
-          className="flex items-center cursor-pointer"
-          style={{ minHeight: "24px" }}
-          onClick={handleProgressClick}
-        >
-          <div className="w-full h-[2px] overflow-hidden">
-            <div
-              ref={progressBarRef}
-              className="h-full"
-              style={{
-                width: "0%",
-                background: "linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.5) 100%)",
-              }}
-            />
-          </div>
-        </div>
+          className="h-px w-full"
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.08) 80%, transparent)" }}
+        />
 
+        {/* Desktop bar */}
         <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{
-            background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 60%, transparent 100%)",
-          }}
+          className="room-bar-desktop items-center px-4"
+          style={{ background: "#000", height: "56px" }}
         >
-          {/* Left: journey name + share */}
+          {/* LEFT: Journey name pill */}
           <div className="flex items-center gap-1.5">
-            <span
-              className="text-white/70 text-sm truncate max-w-[180px]"
-              style={{ fontFamily: "var(--font-geist-sans)" }}
+            <div
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
             >
-              {journey.name}
-            </span>
-
-            <div className="w-px h-5 bg-white/10 mx-1" />
-
-            <button
-              onClick={handleShare}
-              className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
-              title="Share Journey"
-            >
-              <Share2 className="h-4 w-4" />
-            </button>
+              <span
+                className="text-white/70 truncate"
+                style={{
+                  fontSize: "0.72rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  maxWidth: "200px",
+                }}
+              >
+                {journey.name}
+              </span>
+            </div>
           </div>
 
-          {/* Center: transport */}
-          <div className="flex items-center gap-3">
-            <span
-              ref={timeDisplayRef}
-              className="text-white/40"
-              style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", fontVariantNumeric: "tabular-nums" }}
-            >
-              0:00 / 0:00
-            </span>
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* CENTER: Transport + time */}
+          <div className="flex items-center gap-1">
             {audioUrl && (
-              <div className="flex items-center gap-0.5">
+              <>
                 <button
                   onClick={() => seekBy(-10)}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white/40 hover:text-white/70 transition-colors"
+                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 >
                   <SkipBack className="h-3.5 w-3.5" />
                 </button>
                 <button
                   onClick={togglePlay}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors"
+                  className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-75"
                 >
                   {isPlaying ? (
-                    <Pause className="h-4.5 w-4.5" fill="currentColor" />
+                    <Pause className="h-4 w-4" fill="currentColor" />
                   ) : (
-                    <Play className="h-4.5 w-4.5" fill="currentColor" />
+                    <Play className="h-4 w-4" fill="currentColor" />
                   )}
                 </button>
                 <button
                   onClick={() => seekBy(10)}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2 text-white/40 hover:text-white/70 transition-colors"
+                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 >
                   <SkipForward className="h-3.5 w-3.5" />
                 </button>
-              </div>
+              </>
             )}
+            <span
+              ref={timeDisplayRef}
+              className="text-white/30"
+              style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", fontVariantNumeric: "tabular-nums" }}
+            >
+              0:00 / 0:00
+            </span>
           </div>
 
-          {/* Right: volume + fullscreen */}
-          <div className="flex items-center gap-1">
+          {/* Spacer */}
+          <div className="flex-[2]" />
+
+          {/* RIGHT: Share + mute */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+              style={{ border: "1px solid rgba(255,255,255,0.1)", fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)" }}
+              title="Share Journey"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Share
+            </button>
             {audioUrl && (
               <button
                 onClick={toggleMute}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/5 transition-colors"
+                className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
               >
-                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
               </button>
             )}
-            <button
-              onClick={toggleFullscreen}
-              className={`min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg transition-colors ${isFullscreen ? "bg-white/15 text-white" : "text-white/50 hover:text-white/80 hover:bg-white/5"}`}
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+          </div>
+        </div>
+
+        {/* Mobile bar */}
+        <div
+          className="room-bar-mobile flex-col"
+          style={{ background: "#000", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          {/* Row 1: Journey name */}
+          <div className="flex items-center justify-between px-3" style={{ height: "32px" }}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <div
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg min-w-0"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <span
+                  className="text-white/70 truncate"
+                  style={{
+                    fontSize: "0.68rem",
+                    fontFamily: "var(--font-geist-mono)",
+                    maxWidth: "180px",
+                  }}
+                >
+                  {journey.name}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Transport + actions */}
+          <div className="flex items-center justify-between px-2" style={{ height: "44px" }}>
+            {/* Left: transport */}
+            <div className="flex items-center">
+              {audioUrl && (
+                <>
+                  <button
+                    onClick={() => seekBy(-10)}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/40 hover:text-white/80 transition-colors duration-75"
+                  >
+                    <SkipBack className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={togglePlay}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors duration-75"
+                  >
+                    {isPlaying ? (
+                      <Pause className="h-4.5 w-4.5" fill="currentColor" />
+                    ) : (
+                      <Play className="h-4.5 w-4.5" fill="currentColor" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => seekBy(10)}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/40 hover:text-white/80 transition-colors duration-75"
+                  >
+                    <SkipForward className="h-3.5 w-3.5" />
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Center: time */}
+            <span
+              ref={timeDisplayMobileRef}
+              className="text-white/25 flex-shrink-0"
+              style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)", fontVariantNumeric: "tabular-nums" }}
             >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-            </button>
+              0:00 / 0:00
+            </span>
+
+            {/* Right: share + mute */}
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={handleShare}
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors duration-75"
+                title="Share"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              {audioUrl && (
+                <button
+                  onClick={toggleMute}
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/50 hover:text-white/80 transition-colors duration-75"
+                >
+                  {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* CTA — top right */}
+      {/* Progress bar — thin overlay at the very bottom of the bar */}
       <div
-        className="absolute top-6 right-6 z-20"
+        className="absolute bottom-0 inset-x-0 cursor-pointer"
+        style={{ zIndex: 11, height: "24px", display: "flex", alignItems: "flex-end" }}
+        onClick={handleProgressClick}
+      >
+        <div className="w-full h-[2px] overflow-hidden">
+          <div
+            ref={progressBarRef}
+            className="h-full"
+            style={{
+              width: "0%",
+              background: "linear-gradient(90deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.5) 100%)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* CTA — top left */}
+      <div
+        className="absolute top-6 left-6 z-20"
         style={{
           opacity: controlsVisible ? 1 : 0,
           transition: "opacity 0.4s ease",

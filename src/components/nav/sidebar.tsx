@@ -16,6 +16,7 @@ import {
   Disc3,
   Menu,
   X,
+  Settings,
 } from "lucide-react";
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {

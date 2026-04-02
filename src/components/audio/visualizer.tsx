@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from "react";
 import { X, Type, AudioLines, Share2, ChevronUp, ChevronDown, Pause, Play, SkipBack, SkipForward, BookOpen, Library, Globe, Search, Maximize2, Minimize2 } from "lucide-react";
-import { getAudioEngine, ensureResumed } from "@/lib/audio/audio-engine";
+import { getAudioEngine, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
 import type { AnalysisResult } from "@/lib/audio/types";
@@ -30,7 +30,7 @@ function getAiBackdropShader(aiMode: string): VisualizerMode {
 // ─── Shared types ───
 
 export interface VisualizerCoreProps {
-  analyser: AnalyserNode;
+  analyser: AnalyserLike;
   dataArray: Uint8Array<ArrayBuffer>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis?: any | null;
@@ -176,7 +176,7 @@ export function ShaderVisualizer({
   style,
   smoothMotion = false,
 }: {
-  analyser: AnalyserNode;
+  analyser: AnalyserLike;
   dataArray: Uint8Array<ArrayBuffer>;
   fragShader: string;
   style?: React.CSSProperties;
@@ -826,13 +826,13 @@ export function VisualizerCore({
                 style={{ border: "1px solid rgba(255,255,255,0.1)" }}
               >
                 <button
-                  onClick={onJourneyToggle}
+                  onClick={journeyActive ? undefined : onJourneyToggle}
                   className={`px-3 py-2 rounded-l-[7px] transition-colors duration-75 ${
                     inJourneyMode
                       ? "bg-white/10 text-white/90"
                       : "text-white/35 hover:text-white/60 hover:bg-white/10"
                   }`}
-                  style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)", lineHeight: 1 }}
+                  style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)", lineHeight: 1, cursor: journeyActive ? "default" : undefined }}
                 >
                   Journeys
                 </button>

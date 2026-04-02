@@ -796,7 +796,7 @@ export function VisualizerCore({
       {!installationMode && (currentTrack || journeyActive || journeyBrowsing) && <div
         className="absolute inset-x-0 bottom-0 transition-opacity duration-500 ease-out"
         style={{
-          zIndex: 10,
+          zIndex: 70,
           opacity: controlsVisible ? 1 : 0,
           pointerEvents: controlsVisible ? "auto" : "none",
         }}

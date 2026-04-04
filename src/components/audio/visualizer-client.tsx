@@ -9,7 +9,7 @@ import { TonnetzOverlay } from "./tonnetz-overlay";
 import { JourneySelector } from "./journey-selector";
 import { JourneyCompositor } from "./journey-compositor";
 import { JourneyPhaseIndicator } from "./journey-phase-indicator";
-import { JourneyFeedback, resetGlitchCount, flushFeedbackEntries } from "./journey-feedback";
+import { JourneyFeedback, resetPerfMonitor, flushFeedbackEntries } from "./journey-feedback";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
 import { getAudioEngine, getAnalyserNode, getNativeAnalyser, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
@@ -18,6 +18,7 @@ import { useJourney } from "@/lib/journeys/use-journey";
 import { useStoryGeneration } from "@/lib/journeys/use-story";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { getJourney } from "@/lib/journeys/journeys";
+import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { createClient } from "@/lib/supabase/client";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import { Mic } from "lucide-react";
@@ -111,12 +112,14 @@ export function VisualizerClient({
 
   // Phase guidance is now handled internally by JourneyPhaseIndicator
 
-  // Reset glitch counter when a new journey starts
+  // Reset perf monitor + image service when a new journey starts
   const prevJourneyIdRef = useRef<string | null>(null);
   useEffect(() => {
     if (activeJourney && activeJourney.id !== prevJourneyIdRef.current) {
       prevJourneyIdRef.current = activeJourney.id;
-      resetGlitchCount();
+      resetPerfMonitor();
+      // Reset image service session cost so each journey gets a fresh budget
+      getRealtimeImageService().resetSession();
     }
     if (!activeJourney) {
       prevJourneyIdRef.current = null;

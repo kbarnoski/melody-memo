@@ -155,9 +155,9 @@ function pickJourneyShaders(realmId: string, random: () => number = Math.random)
     }
   }
 
-  // 70% from affinity, 30% from variety
-  const affinityCount = Math.min(32, affinityPool.length);
-  const varietyCount = Math.min(13, varietyPool.length);
+  // 65% from affinity, 35% from variety — broader palette, more surprise
+  const affinityCount = Math.min(30, affinityPool.length);
+  const varietyCount = Math.min(20, varietyPool.length);
 
   const picked = [
     ...mustInclude, // always first

@@ -377,12 +377,16 @@ class JourneyEngine {
   /**
    * Pre-compute shader switch points for each phase as progress fractions.
    * Uses 15-20s intervals converted to progress (assuming ~300s track).
-   * Strict limit: every shader lasts at least 15s, never more than 20s.
-   * The exact points are deterministic given the same random function.
+   * Every shader gets at least 10s of visible time — no short flashes at
+   * phase boundaries. The crossfade itself is ~1.5s, so 10s minimum means
+   * ~8.5s at full opacity before the next fade starts.
    */
   private precomputeShaderSwitchSchedule(random: () => number): void {
     this.shaderSwitchSchedule.clear();
     if (!this.journey) return;
+
+    // 10 seconds expressed as progress fraction (~300s track)
+    const MIN_VISIBLE = 10 / 300;
 
     for (const phase of this.journey.phases) {
       if (phase.shaderModes.length <= 1) {
@@ -390,16 +394,18 @@ class JourneyEngine {
         continue;
       }
 
-      const phaseLength = phase.end - phase.start;
       const points: number[] = [];
       let cursor = phase.start;
 
-      // Generate switch points within this phase's progress range
-      while (cursor < phase.end) {
+      // Generate switch points within this phase's progress range.
+      // Stop early enough that the last shader gets at least MIN_VISIBLE time.
+      const deadline = phase.end - MIN_VISIBLE;
+
+      while (cursor < deadline) {
         // 15-20s intervals expressed as progress fraction (~300s assumed track)
         const intervalProgress = (15 + random() * 5) / 300;
         cursor += intervalProgress;
-        if (cursor < phase.end) {
+        if (cursor < deadline) {
           points.push(cursor);
         }
       }

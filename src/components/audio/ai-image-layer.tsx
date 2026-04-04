@@ -297,14 +297,16 @@ export function AiImageLayer({
     return () => clearInterval(id);
   }, [enabled, triggerGeneration]);
 
-  // Check availability + register WS frame callback
+  // Check availability + register WS frame callback.
+  // Retries periodically (every 30s) if initial checks fail — covers
+  // transient outages without blocking the entire journey.
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     const service = getRealtimeImageService();
 
-    // Try up to 3 times with increasing delay (covers slow server start)
-    (async () => {
+    const checkWithRetries = async () => {
+      // Try up to 3 times with increasing delay (covers slow server start)
       for (let attempt = 0; attempt < 3; attempt++) {
         if (cancelled) return;
         const ok = await service.checkAvailability();
@@ -316,7 +318,18 @@ export function AiImageLayer({
         if (attempt < 2) await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
       }
       if (!cancelled) setAvailable(false);
-    })();
+    };
+
+    checkWithRetries();
+
+    // Periodic retry if unavailable — service may come back during a journey
+    const retryId = setInterval(() => {
+      if (cancelled) return;
+      // Only retry if still unavailable
+      service.checkAvailability().then((ok) => {
+        if (ok && !cancelled) setAvailable(true);
+      }).catch(() => {});
+    }, 30_000);
 
     service.onFrame(async (imageUrl) => {
       try {
@@ -325,7 +338,7 @@ export function AiImageLayer({
       } catch { /* skip broken frames */ }
     });
 
-    return () => { cancelled = true; };
+    return () => { cancelled = true; clearInterval(retryId); };
   }, [enabled, loadImage, pushImage]);
 
   // Generation loop — fires 2 requests immediately for fast initial imagery,
@@ -383,7 +396,8 @@ export function AiImageLayer({
     function render() {
       if (!canvas || !ctx) return;
 
-      const dpr = devicePixelRatio;
+      // Cap at 1.5x — AI images are blended/panned, full retina is wasted GPU fill
+      const dpr = Math.min(devicePixelRatio, 1.5);
       const w = canvas.clientWidth * dpr;
       const h = canvas.clientHeight * dpr;
 

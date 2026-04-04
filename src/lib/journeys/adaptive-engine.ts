@@ -114,7 +114,8 @@ interface DislikedCondition {
   lastSeen: string;
 }
 
-const PROFILE_KEY = "resonance-adaptive-profile-v2";
+// Bump version to reset profile when glitch detector was producing false positives
+const PROFILE_KEY = "resonance-adaptive-profile-v3";
 const FEEDBACK_KEY = "resonance-journey-feedback";
 
 // ─── Storage ───
@@ -127,13 +128,35 @@ const EMPTY_PROFILE: AdaptiveProfile = {
   lastAnalysis: "",
 };
 
+// One-time migration: purge false-positive glitch data from feedback store
+let _migrationDone = false;
+function purgeOldGlitchData() {
+  if (_migrationDone || typeof localStorage === "undefined") return;
+  _migrationDone = true;
+
+  // Remove old profile versions that were polluted by false glitch data
+  try { localStorage.removeItem("resonance-adaptive-profile-v2"); } catch {}
+
+  // Purge glitch entries from feedback — keep love/dislike only
+  try {
+    const raw = localStorage.getItem(FEEDBACK_KEY);
+    if (raw) {
+      const entries: Snapshot[] = JSON.parse(raw);
+      const cleaned = entries.filter((e) => e.type !== "glitch");
+      if (cleaned.length !== entries.length) {
+        localStorage.setItem(FEEDBACK_KEY, JSON.stringify(cleaned));
+      }
+    }
+  } catch {}
+}
+
 function loadProfile(): AdaptiveProfile {
   if (typeof localStorage === "undefined") return { ...EMPTY_PROFILE, rules: [], lovedConditions: [], dislikedConditions: [] };
+  purgeOldGlitchData();
   try {
     const raw = localStorage.getItem(PROFILE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      // Backward compat: ensure new fields exist on old profiles
       if (!parsed.dislikedConditions) parsed.dislikedConditions = [];
       return parsed;
     }
@@ -481,34 +504,36 @@ export function applyShaderPreferences(pool: string[], realmId?: string, phase?:
 
   // Loved conditions — gentle positive bias
   for (const lc of profile.lovedConditions) {
-    let relevance = lc.count * 0.1; // Base: each love = 0.1 boost
-    // Extra relevance if same realm or phase
-    if (realmId && lc.realmId === realmId) relevance *= 1.5;
-    if (phase && lc.phase === phase) relevance *= 1.3;
-    // Cap individual shader boost at 0.5 — never let one shader dominate
+    let relevance = lc.count * 0.06; // Base: each love = 0.06 boost (gradual)
+    if (realmId && lc.realmId === realmId) relevance *= 1.3;
+    if (phase && lc.phase === phase) relevance *= 1.2;
+    // Cap individual shader boost at 0.35 — variation is sacred
     const current = scores.get(lc.shader) ?? 0;
-    scores.set(lc.shader, Math.min(0.5, current + relevance));
+    scores.set(lc.shader, Math.min(0.35, current + relevance));
   }
 
-  // Disliked conditions — gentle negative bias (doesn't remove, just pushes back)
+  // Disliked conditions — very gradual negative bias
+  // First 2 dislikes have zero effect (could be contextual, not the shader's fault)
+  // After that, gentle pushback. Never removes from pool — just shifts order slightly.
   for (const dc of profile.dislikedConditions) {
-    let penalty = dc.count * -0.12; // Base: each dislike = -0.12
-    // More penalty if same realm or phase
-    if (realmId && dc.realmId === realmId) penalty *= 1.5;
-    if (phase && dc.phase === phase) penalty *= 1.3;
-    // Cap penalty at -0.6 — never fully block a shader
+    if (dc.count < 3) continue; // Require 3+ dislikes before any effect
+    const effectiveCount = dc.count - 2; // First 2 are "free"
+    let penalty = effectiveCount * -0.05; // Base: -0.05 per dislike after threshold
+    if (realmId && dc.realmId === realmId) penalty *= 1.3;
+    if (phase && dc.phase === phase) penalty *= 1.2;
+    // Cap penalty at -0.3 — the shader still appears, just less often
     const current = scores.get(dc.shader) ?? 0;
-    scores.set(dc.shader, Math.max(-0.6, current + penalty));
+    scores.set(dc.shader, Math.max(-0.3, current + penalty));
   }
 
   // Sort with gentle bias — loved shaders float toward front, disliked toward back
-  // but randomness still dominates (shuffle already happened before this)
+  // Randomness still dominates (shuffle already happened before this)
   const result = [...pool];
   result.sort((a, b) => {
     const sa = scores.get(a) ?? 0;
     const sb = scores.get(b) ?? 0;
-    // Only move if score difference is meaningful
-    if (Math.abs(sa - sb) < 0.15) return 0; // preserve existing random order
+    // Only reorder if score difference is substantial — preserves randomness
+    if (Math.abs(sa - sb) < 0.2) return 0;
     return sb - sa;
   });
 

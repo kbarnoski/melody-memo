@@ -7,6 +7,7 @@ import { JourneyCompositor } from "@/components/audio/journey-compositor";
 import { JourneyPhaseIndicator } from "@/components/audio/journey-phase-indicator";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { MODES_3D, MODES_AI } from "@/lib/shaders";
 import type { Journey, JourneyFrame, JourneyPhaseId } from "@/lib/journeys/types";
 import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, SkipBack, SkipForward } from "lucide-react";
@@ -324,6 +325,8 @@ export function SharedJourneyClient({
 
   // Start journey engine + subscribe to phase changes
   useEffect(() => {
+    // Fresh image budget for each shared journey
+    getRealtimeImageService().resetSession();
     const engine = getJourneyEngine();
     const seed = playbackSeed ? parseInt(playbackSeed, 10) : undefined;
     engine.start(journey, seed != null && !isNaN(seed) ? { seed } : undefined);

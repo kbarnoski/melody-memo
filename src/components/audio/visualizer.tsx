@@ -11,7 +11,7 @@ import { StoryOverlay } from "./story-overlay";
 import { Visualizer3D, type Visualizer3DMode } from "./visualizer-3d";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { SHADERS, MODE_META, MODE_CATEGORIES, MODES_3D, MODES_AI } from "@/lib/shaders";
-import { recordGlitch, getSharedFpsRef, startFpsTracker, stopFpsTracker } from "./journey-feedback";
+// Performance monitor is now FPS-based, started/stopped by JourneyFeedback component
 export type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
 // Ambient shaders used as backdrop underneath AI imagery modes
@@ -226,10 +226,14 @@ export function ShaderVisualizer({
     let lastW = 0;
     let lastH = 0;
 
+    // Cap at 1x DPR — shaders are abstract/blurry by nature, retina resolution
+    // is wasted GPU work. Cuts pixel count by 4x on retina displays.
+    const dpr = Math.min(devicePixelRatio, 1);
+
     function render() {
-      if (!canvas || !gl) return;
-      const w = Math.round(canvas.clientWidth * devicePixelRatio);
-      const h = Math.round(canvas.clientHeight * devicePixelRatio);
+      if (!canvas || !gl || gl.isContextLost()) return;
+      const w = Math.round(canvas.clientWidth * dpr);
+      const h = Math.round(canvas.clientHeight * dpr);
       if (w !== lastW || h !== lastH) {
         canvas.width = w;
         canvas.height = h;
@@ -289,11 +293,17 @@ export function ShaderVisualizer({
 
     return () => {
       cancelAnimationFrame(animId);
-      // Proper GPU cleanup — prevent memory leaks across shader switches
+      // Full GPU cleanup — prevent memory leaks across 15-20 shader switches per journey
+      gl.disableVertexAttribArray(posLoc);
       gl.deleteBuffer(buffer);
       gl.deleteProgram(program);
       gl.deleteShader(vertShader);
       gl.deleteShader(fragShaderObj);
+      // Release framebuffer memory by zeroing the canvas dimensions.
+      // We can't use WEBGL_lose_context because React may reuse this canvas
+      // element when the fragShader prop changes (effect re-runs on same canvas).
+      canvas.width = 0;
+      canvas.height = 0;
     };
   }, [analyser, dataArray, fragShader]);
 
@@ -585,66 +595,6 @@ export function VisualizerCore({
     }
     return () => cancelAnimationFrame(tertiaryFadeRef.current);
   }, [tertiaryShaderTarget]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── Automatic shader glitch detector ──
-  // Polls opacity of all shader layers at 200ms intervals (not per-frame).
-  // If any layer's opacity jumps more than 0.15 between polls, records a
-  // "glitch" snapshot. Uses shared FPS tracker from journey-feedback module.
-  useEffect(() => {
-    startFpsTracker(); // ref-counted — shared with JourneyFeedback
-    const prevOpacities: Record<string, number> = {};
-    // Throttle: max 1 glitch record per 2 seconds to avoid flooding
-    let lastGlitchTime = 0;
-    const fpsRef = getSharedFpsRef();
-
-    const intervalId = setInterval(() => {
-      const now = performance.now();
-      const layers = [
-        { name: "primary-prev", ref: prevLayerRef },
-        { name: "primary-next", ref: nextLayerRef },
-        { name: "dual", ref: dualShaderRef },
-        { name: "tertiary", ref: tertiaryShaderRef },
-      ];
-      for (const { name, ref } of layers) {
-        if (!ref.current) {
-          // Layer unmounted — if it was visible, that's a pop-off
-          if (prevOpacities[name] !== undefined && prevOpacities[name] > 0.1) {
-            const fromOp = prevOpacities[name];
-            console.warn(
-              `[GLITCH] ${name} shader: unmounted at opacity ${fromOp.toFixed(2)} (pop-off) | mode=${renderMode}`
-            );
-            if (now - lastGlitchTime > 2000) {
-              lastGlitchTime = now;
-              recordGlitch(name, fromOp, 0, renderMode, dualShaderVisible, fpsRef);
-            }
-          }
-          delete prevOpacities[name];
-          continue;
-        }
-        const current = parseFloat(ref.current.style.opacity);
-        if (isNaN(current)) continue;
-        const prev = prevOpacities[name];
-        if (prev !== undefined) {
-          const delta = Math.abs(current - prev);
-          if (delta > 0.15) {
-            console.warn(
-              `[GLITCH] ${name} shader: opacity ${prev.toFixed(2)}→${current.toFixed(2)} (Δ${(current - prev) > 0 ? "+" : ""}${(current - prev).toFixed(2)}) | mode=${renderMode}`
-            );
-            if (now - lastGlitchTime > 2000) {
-              lastGlitchTime = now;
-              recordGlitch(name, prev, current, renderMode, dualShaderVisible, fpsRef);
-            }
-          }
-        }
-        prevOpacities[name] = current;
-      }
-    }, 200); // 5Hz polling — catches any visible glitch without per-frame cost
-
-    return () => {
-      clearInterval(intervalId);
-      stopFpsTracker();
-    };
-  }, [renderMode, dualShaderVisible, tertiaryShaderVisible]);
 
   // Sync config ref for parent to read
   useEffect(() => {

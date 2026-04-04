@@ -118,15 +118,19 @@ export function VisualizerClient({
       }
       return;
     }
-    // Journey completes when audio reaches the end (progress >= ~0.99)
-    // or when audio pauses and we're past 95% of the track
-    if (duration > 0 && currentTime > 0 && currentTime >= duration - 0.5) {
-      if (!journeyCompleted && completedJourneyRef.current !== activeJourney.id) {
-        setJourneyCompleted(true);
-        completedJourneyRef.current = activeJourney.id;
-      }
+    if (journeyCompleted) return; // Already completed
+    if (completedJourneyRef.current === activeJourney.id) return; // Already detected for this journey
+
+    // Detect completion: currentTime within 0.5s of end,
+    // OR audio stopped while past 95% of the track (handles RAF sync gaps)
+    const nearEnd = duration > 0 && currentTime > 0 && currentTime >= duration - 0.5;
+    const stoppedLate = duration > 0 && currentTime > 0 && !isPlaying && currentTime >= duration * 0.95;
+
+    if (nearEnd || stoppedLate) {
+      setJourneyCompleted(true);
+      completedJourneyRef.current = activeJourney.id;
     }
-  }, [journeyActive, activeJourney, currentTime, duration, journeyCompleted]);
+  }, [journeyActive, activeJourney, currentTime, duration, journeyCompleted, isPlaying]);
 
   // Detect AI-only viz mode
   const storeVizMode = useAudioStore((s) => s.vizMode);
@@ -777,8 +781,8 @@ export function VisualizerClient({
         </VisualizerCore>
       </JourneyCompositor>}
 
-      {/* Journey phase indicator — hidden in fullscreen/immersive mode and when browsing */}
-      {journeyActive && activeJourney && !isFullscreen && !journeyOpen && (
+      {/* Journey phase indicator — always mounted to avoid remount retriggering phases */}
+      {journeyActive && activeJourney && !journeyOpen && (
         <JourneyPhaseIndicator
           journey={activeJourney}
           currentPhase={journeyPhase}

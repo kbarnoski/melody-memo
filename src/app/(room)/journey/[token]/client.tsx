@@ -95,9 +95,10 @@ export function SharedJourneyClient({
 
       // Start crossfade on next frame (after React renders the new layers)
       crossfadeRef.current = requestAnimationFrame(() => {
-        const prevStartOpacity = prevLayerRef.current
+        let prevStartOpacity = prevLayerRef.current
           ? parseFloat(prevLayerRef.current.style.opacity || "1")
           : 1;
+        if (isNaN(prevStartOpacity)) prevStartOpacity = 1;
         if (prevLayerRef.current && prevStartOpacity <= 0.01) {
           prevLayerRef.current.style.opacity = "1";
         }
@@ -475,7 +476,7 @@ export function SharedJourneyClient({
   }
 
   // ─── Shader layer renderer (matching VisualizerCore exactly) ───
-  const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>) => {
+  const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>, initialOpacity?: number) => {
     if (!analyser || !dataArray) return null;
     const layerIs3D = MODES_3D.has(layerMode);
     const layerIsAI = MODES_AI.has(layerMode);
@@ -485,6 +486,7 @@ export function SharedJourneyClient({
       inset: 0,
       zIndex,
       pointerEvents: "none",
+      ...(initialOpacity !== undefined && { opacity: initialOpacity }),
     };
 
     if (layerIsAI) {
@@ -532,7 +534,8 @@ export function SharedJourneyClient({
           {prevRenderMode && renderShaderLayer(prevRenderMode, 0, prevLayerRef)}
 
           {/* Current shader (fading in, or full opacity when no crossfade) */}
-          {renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined)}
+          {/* During crossfade: start at opacity 0 to prevent one-frame flash */}
+          {renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined, prevRenderMode ? 0 : undefined)}
 
           {/* Dual shader — second layer during peak journey moments */}
           {dualShaderVisible && SHADERS[dualShaderVisible as VisualizerMode] && (

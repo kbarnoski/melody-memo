@@ -435,9 +435,11 @@ export function VisualizerCore({
       crossfadeRef.current = requestAnimationFrame(() => {
         // Read current opacity of the outgoing layer — if we're interrupting
         // an in-progress crossfade, start from where it is (not forced to 1)
-        const prevStartOpacity = prevLayerRef.current
+        // parseFloat can return NaN when opacity is a CSS variable like "var(--shader-opacity, 1)"
+        let prevStartOpacity = prevLayerRef.current
           ? parseFloat(prevLayerRef.current.style.opacity || "1")
           : 1;
+        if (isNaN(prevStartOpacity)) prevStartOpacity = 1;
         if (prevLayerRef.current && prevStartOpacity <= 0.01) {
           prevLayerRef.current.style.opacity = "1";
         }
@@ -579,19 +581,20 @@ export function VisualizerCore({
     setVibe(result.mood);
   }, [analysis]);
 
-  const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>) => {
+  const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>, initialOpacity?: number) => {
     const layerIs3D = MODES_3D.has(layerMode);
     const layerIsAI = MODES_AI.has(layerMode);
 
     // Shader layers consume --shader-opacity (set by JourneyCompositor) so
     // they fade in during AI intro without creating a stacking context that
     // would trap the bottom bar below the AI layer.
+    // initialOpacity overrides for crossfade layers (prevents one-frame flash)
     const wrapStyle: React.CSSProperties = {
       position: "absolute",
       inset: 0,
       zIndex,
       pointerEvents: "none",
-      opacity: "var(--shader-opacity, 1)" as unknown as number,
+      opacity: initialOpacity !== undefined ? initialOpacity : ("var(--shader-opacity, 1)" as unknown as number),
     };
 
     if (layerIsAI) {
@@ -638,7 +641,13 @@ export function VisualizerCore({
 
         {/* Current shader (fading in, or full opacity when no crossfade) */}
         {/* When journey picker is open, render a fixed calm shader instead */}
-        {!shadersHidden && renderShaderLayer(shaderDimmed ? JOURNEY_PICKER_SHADER : renderMode, 1, shaderDimmed ? undefined : (prevRenderMode ? nextLayerRef : undefined))}
+        {/* During crossfade: start at opacity 0 to prevent one-frame flash before rAF kicks in */}
+        {!shadersHidden && renderShaderLayer(
+          shaderDimmed ? JOURNEY_PICKER_SHADER : renderMode,
+          1,
+          shaderDimmed ? undefined : (prevRenderMode ? nextLayerRef : undefined),
+          !shaderDimmed && prevRenderMode ? 0 : undefined
+        )}
 
         {/* Dual shader — second layer during peak journey moments (smooth fade).
             Outer div applies --shader-opacity; inner div handles the crossfade animation. */}

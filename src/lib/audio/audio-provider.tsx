@@ -194,6 +194,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     };
 
     const onEnded = () => {
+      // Sync final currentTime — RAF loop won't update once audio is paused,
+      // so the store could miss the last fraction of a second. This is critical
+      // for journey completion detection (currentTime >= duration - 0.5).
+      if (!isNaN(audioElement.duration) && audioElement.duration > 0) {
+        useAudioStore.getState().setCurrentTime(audioElement.duration);
+      }
+
       const { installationMode } = useAudioStore.getState();
       if (installationMode) {
         // Installation mode: auto-advance through queue

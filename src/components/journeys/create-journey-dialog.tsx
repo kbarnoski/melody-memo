@@ -131,7 +131,7 @@ export function CreateJourneyDialog({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[60] transition-opacity duration-300"
+        className="fixed inset-0 z-[90] transition-opacity duration-300"
         style={{
           backdropFilter: "blur(32px) saturate(1.2)",
           WebkitBackdropFilter: "blur(32px) saturate(1.2)",
@@ -141,7 +141,7 @@ export function CreateJourneyDialog({
       />
 
       {/* Content */}
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-8 pointer-events-none">
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-8 pointer-events-none">
         <div
           className="pointer-events-auto w-full max-w-lg"
           onClick={(e) => e.stopPropagation()}

@@ -415,7 +415,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
       {/* Full-area journey browser — solid black, no blur */}
       <div
         className="absolute inset-0 overflow-y-auto overflow-x-hidden"
-        style={{ zIndex: 60, backgroundColor: "rgba(0, 0, 0, 0.88)", willChange: "scroll-position", overscrollBehaviorY: "contain" }}
+        style={{ zIndex: 80, backgroundColor: "rgba(0, 0, 0, 0.92)", willChange: "scroll-position", overscrollBehaviorY: "contain" }}
       >
         <div className="mx-auto px-5 md:px-8 pt-10" style={{ maxWidth: "72rem", paddingBottom: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
 
@@ -456,7 +456,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
               <span
-                className="text-white/25"
+                className="text-white/30"
                 style={{
                   fontSize: "0.65rem",
                   fontFamily: "var(--font-geist-mono)",
@@ -503,7 +503,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                         />
                         <div className="min-w-0 flex-1">
                           <span
-                            className="text-white/75 block"
+                            className="text-white/80 block"
                             style={{
                               fontFamily: "var(--font-geist-sans)",
                               fontWeight: 300,
@@ -513,7 +513,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             {path.name}
                           </span>
                           <span
-                            className="text-white/30 block mt-0.5"
+                            className="text-white/35 block mt-0.5"
                             style={{
                               fontSize: "0.68rem",
                               fontFamily: "var(--font-geist-mono)",
@@ -546,7 +546,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           style={{
                             fontFamily: "var(--font-geist-mono)",
                             fontSize: "0.6rem",
-                            color: "rgba(255,255,255,0.25)",
+                            color: "rgba(255,255,255,0.3)",
                             marginLeft: "0.4rem",
                           }}
                         >
@@ -577,7 +577,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                                   style={{
                                     fontFamily: "var(--font-geist-mono)",
                                     fontSize: "0.6rem",
-                                    color: "rgba(255,255,255,0.2)",
+                                    color: "rgba(255,255,255,0.25)",
                                     width: "1rem",
                                     textAlign: "right",
                                   }}
@@ -590,7 +590,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                                     fontFamily: "var(--font-geist-sans)",
                                     fontWeight: 300,
                                     fontSize: "0.85rem",
-                                    color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.65)",
+                                    color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.7)",
                                   }}
                                 >
                                   {journey.name}
@@ -653,7 +653,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                                 style={{
                                   fontFamily: "var(--font-geist-mono)",
                                   fontSize: "0.65rem",
-                                  color: "rgba(255,255,255,0.2)",
+                                  color: "rgba(255,255,255,0.25)",
                                 }}
                               >
                                 Complete all journeys to reveal
@@ -719,7 +719,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           <div className="flex items-center gap-4 mb-8">
             <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
             <span
-              className="text-white/25"
+              className="text-white/30"
               style={{
                 fontSize: "0.65rem",
                 fontFamily: "var(--font-geist-mono)",
@@ -736,7 +736,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           {featured && (
             <div className="md:hidden mb-12">
               <span
-                className="text-white/25 mb-4 block"
+                className="text-white/30 mb-4 block"
                 style={{
                   fontSize: "0.65rem",
                   fontFamily: "var(--font-geist-mono)",
@@ -764,7 +764,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       {featured.name}
                     </h2>
                     <p
-                      className="text-white/40 mb-2"
+                      className="text-white/45 mb-2"
                       style={{
                         fontSize: "0.75rem",
                         fontFamily: "var(--font-geist-mono)",
@@ -773,7 +773,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       {featured.subtitle}
                     </p>
                     <p
-                      className="text-white/45 mb-4"
+                      className="text-white/50 mb-4"
                       style={{
                         fontSize: "0.75rem",
                         fontFamily: "var(--font-geist-mono)",
@@ -852,7 +852,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                     }}
                   />
                   <span
-                    className="text-white/30"
+                    className="text-white/35"
                     style={{
                       fontSize: "0.65rem",
                       fontFamily: "var(--font-geist-mono)",
@@ -911,7 +911,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 {featured.name}
               </h2>
               <p
-                className="text-white/30 mb-3"
+                className="text-white/35 mb-3"
                 style={{
                   fontSize: "0.72rem",
                   fontFamily: "var(--font-geist-mono)",
@@ -920,7 +920,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 {featured.subtitle}
               </p>
               <p
-                className="text-white/35 mb-5"
+                className="text-white/40 mb-5"
                 style={{
                   fontSize: "0.68rem",
                   fontFamily: "var(--font-geist-mono)",
@@ -967,7 +967,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   }}
                 />
                 <span
-                  className="text-white/30"
+                  className="text-white/35"
                   style={{
                     fontSize: "0.65rem",
                     fontFamily: "var(--font-geist-mono)",
@@ -1021,7 +1021,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             {journey.name}
                           </span>
                           <span
-                            className="text-white/30 truncate"
+                            className="text-white/35 truncate"
                             style={{
                               fontSize: "0.75rem",
                               fontFamily: "var(--font-geist-mono)",
@@ -1069,7 +1069,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       </div>
                       {journey.description && (
                         <p
-                          className="text-white/40 mb-2"
+                          className="text-white/45 mb-2"
                           style={{
                             fontSize: "0.7rem",
                             fontFamily: "var(--font-geist-mono)",
@@ -1142,7 +1142,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             {journey.name}
                           </span>
                           <span
-                            className="text-white/30 truncate"
+                            className="text-white/35 truncate"
                             style={{
                               fontSize: "0.75rem",
                               fontFamily: "var(--font-geist-mono)",
@@ -1185,7 +1185,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       </div>
                       {journey.description && (
                         <p
-                          className="text-white/40 mb-2"
+                          className="text-white/45 mb-2"
                           style={{
                             fontSize: "0.7rem",
                             fontFamily: "var(--font-geist-mono)",
@@ -1236,7 +1236,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           }}
                         />
                         <span
-                          className="text-white/30"
+                          className="text-white/35"
                           style={{
                             fontSize: "0.6rem",
                             fontFamily: "var(--font-geist-mono)",
@@ -1302,7 +1302,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
 
                     {/* Subtitle */}
                     <p
-                      className="text-white/30 mb-2"
+                      className="text-white/35 mb-2"
                       style={{
                         fontSize: "0.72rem",
                         fontFamily: "var(--font-geist-mono)",
@@ -1314,7 +1314,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                     {/* Description — 2 line clamp */}
                     {journey.description && (
                       <p
-                        className="text-white/35 mb-3 line-clamp-2"
+                        className="text-white/40 mb-3 line-clamp-2"
                         style={{
                           fontSize: "0.68rem",
                           fontFamily: "var(--font-geist-mono)",
@@ -1338,7 +1338,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 <div className="flex items-center gap-4 my-8">
                   <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
                   <span
-                    className="text-white/25"
+                    className="text-white/30"
                     style={{
                       fontSize: "0.65rem",
                       fontFamily: "var(--font-geist-mono)",

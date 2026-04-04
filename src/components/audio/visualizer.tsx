@@ -135,7 +135,13 @@ void main() {
 }
 `;
 
-function createShaderProgram(gl: WebGLRenderingContext, fragSource: string): WebGLProgram | null {
+interface ShaderProgramResult {
+  program: WebGLProgram;
+  vertShader: WebGLShader;
+  fragShader: WebGLShader;
+}
+
+function createShaderProgram(gl: WebGLRenderingContext, fragSource: string): ShaderProgramResult | null {
   const vs = gl.createShader(gl.VERTEX_SHADER)!;
   gl.shaderSource(vs, VERTEX_SHADER);
   gl.compileShader(vs);
@@ -161,7 +167,7 @@ function createShaderProgram(gl: WebGLRenderingContext, fragSource: string): Web
     return null;
   }
 
-  return prog;
+  return { program: prog, vertShader: vs, fragShader: fs };
 }
 
 // SHADERS, MODE_META, MODES_3D, MODE_CATEGORIES now imported from @/lib/shaders
@@ -193,8 +199,9 @@ export function ShaderVisualizer({
     const gl = canvas.getContext("webgl");
     if (!gl) return;
 
-    const program = createShaderProgram(gl, fragShader);
-    if (!program) return;
+    const result = createShaderProgram(gl, fragShader);
+    if (!result) return;
+    const { program, vertShader, fragShader: fragShaderObj } = result;
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -281,6 +288,11 @@ export function ShaderVisualizer({
 
     return () => {
       cancelAnimationFrame(animId);
+      // Proper GPU cleanup — prevent memory leaks across shader switches
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      gl.deleteShader(vertShader);
+      gl.deleteShader(fragShaderObj);
     };
   }, [analyser, dataArray, fragShader]);
 
@@ -413,32 +425,43 @@ export function VisualizerCore({
 
   useEffect(() => {
     if (mode !== prevModeRef.current) {
+      cancelAnimationFrame(crossfadeRef.current);
+
       setPrevRenderMode(prevModeRef.current);
       setRenderMode(mode);
       prevModeRef.current = mode;
 
-      // Reset layer opacities immediately
-      if (prevLayerRef.current) prevLayerRef.current.style.opacity = "1";
-      if (nextLayerRef.current) nextLayerRef.current.style.opacity = "0";
-
-      let progress = 0;
-      const animate = () => {
-        progress = Math.min(1, progress + 0.011); // ~90 frames (~1.5s at 60fps)
-        // Ease-in-out for smoother feel
-        const eased = progress < 0.5
-          ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-        if (prevLayerRef.current) prevLayerRef.current.style.opacity = String(1 - eased);
-        if (nextLayerRef.current) nextLayerRef.current.style.opacity = String(eased);
-
-        if (progress < 1) {
-          crossfadeRef.current = requestAnimationFrame(animate);
-        } else {
-          setPrevRenderMode(null);
+      // Start crossfade on next frame (after React renders the new layers)
+      crossfadeRef.current = requestAnimationFrame(() => {
+        // Read current opacity of the outgoing layer — if we're interrupting
+        // an in-progress crossfade, start from where it is (not forced to 1)
+        const prevStartOpacity = prevLayerRef.current
+          ? parseFloat(prevLayerRef.current.style.opacity || "1")
+          : 1;
+        if (prevLayerRef.current && prevStartOpacity <= 0.01) {
+          prevLayerRef.current.style.opacity = "1";
         }
-      };
-      crossfadeRef.current = requestAnimationFrame(animate);
+        if (nextLayerRef.current) nextLayerRef.current.style.opacity = "0";
+
+        let progress = 0;
+        const animate = () => {
+          progress = Math.min(1, progress + 0.011); // ~90 frames (~1.5s at 60fps)
+          const eased = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          const outOpacity = Math.max(0, (prevStartOpacity <= 0.01 ? 1 : prevStartOpacity) * (1 - eased));
+          if (prevLayerRef.current) prevLayerRef.current.style.opacity = String(outOpacity);
+          if (nextLayerRef.current) nextLayerRef.current.style.opacity = String(eased);
+
+          if (progress < 1) {
+            crossfadeRef.current = requestAnimationFrame(animate);
+          } else {
+            setPrevRenderMode(null);
+          }
+        };
+        crossfadeRef.current = requestAnimationFrame(animate);
+      });
 
       return () => cancelAnimationFrame(crossfadeRef.current);
     }
@@ -480,7 +503,7 @@ export function VisualizerCore({
       }
       let progress = 0;
       const fadeOut = () => {
-        progress = Math.min(1, progress + 0.008);
+        progress = Math.min(1, progress + 0.005); // ~200 frames (~3.3s) — gentle exit
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         if (dualShaderRef.current) dualShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
         if (progress < 1) {
@@ -530,7 +553,7 @@ export function VisualizerCore({
       }
       let progress = 0;
       const fadeOut = () => {
-        progress = Math.min(1, progress + 0.007);
+        progress = Math.min(1, progress + 0.004); // ~250 frames (~4s) — very gentle exit
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         if (tertiaryShaderRef.current) tertiaryShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
         if (progress < 1) {

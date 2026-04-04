@@ -53,7 +53,7 @@ const GEN_INTERVAL_MAX = 10000; // 10s max — ensures constant visual movement
 const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
 const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
 const KEN_BURNS_DURATION = 50; // seconds — full motion cycle
-const MAX_LAYERS = 4; // 4 overlapping layers — 2-3 visible + 1 fading = sense of video
+const MAX_LAYERS = 6; // 6 overlapping layers — denser visual flow, more layered depth
 const MAX_CONCURRENT_GENS = 2; // 2 parallel REST requests for faster imagery fill
 
 /** Smooth ease-in-out cubic — no jarring linear interpolation */

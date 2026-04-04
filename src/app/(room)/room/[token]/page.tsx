@@ -67,7 +67,7 @@ export default function SharedRoomPage({
 
   if (!config) {
     return (
-      <div className="h-screen w-screen bg-black flex items-center justify-center">
+      <div className="h-dvh w-screen bg-black flex items-center justify-center">
         <p className="text-white/30 text-sm" style={{ fontFamily: "var(--font-geist-mono)" }}>
           Invalid room link
         </p>
@@ -82,7 +82,7 @@ export default function SharedRoomPage({
   ) as VisualizerMode;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-black relative">
+    <div className="h-dvh w-screen overflow-hidden bg-black relative">
       {analyser && dataArray && (
         <>
           {MODES_3D.has(shaderMode) ? (

@@ -87,30 +87,41 @@ export function SharedJourneyClient({
   // Crossfade animation when shader mode changes (~1.5s ease-in-out)
   useEffect(() => {
     if (shaderMode !== prevModeRef.current) {
+      cancelAnimationFrame(crossfadeRef.current);
+
       setPrevRenderMode(prevModeRef.current as VisualizerMode);
       setRenderMode(shaderMode as VisualizerMode);
       prevModeRef.current = shaderMode;
 
-      if (prevLayerRef.current) prevLayerRef.current.style.opacity = "1";
-      if (nextLayerRef.current) nextLayerRef.current.style.opacity = "0";
-
-      let progress = 0;
-      const animate = () => {
-        progress = Math.min(1, progress + 0.011); // ~90 frames (~1.5s at 60fps)
-        const eased = progress < 0.5
-          ? 2 * progress * progress
-          : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-
-        if (prevLayerRef.current) prevLayerRef.current.style.opacity = String(1 - eased);
-        if (nextLayerRef.current) nextLayerRef.current.style.opacity = String(eased);
-
-        if (progress < 1) {
-          crossfadeRef.current = requestAnimationFrame(animate);
-        } else {
-          setPrevRenderMode(null);
+      // Start crossfade on next frame (after React renders the new layers)
+      crossfadeRef.current = requestAnimationFrame(() => {
+        const prevStartOpacity = prevLayerRef.current
+          ? parseFloat(prevLayerRef.current.style.opacity || "1")
+          : 1;
+        if (prevLayerRef.current && prevStartOpacity <= 0.01) {
+          prevLayerRef.current.style.opacity = "1";
         }
-      };
-      crossfadeRef.current = requestAnimationFrame(animate);
+        if (nextLayerRef.current) nextLayerRef.current.style.opacity = "0";
+
+        let progress = 0;
+        const animate = () => {
+          progress = Math.min(1, progress + 0.011);
+          const eased = progress < 0.5
+            ? 2 * progress * progress
+            : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+          const outOpacity = Math.max(0, (prevStartOpacity <= 0.01 ? 1 : prevStartOpacity) * (1 - eased));
+          if (prevLayerRef.current) prevLayerRef.current.style.opacity = String(outOpacity);
+          if (nextLayerRef.current) nextLayerRef.current.style.opacity = String(eased);
+
+          if (progress < 1) {
+            crossfadeRef.current = requestAnimationFrame(animate);
+          } else {
+            setPrevRenderMode(null);
+          }
+        };
+        crossfadeRef.current = requestAnimationFrame(animate);
+      });
 
       return () => cancelAnimationFrame(crossfadeRef.current);
     }
@@ -152,7 +163,7 @@ export function SharedJourneyClient({
       }
       let progress = 0;
       const fadeOut = () => {
-        progress = Math.min(1, progress + 0.008);
+        progress = Math.min(1, progress + 0.005); // ~200 frames (~3.3s) — gentle exit
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         if (dualShaderRef.current) dualShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
         if (progress < 1) {
@@ -202,7 +213,7 @@ export function SharedJourneyClient({
       }
       let progress = 0;
       const fadeOut = () => {
-        progress = Math.min(1, progress + 0.007);
+        progress = Math.min(1, progress + 0.004); // ~250 frames (~4s) — very gentle exit
         const eased = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
         if (tertiaryShaderRef.current) tertiaryShaderRef.current.style.opacity = String(startOpacity * (1 - eased));
         if (progress < 1) {
@@ -507,7 +518,7 @@ export function SharedJourneyClient({
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/journey/${shareToken}`;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-black relative">
+    <div className="h-dvh w-screen overflow-hidden bg-black relative">
       {analyser && dataArray && (
         <JourneyCompositor
           frame={journeyFrame}

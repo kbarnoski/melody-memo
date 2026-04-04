@@ -2,6 +2,7 @@ import type { Journey, JourneyPhase, JourneyPhaseId, JourneyFrame, AmbientLayers
 import { getRealm } from "./realms";
 import { regenerateJourneyShaders } from "./journeys";
 import { createSeededRandom, seededShuffle } from "./seeded-random";
+import { MODES_3D } from "@/lib/shaders";
 import {
   getPhaseBlend,
   getPhaseProgress,
@@ -415,8 +416,10 @@ class JourneyEngine {
   private scheduleDualShaderMoments(random: () => number): void {
     this.dualShaderMoments = [];
 
-    // Moment duration: 0.08-0.14 of progress (~24-42s for a 5min track)
-    const momentDuration = () => 0.08 + random() * 0.06;
+    // Moment duration: 0.10-0.16 of progress (~30-48s for a 5min track)
+    // Minimum 30s ensures dual/tertiary shaders have time to fully fade in (~3s)
+    // and hold for a meaningful period before fading out (~2s) — no jarring flashes
+    const momentDuration = () => 0.10 + random() * 0.06;
 
     // 16 anchors every ~6% — dense coverage across the journey
     const anchors = [
@@ -458,8 +461,12 @@ class JourneyEngine {
       const phase = phases.find((p) => midPoint >= p.start && midPoint <= p.end);
       if (!phase || phase.shaderModes.length < 2) continue;
 
-      // Shuffle the phase's shader pool and pick 2 different ones
-      const shuffled = seededShuffle(phase.shaderModes, random);
+      // Filter out heavy 3D modes from dual shader candidates
+      const candidates = phase.shaderModes.filter(m => !MODES_3D.has(m));
+      if (candidates.length < 1) continue;
+
+      // Shuffle the filtered pool and pick dual + tertiary shaders
+      const shuffled = seededShuffle(candidates, random);
       this.dualShaderPicks.set(i, {
         dual: shuffled[0],
         tertiary: shuffled.length > 2 ? shuffled[1] : null,

@@ -83,11 +83,14 @@ const REALM_SHADER_AFFINITY: Record<string, string[]> = {
 /** Shaders blocked from ALL realms except those in REALM_SHADER_ALLOW */
 const GLOBAL_SHADER_BLOCKLIST: string[] = [
   "snow", // only appropriate for winter/snowflake or user-created journeys
+  "rain", // only appropriate for water-related realms (ocean, storm)
 ];
 
 /** Realms that ARE allowed to use globally-blocked shaders */
 const REALM_SHADER_ALLOW: Record<string, string[]> = {
   winter: ["snow"], // snow is core to the winter realm
+  ocean: ["rain"],  // rain fits underwater/water themes
+  storm: ["rain"],  // rain is core to storm imagery
 };
 
 const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
@@ -96,7 +99,6 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "aurora", "orb", // wrong vibe
     "neon", "moire", "lattice", "sacred", // solid/geometric
     "mangrove", // tree/botanical 2D
-    "rain", // wrong weather
     "tesseract", "cage", // geometric/cube — wrong vibe
     "supernova", "nova", "photon", "pulsar", // yellow sun/hot graphics
     "thermal", "geyser", "lightning", // warm/fiery elemental
@@ -107,14 +109,11 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "orb", // wrong vibe
   ],
   cosmos: [
-    "rain", // wrong atmosphere for space
   ],
   ocean: [
-    "rain", // wrong climate
     "bonfire", "flame", "inferno", // fire
   ],
   garden: [
-    "rain", // wrong climate
     "bonfire", "inferno", // fire
   ],
   temple: [

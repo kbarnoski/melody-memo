@@ -109,18 +109,27 @@ export function JourneyPhaseIndicator({
           opacity: visible ? 1 : 0,
           transition: visible
             ? "opacity 1.5s cubic-bezier(0.23, 1, 0.32, 1)"
-            : "opacity 2s cubic-bezier(0.23, 1, 0.32, 1)",
-          padding: "2rem 3rem",
-          borderRadius: "1rem",
-          background: visible
-            ? "radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 70%, transparent 100%)"
-            : "transparent",
+            : "opacity 4s cubic-bezier(0.16, 1, 0.3, 1)",
+          padding: "4rem 6rem",
+          position: "relative",
         }}
       >
+        {/* Soft blurred background — always present, fades with parent opacity */}
+        <div
+          style={{
+            position: "absolute",
+            inset: "-40%",
+            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+          }}
+        />
+
         {/* Phase name — large, prominent */}
         {displayPhaseId && (
           <span
             style={{
+              position: "relative",
               fontSize: "clamp(2rem, 5vw, 3.5rem)",
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontWeight: 300,
@@ -140,6 +149,7 @@ export function JourneyPhaseIndicator({
         {displayPhrase && (
           <p
             style={{
+              position: "relative",
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontWeight: 300,
               fontSize: "clamp(1.2rem, 2.5vw, 1.8rem)",

@@ -104,7 +104,7 @@ export function PostProcessingLayer({
       timeRef.current += dt;
       const t = timeRef.current;
 
-      const dpr = devicePixelRatio;
+      const dpr = Math.min(devicePixelRatio, 1); // Cap at 1x — blurry effects don't need retina
       const cw = canvas.clientWidth;
       const ch = canvas.clientHeight;
 

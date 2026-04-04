@@ -476,17 +476,24 @@ export function SharedJourneyClient({
   }
 
   // ─── Shader layer renderer (matching VisualizerCore exactly) ───
+  // Two-layer approach: outer for positioning, inner for crossfade opacity (animated via ref).
+  // This prevents React style prop conflicts with rAF-driven opacity animation.
   const renderShaderLayer = (layerMode: VisualizerMode, zIndex: number, ref?: React.Ref<HTMLDivElement>, initialOpacity?: number) => {
     if (!analyser || !dataArray) return null;
     const layerIs3D = MODES_3D.has(layerMode);
     const layerIsAI = MODES_AI.has(layerMode);
 
-    const wrapStyle: React.CSSProperties = {
+    const outerStyle: React.CSSProperties = {
       position: "absolute",
       inset: 0,
       zIndex,
       pointerEvents: "none",
-      ...(initialOpacity !== undefined && { opacity: initialOpacity }),
+    };
+
+    const innerStyle: React.CSSProperties = {
+      position: "absolute",
+      inset: 0,
+      opacity: initialOpacity !== undefined ? initialOpacity : 1,
     };
 
     if (layerIsAI) {
@@ -494,25 +501,31 @@ export function SharedJourneyClient({
       const backdropFrag = SHADERS[backdropMode];
       if (backdropFrag) {
         return (
-          <div key={layerMode} ref={ref} style={{ ...wrapStyle, opacity: 0.6 }}>
-            <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion />
+          <div key={layerMode} style={{ ...outerStyle, opacity: 0.6 }}>
+            <div ref={ref} style={innerStyle}>
+              <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion />
+            </div>
           </div>
         );
       }
-      return <div key={layerMode} ref={ref} style={{ ...wrapStyle, backgroundColor: "#000" }} />;
+      return <div key={layerMode} style={{ ...outerStyle, backgroundColor: "#000" }}><div ref={ref} style={innerStyle} /></div>;
     }
     if (layerIs3D) {
       return (
-        <div key={layerMode} ref={ref} style={wrapStyle}>
-          <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />
+        <div key={layerMode} style={outerStyle}>
+          <div ref={ref} style={innerStyle}>
+            <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />
+          </div>
         </div>
       );
     }
     const frag = SHADERS[layerMode];
-    if (!frag) return <div key={layerMode} ref={ref} style={{ ...wrapStyle, backgroundColor: "#000" }} />;
+    if (!frag) return <div key={layerMode} style={{ ...outerStyle, backgroundColor: "#000" }}><div ref={ref} style={innerStyle} /></div>;
     return (
-      <div key={layerMode} ref={ref} style={wrapStyle}>
-        <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={frag} smoothMotion />
+      <div key={layerMode} style={outerStyle}>
+        <div ref={ref} style={innerStyle}>
+          <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={frag} smoothMotion />
+        </div>
       </div>
     );
   };

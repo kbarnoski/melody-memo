@@ -796,12 +796,22 @@ export function VisualizerClient({
           style={{
             zIndex: 50,
             animation: "journeyEndFadeIn 2s ease-out forwards",
-            background: "radial-gradient(ellipse at center, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.2) 100%)",
           }}
         >
-          <div className="flex flex-col items-center gap-6">
+          <div className="flex flex-col items-center gap-6" style={{ position: "relative", padding: "4rem 6rem" }}>
+            {/* Soft blurred background — matches phase indicator style */}
+            <div
+              style={{
+                position: "absolute",
+                inset: "-40%",
+                background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+                filter: "blur(40px)",
+                pointerEvents: "none",
+              }}
+            />
             <p
               style={{
+                position: "relative",
                 fontFamily: "'Cormorant Garamond', Georgia, serif",
                 fontWeight: 300,
                 fontSize: "clamp(1rem, 2vw, 1.4rem)",
@@ -812,7 +822,7 @@ export function VisualizerClient({
             >
               journey complete
             </p>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3" style={{ position: "relative" }}>
               <button
                 onClick={handleReplayJourney}
                 className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"

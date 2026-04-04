@@ -585,16 +585,25 @@ export function VisualizerCore({
     const layerIs3D = MODES_3D.has(layerMode);
     const layerIsAI = MODES_AI.has(layerMode);
 
-    // Shader layers consume --shader-opacity (set by JourneyCompositor) so
-    // they fade in during AI intro without creating a stacking context that
-    // would trap the bottom bar below the AI layer.
-    // initialOpacity overrides for crossfade layers (prevents one-frame flash)
-    const wrapStyle: React.CSSProperties = {
+    // Two-layer approach to prevent crossfade ↔ CSS variable conflicts:
+    // Outer div: --shader-opacity from JourneyCompositor (never animated by crossfade)
+    // Inner div: crossfade opacity (animated by rAF via ref, independent of CSS variable)
+    // This prevents flashes when the rAF animation targets opacity=1 but the CSS
+    // variable says opacity should be lower (e.g. during AI image display).
+    const outerStyle: React.CSSProperties = {
       position: "absolute",
       inset: 0,
       zIndex,
       pointerEvents: "none",
-      opacity: initialOpacity !== undefined ? initialOpacity : ("var(--shader-opacity, 1)" as unknown as number),
+      opacity: "var(--shader-opacity, 1)" as unknown as number,
+    };
+
+    // initialOpacity: 0 for new layers during crossfade (prevents one-frame flash),
+    // undefined for settled layers (defaults to 1)
+    const innerStyle: React.CSSProperties = {
+      position: "absolute",
+      inset: 0,
+      opacity: initialOpacity !== undefined ? initialOpacity : 1,
     };
 
     if (layerIsAI) {
@@ -603,23 +612,29 @@ export function VisualizerCore({
       const backdropFrag = SHADERS[backdropMode];
       if (backdropFrag) {
         return (
-          <div key={layerMode} ref={ref} style={{ ...wrapStyle, opacity: "calc(var(--shader-opacity, 1) * 0.6)" as unknown as number }}>
-            <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion />
+          <div key={layerMode} style={{ ...outerStyle, opacity: "calc(var(--shader-opacity, 1) * 0.6)" as unknown as number }}>
+            <div ref={ref} style={innerStyle}>
+              <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={backdropFrag} smoothMotion />
+            </div>
           </div>
         );
       }
-      return <div key={layerMode} ref={ref} style={{ ...wrapStyle, backgroundColor: "#000" }} />;
+      return <div key={layerMode} style={{ ...outerStyle, backgroundColor: "#000" }}><div ref={ref} style={innerStyle} /></div>;
     }
     if (layerIs3D) {
       return (
-        <div key={layerMode} ref={ref} style={wrapStyle}>
-          <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />
+        <div key={layerMode} style={outerStyle}>
+          <div ref={ref} style={innerStyle}>
+            <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />
+          </div>
         </div>
       );
     }
     return (
-      <div key={layerMode} ref={ref} style={wrapStyle}>
-        <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion />
+      <div key={layerMode} style={outerStyle}>
+        <div ref={ref} style={innerStyle}>
+          <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion />
+        </div>
       </div>
     );
   };

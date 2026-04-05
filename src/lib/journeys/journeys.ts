@@ -1,5 +1,4 @@
 import type { Journey, JourneyPhase } from "./types";
-import { getRealm } from "./realms";
 import { MODE_META } from "@/lib/shaders";
 import { seededShuffle } from "./seeded-random";
 import { applyShaderPreferences } from "./adaptive-engine";
@@ -7,43 +6,61 @@ import { applyShaderPreferences } from "./adaptive-engine";
 // ─── Full shader library: ALL registered shaders ───
 // Every journey draws from this pool — balanced across all categories.
 const ALL_SHADERS_RAW: string[] = [
-  // Elemental (16)
+  // Elemental (32)
   "fog", "dusk", "snow", "ocean", "cascade", "whirlpool", "flux",
   "monsoon", "geyser", "magma", "typhoon",
   "chinook", "thermal", "lightning", "maelstrom",
   "deluge", "squall",
-  // Visionary (11)
-  "astral", "portal", "oracle",
+  "glacial", "tsunami", "permafrost", "mistral", "rime",
+  "updraft", "cirrus", "torrent", "swell", "aurora-borealis",
+  "tempest", "nimbostratus", "frost-bloom", "thermocline", "estuary",
+  // Visionary (23)
+  "astral", "portal",
   "revelation", "threshold", "rapture",
   "mandorla", "seraph",
-  "halo",
-  "nimbus",
-  // Cosmic (22)
+  "halo", "nimbus",
+  "anamnesis", "dharma", "gnosis", "chakra", "vestige",
+  "empyrean", "stigmata", "aureole", "pleroma", "apophatic",
+  "theophany", "yantra", "satori", "merkaba", "soma",
+  // Cosmic (36)
   "cosmos", "pulsar", "quasar", "supernova",
   "nebula", "singularity", "stardust", "drift", "expanse",
   "comet", "magnetar", "protostar", "redshift", "aphelion",
   "nadir", "parsec", "nova", "photon",
-  "selene", "kepler", "cassini", "hubble", "doppler",
-  // Organic (15)
-  "ethereal", "ember", "tide", "spore",
+  "selene", "kepler", "hubble", "doppler",
+  "corona", "aurora-wave", "wormhole", "zodiac", "solaris",
+  "perihelion", "helios", "crescent", "eclipse", "zenith",
+  "lightyear", "binary", "cosmic-web", "dark-matter", "event-horizon",
+  // Organic (27)
+  "ember", "tide", "spore",
   "chrysalis", "plankton", "lichen", "growth",
-  "enzyme", "pollen", "symbiosis", "chitin",
+  "enzyme", "pollen", "symbiosis",
   "phylum", "kelp", "mangrove",
-  // Geometry (21)
-  "sacred", "tesseract", "neon", "lattice", "spiral",
+  "dendrite", "flagella", "mycelium", "coral", "mitochondria",
+  "synapse", "biolume", "tendril", "osmosis", "alveoli",
+  "diatom", "protoplasm", "filament", "photosynthesis", "biofilm",
+  // Geometry (35)
+  "neon", "spiral",
   "geodesic", "moire",
   "catenary",
   "astroid", "cardioid", "lissajous", "cymatic", "guilloche",
   "trefoil", "quatrefoil", "involute", "rosette", "roulette", "deltoid", "nephroid", "epicycle",
-  // Dark (6)
+  "hyperbola", "penrose", "torus", "helix", "escher",
+  "harmonograph", "voronoi-flow", "klein", "mobius-strip", "fibonacci-spiral",
+  "interference", "topology", "fractal-tree", "weave", "kaleidoscope",
+  "aurora-trail", "constellation",
+  // Dark (21)
   "umbra", "inferno", "plasma",
   "vortex",
   "lament", "hollow",
+  "obsidian", "eclipse-dark", "entropy", "miasma", "penumbra",
+  "terminus", "cinder", "requiem", "maelstrom-dark", "obsidian-flow",
+  "wraith", "furnace", "abyssal-zone", "charcoal", "shadowplay",
   // Nature (4)
   "river", "rain", "ripple", "flame",
   "starfield", "radiance",
-  // 3D Worlds (15)
-  "orb", "aurora",
+  // 3D Worlds (13)
+  "orb",
   "galaxy", "depths", "bonfire", "crystal", "swarm", "lotus", "cloud", "waterfall",
   "wave", "seabed", "cage", "pendulum",
 ];
@@ -85,9 +102,7 @@ const REALM_SHADER_AFFINITY: Record<string, string[]> = {
 const GLOBAL_SHADER_BLOCKLIST: string[] = [
   "snow", // only appropriate for winter/snowflake or user-created journeys
   "rain", // only appropriate for water-related realms (ocean, storm)
-  "lattice", // grid-lined look — not suited for journeys
-  "chitin", // full-screen hexagon pattern chokes performance
-  "aurora", // 3D raymarched — sustained 6-8fps, unusable in journeys
+  // oracle, cassini, tesseract, chitin, lattice, aurora, ethereal, sacred — REMOVED from codebase entirely
 ];
 
 /** Realms that ARE allowed to use globally-blocked shaders */
@@ -100,10 +115,10 @@ const REALM_SHADER_ALLOW: Record<string, string[]> = {
 const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
   winter: [
     "magma", "inferno", "bonfire", "flame", // fire
-    "aurora", "orb", // wrong vibe
-    "neon", "moire", "lattice", "sacred", // solid/geometric
+    "orb", // wrong vibe
+    "neon", "moire", // solid/geometric
     "mangrove", // tree/botanical 2D
-    "tesseract", "cage", // geometric/cube — wrong vibe
+    "cage", // geometric/cube — wrong vibe
     "supernova", "nova", "photon", "pulsar", // yellow sun/hot graphics
     "thermal", "geyser", "lightning", // warm/fiery elemental
     "ember", // warm organic tones
@@ -113,7 +128,7 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "ocean", "cascade", "whirlpool", "tide", "ripple", // water elemental
     "waterfall", "wave", "seabed", // water 3D worlds
     "plankton", "kelp", "mangrove", "coral", // aquatic/botanical organic
-    "snow", "aurora", // cold/winter
+    "snow", // cold/winter
     "lotus", "cloud", // serene — wrong vibe
   ],
   heaven: [
@@ -137,18 +152,53 @@ const REALM_SHADER_MUSTINCLUDE: Record<string, string[]> = {
   hell: ["lightning", "flame", "magma", "inferno", "vortex"],
 };
 
-function pickJourneyShaders(realmId: string, random: () => number = Math.random): string[] {
-  const affinityCategories = REALM_SHADER_AFFINITY[realmId] ?? [];
-  const allowedGlobals = new Set(REALM_SHADER_ALLOW[realmId] ?? []);
-  const globalBlocked = GLOBAL_SHADER_BLOCKLIST.filter(s => !allowedGlobals.has(s));
-  const blocklist = new Set([...globalBlocked, ...(REALM_SHADER_BLOCKLIST[realmId] ?? [])]);
-  const mustInclude = REALM_SHADER_MUSTINCLUDE[realmId] ?? [];
+/** Read user-blocked shaders from localStorage (safe for SSR — returns empty set) */
+function getUserBlockedShaders(): Set<string> {
+  if (typeof localStorage === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem("resonance-blocked-shaders");
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+/** Read user-deleted shaders from localStorage (permanent removal — stronger than blocked) */
+function getUserDeletedShaders(): Set<string> {
+  if (typeof localStorage === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem("resonance-deleted-shaders");
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+function pickJourneyShaders(
+  options: { realmId?: string; shaderCategories?: string[] },
+  random: () => number = Math.random,
+): string[] {
+  const { realmId, shaderCategories } = options;
+
+  // Determine affinity categories: from theme or realm
+  const affinityCategories = shaderCategories ?? (realmId ? REALM_SHADER_AFFINITY[realmId] ?? [] : []);
+
+  // Realm-specific blocklists only apply when realmId is provided
+  const allowedGlobals = new Set(realmId ? REALM_SHADER_ALLOW[realmId] ?? [] : []);
+  const globalBlocked = realmId
+    ? GLOBAL_SHADER_BLOCKLIST.filter(s => !allowedGlobals.has(s))
+    : []; // theme-based journeys have no global blocklist — full creative freedom
+  const userBlocked = getUserBlockedShaders();
+  const userDeleted = getUserDeletedShaders();
+  const blocklist = new Set([
+    ...globalBlocked,
+    ...(realmId ? REALM_SHADER_BLOCKLIST[realmId] ?? [] : []),
+    ...userBlocked,
+    ...userDeleted,
+  ]);
+  const mustInclude = realmId ? REALM_SHADER_MUSTINCLUDE[realmId] ?? [] : [];
 
   // Build category lookup from MODE_META (skip AI Imagery category)
   const categoryMap = new Map<string, string[]>();
   for (const meta of MODE_META) {
     if (meta.category === "AI Imagery") continue;
-    if (blocklist.has(meta.mode)) continue; // skip blocklisted shaders for this realm
+    if (blocklist.has(meta.mode)) continue;
     const list = categoryMap.get(meta.category) ?? [];
     list.push(meta.mode);
     categoryMap.set(meta.category, list);
@@ -177,7 +227,7 @@ function pickJourneyShaders(realmId: string, random: () => number = Math.random)
   ];
 
   // Apply adaptive preferences — gently promotes loved shaders, preserves variation
-  return applyShaderPreferences(shuffleArray(picked, random), realmId);
+  return applyShaderPreferences(shuffleArray(picked, random), realmId ?? "custom");
 }
 
 /** Pick `count` shaders from pool, avoiding `used` set. Never duplicates. */
@@ -194,7 +244,7 @@ export function defaultPhases(
   overrides: Partial<Record<string, Partial<JourneyPhase>>> = {}
 ): JourneyPhase[] {
   // Every play gets a fresh random set, biased toward realm-appropriate categories
-  const allShaders = pickJourneyShaders(realmId);
+  const allShaders = pickJourneyShaders({ realmId });
 
   // Track used shaders across all phases to guarantee diversity
   const usedShaders = new Set<string>();
@@ -208,7 +258,7 @@ export function defaultPhases(
     {
       id: "threshold",
       start: 0.0,
-      end: 0.15,
+      end: 0.10,
       shaderModes: pickShaders(allShaders, phaseBudgets.threshold, usedShaders),
       shaderOpacity: 0.50,
       aiPrompt: "luminous geometry condensing from deep space, glowing non-representational forms emerging at the edge of perception, radiant points in vast emptiness, no text no signatures no watermarks no letters no writing",
@@ -234,8 +284,8 @@ export function defaultPhases(
     },
     {
       id: "expansion",
-      start: 0.15,
-      end: 0.35,
+      start: 0.10,
+      end: 0.26,
       shaderModes: pickShaders(allShaders, phaseBudgets.expansion, usedShaders),
       shaderOpacity: 0.50,
       aiPrompt: "radiant abstract topologies unfolding, luminous energy fields pulsing with light, pressure gradients made visible as glowing color and bright form, no text no signatures no watermarks no letters no writing",
@@ -262,8 +312,8 @@ export function defaultPhases(
     },
     {
       id: "transcendence",
-      start: 0.35,
-      end: 0.6,
+      start: 0.26,
+      end: 0.48,
       shaderModes: pickShaders(allShaders, phaseBudgets.transcendence, usedShaders),
       shaderOpacity: 0.50,
       aiPrompt: "pure radiant abstraction at peak intensity, brilliant color fields dissolving into blinding light, the visual equivalent of every frequency at once, overwhelming luminous saturation, no text no signatures no watermarks no letters no writing",
@@ -291,8 +341,8 @@ export function defaultPhases(
     },
     {
       id: "illumination",
-      start: 0.6,
-      end: 0.8,
+      start: 0.48,
+      end: 0.65,
       shaderModes: pickShaders(allShaders, phaseBudgets.illumination, usedShaders),
       shaderOpacity: 0.50,
       aiPrompt: "abstract clarity, luminous negative space, simple geometric forms hovering in warm light, the mathematics of understanding, no text no signatures no watermarks no letters no writing",
@@ -318,8 +368,8 @@ export function defaultPhases(
     },
     {
       id: "return",
-      start: 0.8,
-      end: 0.95,
+      start: 0.65,
+      end: 0.82,
       shaderModes: pickShaders(allShaders, phaseBudgets.return, usedShaders),
       shaderOpacity: 0.50,
       aiPrompt: "luminous warmth condensing, soft radiant gradients resolving, gentle glowing comfort, bright color fields settling into harmony, no text no signatures no watermarks no letters no writing",
@@ -345,7 +395,7 @@ export function defaultPhases(
     },
     {
       id: "integration",
-      start: 0.95,
+      start: 0.82,
       end: 1.0,
       shaderModes: pickShaders(allShaders, phaseBudgets.integration, usedShaders),
       shaderOpacity: 0.50,
@@ -393,32 +443,32 @@ export const JOURNEYS: Journey[] = [
     phases: defaultPhases("heaven", {
 
       threshold: {
-        aiPrompt: "a lone ancient tree on a small floating island of earth and rock emerging from the lower right of deep cosmic void, the tree gnarled and impossibly old with bark texture visible at cosmic scale, roots dangling into the black abyss below like organic tendrils reaching for nothing, faint starlight catching the rough bark and scattered leaves, misty atmosphere curling around the island base where soil crumbles and tiny stones drift free, fine particles of earth and leaf-dust dispersing upward into vast dark negative space above and left, the island anchored in one third of the frame with the rest open darkness and distant stars, asymmetric composition with visual weight low and right, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "dark cosmic void with clusters of crystalline mineral formations emerging from the lower right — raw quartz and obsidian facets catching faint blue and violet bioluminescence from within, thousands of fine luminous particles dispersing upward from the crystal surfaces into infinite black space like spores or stardust, the mineral detail anchored in one third of the frame with the rest vast open darkness and distant stars, macro texture on the crystal surfaces visible at cosmic scale, asymmetric composition with visual weight low and right, no ground no horizon, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["breathe...", "feel the warmth...", "light is coming..."],
         poetryMood: "dreamy",
       },
       expansion: {
-        aiPrompt: "WHITE BACKGROUND — massive cloudscape at impossible scale filling the upper two thirds of the frame, billowing white cumulus clouds with golden light pouring through gaps and crevices, warm sun rays streaming diagonally through the cloud architecture, a single ancient tree growing upside-down from the underside of the largest cloud formation — its roots embedded in cloud-matter and its canopy hanging into the bright white void below, the tree photorealistic dark bark and green leaves against brilliant cloud-white, golden pollen and leaf particles drifting downward from the inverted canopy into generous white negative space, three-dimensional depth through layered cloud planes receding into warm haze, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "WHITE BACKGROUND — sculptural golden metallic forms and translucent glass-like structures sweeping diagonally from upper left, fibonacci curves visible in the architecture, warm light refracting through prismatic crystal edges casting rainbow caustics against brilliant pale ground, thousands of fine golden particles streaming from the structures trailing into scattered luminous dust and open white space below, surfaces shift between polished metal and organic coral-like growth, infinite depth through layered translucency, ascending and expanding, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["rise...", "the light knows you...", "open..."],
         poetryMood: "transcendent",
       },
       transcendence: {
-        aiPrompt: "spiraling column of golden light particles ascending through infinite deep-blue starfield, the spiral tightening as it rises from the lower-left like a galaxy forming in reverse, millions of luminous points in warm gold and rose and white tracing fibonacci curves upward, the spiral dense and brilliant at its core but dissolving into scattered individual stars at its outermost reaches, vast cosmic darkness on all sides with the spiral occupying the center-left third of the frame, the sense of infinite upward motion frozen in light, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "cosmic nebula at impossible scale with embedded material textures — vast swirling gas and particle fields in deep blue and electric violet pierced by veins of molten gold, within the nebula dense clusters of bioluminescent coral-like organic structures glow from within, millions of particles streaming between the organic nodes and the cosmic gas creating bridges of light, the macro nebula contains micro biological detail visible at every scale, composition fills the frame off-center with the densest structure upper right and particle streams reaching across, no ground no horizon, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are light...", "there is no boundary...", "this is home..."],
         poetryMood: "transcendent",
       },
       illumination: {
-        aiPrompt: "vast field of softly glowing particles suspended in deep indigo-violet cosmos like frozen fireflies at galactic scale, the particles clustered denser along the left edge forming a gentle gradient toward open darkness on the right, each particle a warm gold or pale rose point of light at a slightly different brightness creating depth through luminosity variation, the spaces between particles alive with the faintest violet nebula-haze, asymmetric composition with the densest particle region left-of-center and two-thirds generous cosmic darkness above and right, infinite stillness and clarity rendered as light suspended in void, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PALE BACKGROUND — weathered stone and ancient marble architectural fragments arranged along the left edge and lower third of an immense soft white field, the stone surfaces impossibly detailed with veins of gold and embedded crystalline deposits catching warm light, luminous particles rising from the stone like heat shimmer or ascending fireflies, cool blue shadows on the carved surfaces, an infinite cosmic quality to the vast emptiness above, the grounded weight of stone against the weightlessness of light and particles, asymmetric leaving the upper right open and boundless, no ground no horizon, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see how vast you are...", "every direction is warmth...", "stay in this light..."],
         poetryMood: "transcendent",
       },
       return: {
-        aiPrompt: "enormous ancient tree with a massive spreading canopy anchored in the lower left of deep cosmic void, the leaves photorealistic autumn gold and warm amber but at their tips each leaf dissolves into points of golden light that drift upward and merge with the surrounding starfield, the trunk thick and deeply textured bark with moss at its base, birds silhouetted in flight around the canopy — some perched on branches some taking wing into the cosmos, fine particles of golden leaf-light and luminous pollen dispersing into generous dark negative space above and right, the boundary between tree and stars is soft and dreamlike, composition weighted to the lower half with cosmic darkness and stars opening above, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "organic botanical forms — impossible flowers and seed pods with translucent petals — arcing from lower left across a deep indigo cosmos, prismatic light refracting through the petal surfaces in spectrum from blue to violet to rose to warm gold, fine pollen particles and luminous spores dispersing from the botanical structures into generous dark negative space above and right, the organic forms impossibly beautiful and detailed even as they thin and dissolve into pure particle at the edges, composition weighted to the lower half with cosmic darkness and stars opening above, no ground no horizon, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["gently now...", "the glow remains...", "carry the warmth..."],
         poetryMood: "flowing",
       },
       integration: {
-        aiPrompt: "single small floating rock with a carpet of green moss and one tiny seedling sprouting from its center, the rock resting in the lower left corner of vast dark cosmos, the seedling barely a few centimeters tall with two delicate pale green leaves catching the faintest violet and gold starlight, a few grains of soil drifting free from the rock edge, the moss photorealistic and damp with a single dewdrop on one of the seedling leaves, enormous open cosmos with stars scattered sparsely above, asymmetric and quiet — almost nothing against everything, no ground no horizon, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "sparse scattered particles — some crystalline some organic — drifting across vast blue-black cosmos, one small sculptural form in the lower left corner that could be a mineral growth or a seed catching faint violet and gold light, thousands of fine luminous particles trailing diagonally upward from it toward infinite upper darkness like a slow dissolution, the particles carry the memory of every material — stone metal glass petal — as they scatter and thin, enormous open cosmos with stars everywhere above, asymmetric and quiet — almost nothing against everything, no ground no horizon, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are changed...", "the light lives in you now..."],
         poetryMood: "flowing",
       },
@@ -436,37 +486,37 @@ export const JOURNEYS: Journey[] = [
     phases: defaultPhases("hell", {
 
       threshold: {
-        aiPrompt: "dead ancient tree on a floating island of cracked ember-glowing earth entering from the lower right corner of absolute black void, the tree leafless and skeletal with photorealistic charred bark peeling away from the trunk, the earth beneath it fractured with deep fissures where molten orange light pulses from within, smoke rising from the cracks in thin wisps curling upward into the darkness, roots exposed and smoldering at the island edges where chunks of earth crumble and drift free, fine ash particles and glowing embers dispersing upward-left along curved paths into vast dark negative space, the dead tree and burning earth anchored in one third of the frame, asymmetric composition with visual weight low and right, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "interconnected ember constellation entering from the lower right corner against deep black void, fractal fire filaments branching between white-hot nodes with internal orange glow, fine ash particles dispersed along geometric pathways into vast dark negative space above and left, cosmic scale where the ember network could be a dying star's skeleton, asymmetric composition with visual weight low and right, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["descend...", "there is no turning back...", "alone now..."],
         poetryMood: "mystical",
         voice: "onyx",
       },
       expansion: {
-        aiPrompt: "DEEP CHARCOAL-BLACK BACKGROUND — cascading field of charred flower heads falling through deep black space from the upper left toward lower right, each flower head photorealistic — blackened sunflowers dahlias and roses with curled burnt petals still holding a tiny ember-orange glow at their centers like dying coals, dozens of charred blooms at different scales and distances tumbling in slow descent, ash particles trailing behind each flower head in fibonacci drift-paths, the nearest flowers large and detailed showing individual carbonized petal texture, the farthest ones small dim points of ember-light, fine grey ash dispersing into vast dark void below, asymmetric composition weighted upper-left with generous darkness opening below-right, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "WHITE BACKGROUND — volcanic glass lattice sweeping diagonally from upper left toward lower right, the structure designed and architectural with obsidian facets reflecting deep orange internal fire, cool ash-grey shadows and white-hot edges defining the interwoven form against brilliant pale ground, dense ember detail in the upper third trailing into scattered spark particles and open white space below, infinite depth through layered translucent smoke, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["deeper...", "the walls are burning...", "no one is coming..."],
         poetryMood: "intense",
         voice: "onyx",
       },
       transcendence: {
-        aiPrompt: "massive bonfire at cosmic scale — the flames are actually thousands of autumn leaves caught in an upward spiral of fire sweeping from lower-left across infinite black void, each leaf photorealistic with visible veins and serrated edges in crimson gold and orange but edged with white-hot combustion, the spiral tightens into a dense blazing vortex in the upper-right third where individual leaves become indistinguishable from flame, at the base dark branches and twigs feed the fire with photorealistic bark texture, the fire-leaf spiral dynamic and turbulent with heat-shimmer distortion visible, sparks and ember particles streaming outward from the spiral edges into vast dark void on all sides, composition not centered with the fire-core upper right and leaf-streams reaching across, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "cosmic-scale fractal fire network sweeping across infinite black in a vast descending spiral arc, white-hot nodes pulsing at the intersections with deep orange and amber light coursing through interconnected ember filaments, the structure dense and intricate where it crosses the frame but dissolving into ash particle trails and open void at both edges, fire bridges and heat-shimmer rays stretching toward infinite darkness below, composition fills the frame but is not centered — the spiral core sits upper right with burning streamers reaching across, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["everything burns...", "let it take you...", "witness..."],
         poetryMood: "chaotic",
         voice: "onyx",
       },
       illumination: {
-        aiPrompt: "vast field of floating ember particles at different depths in absolute black void, thousands of tiny orange and deep red points of light arranged in slowly curving stream-lines as if following invisible thermal currents, the densest ember streams clustered along the right edge and lower third while scattered solitary points drift into open darkness above and left, some embers brighter white-hot and some cooling to deep crimson, the particle streams tracing spiral paths visible only at macro scale, asymmetric composition with generous darkness filling two-thirds, the quiet afterglow of infinite fire rendered as particles suspended in darkness, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PALE BACKGROUND — intricate dark charcoal ember threads and connected volcanic glass forms arranged along the left edge and lower third of an immense soft ash-white field, fractal fire detail like glowing wireframes with dispersed spark particles trailing rightward into open pale space, faint orange light at the joints, the design clusters asymmetrically leaving the upper right vast and open, quiet power in the contrast of dark interwoven ember intricacy against boundless cool white, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see what survives the fire...", "even here there is truth...", "the ashes glow..."],
         poetryMood: "intense",
         voice: "onyx",
       },
       return: {
-        aiPrompt: "rising column of smoke from the lower left that gradually forms the silhouette shape of a great tree as it ascends across deep indigo-black void, the smoke photorealistic dark grey and violet vapor with designed internal spiral structure, at the base where the smoke originates from dark ground — green moss and tiny bright green shoots are emerging through cracked charred earth, the contrast between the dark smoke-tree above and the living green below, thousands of fine particles ascending from the green shoots into the smoke form above as if life is feeding the memory, composition weighted to the lower half with cool deep indigo sky opening above, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "connected ember lattice arcing from lower left across a deep charcoal cosmos, prismatic heat threading through the structure — orange to amber to rose to cool silver, dispersed ash particles catching warm spectrum as they drift upward into generous dark negative space above and right, the interwoven form is dynamic and ascending not static, composition weighted to the lower half with cool darkness opening above, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["climb...", "the air is cooler here...", "leave the fire below..."],
         poetryMood: "mystical",
         voice: "onyx",
       },
       integration: {
-        aiPrompt: "nearly empty absolute black void with the faintest warm amber glow concentrated in the lower-left corner, the glow not a form but a diffuse atmospheric phenomenon — light without a visible source bleeding into surrounding darkness like the last heat memory of a fire that burned at cosmic scale, a handful of barely visible particles drifting upward from the glow zone following a gentle fibonacci spiral, the rest of the frame vast cold darkness gradually overtaking the warmth, asymmetric and quiet — almost nothing against everything, no lava flows no volcanoes no landscapes no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "sparse dispersed ash particles and fading ember traces drifting across vast cool grey-black silence, the last connected fire forms clustered small in the lower left corner dissolving into scattered sparks that trail diagonally toward infinite upper darkness, faint orange light in the final ember nodes, enormous open space everywhere above, the particles carry the fire's memory as they cool and scatter, asymmetric and quiet — almost nothing against everything, no lava flows no volcanoes no landscapes, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you walked through the fire...", "it changed you..."],
         poetryMood: "flowing",
         voice: "onyx",
@@ -569,7 +619,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Signal", expansion: "Bandwidth", transcendence: "Merge", illumination: "Logic", return: "Disconnect", integration: "Standby" },
     phases: defaultPhases("machine", {
       threshold: {
-        aiPrompt: "dark fractured rock formation floating in deep black cosmos, the rock split open to reveal an interior lattice of glowing cyan veins like a mineral nervous system pulsing with faint light, moss and small ferns growing in the crevices where the rock meets the void, roots from the plants threading into the glowing veins as if tapping into the signal, fine luminous cyan particles rising from the fracture lines and dispersing upward into starfield, the formation anchored in the lower-right third with two thirds generous dark cosmic void above and left, distant stars behind, the first spark of connection between earth and data, photorealistic rock and plant textures at impossible cosmic scale, no screens no computers no figures no human elements no lightbulbs no vacuum tubes no circuit boards, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "dark fractured rock formation floating in deep black cosmos, the rock split open to reveal an interior lattice of glowing cyan circuit-like veins pulsing with faint light, crystalline deposits growing in the crevices where the mineral meets the void, geometric micro-structures forming at the fracture interfaces where raw stone meets luminous data-pathways, fine luminous cyan particles rising from the fracture lines and dispersing upward into starfield, the formation anchored in the lower-right third with two thirds generous dark cosmic void above and left, distant stars behind, the first spark of signal in raw matter, photorealistic rock and crystal textures at impossible cosmic scale, no screens no computers no figures no human elements no lightbulbs no vacuum tubes no circuit boards no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["connecting...", "signal detected...", "initializing..."],
         poetryMood: "hypnotic",
         voice: "echo",
@@ -587,19 +637,19 @@ export const JOURNEYS: Journey[] = [
         voice: "echo",
       },
       illumination: {
-        aiPrompt: "a single ancient tree growing from the surface of a massive dark meteorite suspended in deep indigo cosmos, the tree's roots wrapping around and penetrating the meteorite surface where they glow faint electric cyan at the contact points as if exchanging data with the stone, the bark photorealistic and gnarled with age, sparse silver-green leaves catching light from an unseen source, the meteorite pitted and textured with veins of copper ore visible in cross-section, fine luminous particles rising from the leaf tips upward into starfield above, the whole formation anchored in the left third with vast cosmic negative space opening to the right, distant nebula glow in deep violet behind, photorealistic textures at impossible scale — a tree that has grown for millennia on a rock drifting through space, no screens no computers no figures no human elements, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "vast three-dimensional circuit topology rendered as luminous filament pathways suspended in deep indigo cosmos, thousands of hair-thin threads of electric cyan light converging toward a single bright processing node in the left third of the frame, the node a dense geometric crystal form pulsing warm amber at its core, data-streams visible as flowing particle currents within the transparent filament channels, the network tilted to reveal depth with nearer filaments bright and focused and distant ones fading to scattered points, fine photon-like particles orbiting the central node in slow spirals, two thirds dark void right and above, the architecture of thought rendered as designed light at cosmic scale, no screens no computers no figures no human elements no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the machine dreams too...", "silicon and carbon are the same...", "pure logic, pure beauty..."],
         poetryMood: "hypnotic",
         voice: "echo",
       },
       return: {
-        aiPrompt: "weathered copper antenna tower standing alone on a small floating island of dark earth and moss in deep space, the tower old and oxidized green with age, vines climbing its lower struts, the island trailing roots and loose soil downward into void, from the antenna tip a single beam of warm amber light extends upward and disperses into thousands of luminous particles that scatter across the starfield like a transmission dissolving into cosmos, the island anchored lower-left with the particle transmission filling the upper-right darkness, distant stars and faint nebula glow behind, the loneliness of a signal sent into infinite space, photorealistic textures on the copper and earth and moss, no screens no computers no figures no human elements, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "weathered copper antenna tower standing alone on a small floating fragment of dark mineral in deep space, the tower old and oxidized green with age, the fragment showing crystalline deposits at its broken edges, from the antenna tip a single beam of warm amber light extends upward and disperses into thousands of luminous particles that scatter across the starfield like a transmission dissolving into cosmos, the fragment anchored lower-left with the particle transmission filling the upper-right darkness, distant stars and faint nebula glow behind, the loneliness of a signal sent into infinite space, photorealistic textures on the copper and mineral, no screens no computers no figures no human elements no trees no roots no plants no vines, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["disconnecting...", "saving state...", "you carry the data..."],
         poetryMood: "dreamy",
         voice: "echo",
       },
       integration: {
-        aiPrompt: "a single small copper coil resting on a fragment of dark stone in the lower-left corner of infinite black cosmos, the coil tarnished and old with a wisp of pale green lichen growing on one side, from its center a faint thread of warm amber light extends upward and thins into barely-visible particles that dissolve into the starfield, the stone fragment floating with a few loose soil particles drifting beneath it, enormous open darkness and distant stars everywhere above and to the right, the quietest possible signal still transmitting into the void, asymmetric and almost empty — one tiny grounded object against infinite space, no screens no computers no figures no human elements, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "a single small copper coil resting on a fragment of dark stone in the lower-left corner of infinite black cosmos, the coil tarnished and old with a patina of verdigris on one side, from its center a faint thread of warm amber light extends upward and thins into barely-visible particles that dissolve into the starfield, the stone fragment floating with a few loose mineral particles drifting beneath it, enormous open darkness and distant stars everywhere above and to the right, the quietest possible signal still transmitting into the void, asymmetric and almost empty — one tiny grounded object against infinite space, no screens no computers no figures no human elements no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["link closed...", "the machine remembers you..."],
         poetryMood: "flowing",
         voice: "echo",
@@ -617,7 +667,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Edge", expansion: "Unraveling", transcendence: "Void", illumination: "Condensing", return: "Re-forming", integration: "Stillness" },
     phases: defaultPhases("cosmos", {
       threshold: {
-        aiPrompt: "perfect sphere of packed earth and tangled roots floating in deep black void entering from the lower-right corner, the sphere photorealistic dark loam with visible layers of soil and pale intertwined roots threading through it like veins, tiny wildflowers growing on the sphere surface — small white daisies and violet clover, one visible crack running across the sphere where golden light leaks through from within as if something luminous lives at the core, fine particles of soil and tiny root fragments dispersing upper-left along the crack trajectory into vast dark negative space, some earth beginning to crumble and fall away from the lower edge of the sphere, asymmetric composition weighted low-right with two thirds generous darkness above and left, no planets no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "perfect sphere of compressed dark matter floating in deep black void entering from the lower-right corner, the sphere photorealistic with a smooth obsidian surface showing faint internal luminescence — swirling patterns of deep violet and warm gold visible within like trapped galaxies, one visible crack running across the sphere where brilliant white light leaks through from the core as if something infinite lives within, fine particles of luminous dust and dark matter dispersing upper-left along the crack trajectory into vast dark negative space, the sphere surface beginning to flake and dissolve at its edges where tiny fragments drift free catching the interior light, asymmetric composition weighted low-right with two thirds generous darkness above and left, no planets no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["let go of your name...", "there is nothing to hold...", "be still..."],
         poetryMood: "mystical",
         voice: "alloy",
@@ -636,13 +686,13 @@ export const JOURNEYS: Journey[] = [
         shaderOpacity: 0.50,
       },
       illumination: {
-        aiPrompt: "PURE WHITE BACKGROUND — water droplets of varying sizes suspended in white void, the largest droplets in the left third photorealistic and crystal clear, each droplet acting as a tiny lens containing a miniature landscape visible through refraction — one holds a tiny green tree, another a snow-capped mountain, another a golden wheat field, another a winding river — like snow globes made of water, warm gold light refracting through the curved water surfaces casting soft rainbow caustics, smaller droplets scattered sparsely rightward into generous white negative space containing only hints of color within, three-dimensional depth through size variation and the impossibly detailed miniature worlds visible inside each drop, no planets no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PURE WHITE BACKGROUND — water droplets of varying sizes suspended in white void, the largest droplets in the left third photorealistic and crystal clear, each droplet acting as a tiny lens containing a miniature landscape visible through refraction — one holds a spiral galaxy in violet and gold, another a nebula in deep blue, another a star cluster in warm amber, another swirling aurora light — like snow globes made of water containing entire universes, warm gold light refracting through the curved water surfaces casting soft rainbow caustics, smaller droplets scattered sparsely rightward into generous white negative space containing only hints of cosmic color within, three-dimensional depth through size variation and the impossibly detailed miniature universes visible inside each drop, no planets no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["something stirs...", "light returns...", "you are being born again..."],
         poetryMood: "mystical",
         voice: "alloy",
       },
       return: {
-        aiPrompt: "sand being blown by invisible wind from a floating rock formation in the lower-left corner across deep blue-indigo space, the rock photorealistic dark basalt with patches of green moss and small hardy plants still clinging to its leeward side, the sand streaming from the windward face in golden ribbons that catch warm amber light as they arc through the void, each sand grain visible at the near edge becoming a river of golden particles at distance, fine particles of sand and tiny plant seeds dispersing across vast dark negative space above and right, the rock formation occupies the lower-left third with sand trails arcing outward in fibonacci curves, asymmetric composition weighted low-left with cosmic blue-indigo emptiness opening above, no planets no figures, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "sand being blown by invisible wind from a floating rock formation in the lower-left corner across deep blue-indigo space, the rock photorealistic dark basalt with veins of quartz and iron oxide catching warm light at the fracture surfaces, the sand streaming from the windward face in golden ribbons that arc through the void, each sand grain visible at the near edge becoming a river of golden particles at distance, fine particles of sand and mineral dust dispersing across vast dark negative space above and right, the rock formation occupies the lower-left third with sand trails arcing outward in fibonacci curves, asymmetric composition weighted low-left with cosmic blue-indigo emptiness opening above, no planets no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["welcome back...", "you are new...", "the void gave you something..."],
         poetryMood: "flowing",
         voice: "alloy",
@@ -666,7 +716,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Candle", expansion: "Awakening", transcendence: "Communion", illumination: "Revelation", return: "Descent", integration: "Silence" },
     phases: defaultPhases("temple", {
       threshold: {
-        aiPrompt: "three massive weathered stone columns rising from a floating island of ancient cracked earth in the lower-right third of the frame, roots growing down through the cracked stone and dangling into void below, tiny wildflowers — purple and white — sprouting from crevices between the columns, a single candle flame burning between the column bases casting long warm golden shadows diagonally upward-left across the stone surfaces, fine pollen and dust motes drifting upward from the flowers into vast deep amber-black cosmos above, the earth fragment photorealistic with layered soil and embedded small stones visible at the broken edges, two thirds of the frame open warm darkness above, asymmetric composition grounded low-right, no specific religion no crosses no symbols no statues no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "three massive weathered stone columns rising from a floating platform of ancient cracked sandstone in the lower-right third of the frame, the columns at different heights with carved spiral patterns worn smooth by millennia, a single candle flame burning between the column bases casting long warm golden shadows diagonally upward-left across the stone surfaces, fine sand particles and warm dust motes drifting upward from the carved grooves into vast deep amber-black cosmos above, the stone platform photorealistic with layered sedimentary texture and small mineral crystals catching candlelight at the broken edges, two thirds of the frame open warm darkness above, asymmetric composition grounded low-right, no specific religion no crosses no symbols no statues no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["enter the temple...", "the stones are listening...", "breathe with the ancients..."],
         poetryMood: "mystical",
         voice: "fable",
@@ -690,7 +740,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       return: {
-        aiPrompt: "stone meditation bench with smooth weathered surface resting on a tiny floating garden in the right third of the frame — the garden a small island of manicured dark green moss with a single gnarled bonsai tree growing beside the bench, its miniature branches perfectly sculpted, a few fallen amber and russet leaves scattered on the moss surface and drifting off the garden edge into vast indigo-black cosmos, the floating garden fragment showing layered earth and small roots at its broken edges, faint warm light from within the moss illuminating the bench from below, fine leaf fragments and particles trailing away leftward into generous dark negative space filling two thirds of the frame, photorealistic ancient stone and living garden at impossible cosmic scale, asymmetric composition weighted right with cosmic silence left, no religion no symbols no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "stone meditation bench with smooth weathered surface resting on a tiny floating platform of dark polished stone in the right third of the frame — the platform a small fragment of ancient carved floor with geometric tile patterns still visible in warm sandstone and deep charcoal, a single extinguished incense stick in a small bronze holder beside the bench with the last wisp of smoke curling upward, a few grains of sand scattered on the stone surface and drifting off the platform edge into vast indigo-black cosmos, the floating fragment showing layered stone strata at its broken edges, faint warm amber light from within the carved stone patterns illuminating the bench from below, fine smoke particles and sand trailing away leftward into generous dark negative space filling two thirds of the frame, photorealistic ancient stone and patinated bronze at impossible cosmic scale, asymmetric composition weighted right with cosmic silence left, no religion no symbols no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the temple settles...", "gravity remembers...", "carry the orbits gently..."],
         poetryMood: "mystical",
         voice: "fable",
@@ -714,19 +764,19 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Starfield", expansion: "Nebula", transcendence: "Supernova", illumination: "Aftermath", return: "Drift", integration: "Distance" },
     phases: defaultPhases("cosmos", {
       threshold: {
-        aiPrompt: "small floating island of snow-covered earth drifting through a field of distant stars in deep black cosmic void, a lone bare winter tree growing from the island with frost-dusted branches catching faint blue starlight, the tree anchored in the upper-left third of the frame with its skeletal branches reaching upward, roots breaking through the island edge and dangling into space below with clumps of frozen soil still clinging to them, fine ice crystals and snow particles dispersing downward-right along gentle curved paths from the branches into vast empty black two thirds of the frame, the snow surface photorealistic with subtle footprint-like depressions and the earth fragment showing layered frozen soil at its broken edges, asymmetric composition with visual weight high and left, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "small floating asteroid of dark iron-rich rock drifting through a field of distant stars in deep black cosmic void, the asteroid surface catching faint blue starlight with photorealistic pitted and cratered texture, a single luminous crystal formation growing from a fissure in the rock surface — pale blue and translucent like frozen light, the asteroid anchored in the upper-left third of the frame with fine mineral dust particles and micro-crystal fragments dispersing downward-right along gentle curved paths into vast empty black two thirds of the frame, the crystal catching distant starlight and refracting it into subtle prismatic points, asymmetric composition with visual weight high and left, no planets no trees no plants no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["look up...", "the stars are ancient light...", "you are moving without moving..."],
         poetryMood: "dreamy",
         voice: "fable",
       },
       expansion: {
-        aiPrompt: "DEEP COSMIC-BLACK BACKGROUND — enormous asteroid covered in impossible lichen and thick emerald moss sweeping diagonally from upper left toward lower right, warm amber bioluminescence glowing from within the lichen patches against the cold distant starfield, a thin trickle of liquid water flowing along a channel in the asteroid surface and cascading off its lower edge into void where it breaks into individual droplets catching starlight, the asteroid surface photorealistic rough basalt with the organic growth impossibly lush, fine luminous spores and water droplets dispersing into open dark void below, connected trailing moss tendrils hanging from the asteroid underbelly, asymmetric composition with the asteroid entering upper-left and its water-trail reaching toward lower-right, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP COSMIC-BLACK BACKGROUND — enormous asteroid field sweeping diagonally from upper left toward lower right, dozens of dark rocky bodies at different scales and distances tumbling slowly through deep space, the nearest asteroids showing photorealistic pitted basalt and iron-ore surfaces with thin veins of luminous mineral glowing amber and blue-white at the fracture lines, fine dust trails streaming behind each asteroid creating luminous comet-like tails of warm particles, a distant nebula in deep violet and blue providing faint ambient glow behind the asteroid field, infinite depth through scale variation from massive foreground rocks to tiny distant points, no planets no trees no plants no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["stars are being born...", "creation is happening now...", "feel the scale..."],
         poetryMood: "dreamy",
         voice: "fable",
       },
       transcendence: {
-        aiPrompt: "supernova explosion at cosmic scale — but the expanding shockwave carries flowers and leaves and seeds and soil outward instead of plasma, brilliant white-gold light erupting from the blast center in the upper-right of the frame, the debris ring a tumbling mass of sunflowers and fern fronds and oak leaves and dark rich earth and trailing root systems all frozen mid-explosion against deep black space, some botanical forms still intact and others shredding into individual petals and leaf fragments, fine seeds and pollen and soil particles dispersing from the outermost wavefront into vast darkness, the debris of a world that was alive rendered photorealistic at cosmic scale, composition offset with the blast core upper-right and botanical debris streaming across, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "supernova explosion at cosmic scale — the expanding shockwave a brilliant sphere of white-gold plasma erupting from the blast center in the upper-right of the frame, concentric rings of superheated gas in crimson and electric blue and molten gold radiating outward, within the debris ring tumbling fragments of the destroyed star — chunks of crystallized carbon catching prismatic light, molten iron droplets cooling to dark spheres, diamond-like shards refracting blinding color — all frozen mid-explosion against deep black space, fine particles of stellar dust and plasma dispersing from the outermost wavefront into vast darkness, the death of a star rendered as photorealistic cosmic violence at impossible scale, composition offset with the blast core upper-right and debris streaming across, no planets no trees no plants no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["witness the supernova...", "death is creation...", "you are stardust remembering..."],
         poetryMood: "transcendent",
         voice: "fable",
@@ -744,7 +794,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       integration: {
-        aiPrompt: "single small rock covered in bright green moss floating in the lower-left corner of vast blue-black cosmos, barely visible against the immense darkness, a tiny thin stream of water trickling off one edge of the rock and catching faint starlight as individual droplets before dissolving into void, the moss photorealistic with tiny fronds visible at macro detail, the rock rough and dark beneath the living green surface, from the rock a single gossamer trail of water droplets extends diagonally upward-right dissolving into infinite darkness, enormous open cosmos with scattered faint stars everywhere above, asymmetric and quiet — almost nothing against everything, no planets no earth no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single small dark meteorite fragment floating in the lower-left corner of vast blue-black cosmos, barely visible against the immense darkness, the rock surface showing faint metallic sheen where iron catches distant starlight, a thin trail of luminous dust particles extending diagonally upward-right from the meteorite and dissolving into infinite darkness like the last exhale of a dying star, the rock rough and ancient with microscopic crystal inclusions catching the faintest light at its edges, enormous open cosmos with scattered faint stars everywhere above, asymmetric and quiet — almost nothing against everything, no planets no trees no plants no figures, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are the cosmos looking at itself...", "drift home..."],
         poetryMood: "flowing",
         voice: "fable",
@@ -762,12 +812,12 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Entry", expansion: "Branching", transcendence: "Infinite", illumination: "Pattern", return: "Simplifying", integration: "Exit" },
     phases: defaultPhases("labyrinth", {
       threshold: {
-        aiPrompt: "massive stone stairway floating in deep black void — the stairs going in impossible Escher-like directions where some ascend into horizontal planes and others descend upward, the weathered granite steps cracked with age and overgrown with ivy and bright green moss through every fissure, one small twisted tree growing sideways from a landing platform defying gravity with dark leaves catching warm amber light from an unseen source, fine stone dust and tiny leaves dispersing upward-left from the eroding edges into vast dark negative space filling two-thirds of the frame, the stairs anchored in the lower-right third with photorealistic ancient stone texture and living vegetation at cosmic scale, connected trailing vines bridging between separated stair sections, asymmetric composition weighted low-right with generous void upper-left, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "massive stone stairway floating in deep black void — the stairs going in impossible Escher-like directions where some ascend into horizontal planes and others descend upward, the weathered granite steps cracked with age and eroded by centuries revealing layered mineral strata in warm amber and cool grey, small pools of still water collected in the worn step surfaces reflecting faint starlight, fine stone dust and water droplets dispersing upward-left from the eroding edges into vast dark negative space filling two-thirds of the frame, the stairs anchored in the lower-right third with photorealistic ancient stone texture at cosmic scale, connected thin water-threads trickling between separated stair sections, asymmetric composition weighted low-right with generous void upper-left, no maze walls no labyrinth no hedge no grid no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["enter...", "every direction is the same...", "the walls are listening..."],
         poetryMood: "hypnotic",
       },
       expansion: {
-        aiPrompt: "infinite corridor of ancient stone archways receding into deep darkness, each archway overgrown with different vegetation — the nearest draped in thick ivy, the next curtained with hanging ferns, the third wrapped in climbing roses with pale blooms, the fourth heavy with wisteria — the corridor floating in deep charcoal-black cosmic void, warm amber light glowing deeper in the corridor between the most distant arches, fine petals and fern spores and seeds dispersing rightward from the archway edges into generous dark negative space, each arch photorealistic weathered limestone with the plants impossibly lush, asymmetric composition with the corridor entering from the left third and trailing scattered botanical particles into open darkness right, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "infinite corridor of ancient stone archways receding into deep darkness, each archway a different architectural style — the nearest a Roman round arch in warm sandstone, the next a Gothic pointed arch in pale limestone, the third a Moorish horseshoe arch in dark marble, the fourth a massive megalithic post-and-lintel in rough granite — the corridor floating in deep charcoal-black cosmic void, warm amber light glowing deeper in the corridor between the most distant arches, fine stone dust and warm particles dispersing rightward from the archway edges into generous dark negative space, each arch photorealistic weathered stone with different mineral textures and carved details, asymmetric composition with the corridor entering from the left third and trailing scattered particles into open darkness right, no maze walls no labyrinth no hedge no grid no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are lost...", "this is where you belong...", "deeper..."],
         poetryMood: "hypnotic",
       },
@@ -777,17 +827,17 @@ export const JOURNEYS: Journey[] = [
         poetryMood: "mystical",
       },
       illumination: {
-        aiPrompt: "PURE WHITE BACKGROUND — ancient doorway of weathered dark stone standing alone in vast clean white void, the doorframe thick with carved weathering and patches of grey lichen, through the open doorway visible: a completely different world of lush green forest with dappled warm golden light filtering through a canopy of leaves and ferns and moss-covered ground, the contrast sharp between the empty white void on this side and the rich living world through the door, fine golden light-motes and small leaves drifting from the doorway threshold outward into the white space, the doorway anchored in the left third of the frame with generous white negative space filling two-thirds, connected thin vine tendrils creeping around the doorframe edges into the white void, photorealistic stone and forest textures at impossible scale, asymmetric composition weighted left with luminous doorway slightly off-center, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PURE WHITE BACKGROUND — ancient doorway of weathered dark stone standing alone in vast clean white void, the doorframe thick with carved weathering and patches of grey lichen, through the open doorway visible: a completely different world of deep cosmic starfield with swirling violet and blue nebula light and millions of stars, the contrast sharp between the empty white void on this side and the infinite cosmos through the door, fine luminous particles and warm amber light-motes drifting from the doorway threshold outward into the white space, the doorway anchored in the left third of the frame with generous white negative space filling two-thirds, connected thin streams of starlight creeping around the doorframe edges into the white void, photorealistic stone texture with cosmos visible through the portal at impossible scale, asymmetric composition weighted left with luminous doorway slightly off-center, no maze walls no labyrinth no hedge no grid no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the pattern reveals itself...", "you were never lost...", "the maze is the map of your mind..."],
         poetryMood: "mystical",
       },
       return: {
-        aiPrompt: "tree roots forming a natural tunnel passage floating in deep blue-black void — the roots ancient and smooth with photorealistic bark texture, thick and intertwined to create an organic archway, the inner surfaces covered in soft emerald moss with tiny white flowers growing from the wood at intervals, warm amber light glowing at the far end of the tunnel visible through the root opening, the root-tunnel anchored in the right third of the frame with its opening facing left, fine moss particles and flower petals trailing from the root surfaces downward-left into vast dark negative space, connected smaller root tendrils reaching from the main structure into surrounding darkness, generous dark void filling the left two-thirds, asymmetric composition weighted right with the dissolving root edges bleeding toward center, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "ancient stone tunnel passage floating in deep blue-black void — the tunnel walls formed by massive interlocking carved stone blocks with geometric spiral carvings worn smooth by millennia, warm amber light glowing at the far end of the tunnel visible through the stone opening, the inner surfaces showing layers of geological mineral deposits in bands of warm amber and cool silver and deep charcoal, fine stone particles and warm dust trailing from the tunnel surfaces downward-left into vast dark negative space, the tunnel anchored in the right third of the frame with its opening facing left, connected thin streams of warm light threading between gaps in the stone blocks, generous dark void filling the left two-thirds, asymmetric composition weighted right with the tunnel edges softening toward center, no maze walls no labyrinth no hedge no grid no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the walls are thinning...", "you chose a direction and it is right...", "the path appears..."],
         poetryMood: "flowing",
       },
       integration: {
-        aiPrompt: "single small stone archway with one delicate vine growing through its opening, the arch resting on a floating platform of dark earth with a few blades of grass at its edges, anchored in the lower-left region of absolute black infinite void, the stone weathered smooth with faint emerald light caught where the vine wraps around the keystone, a gossamer trail of tiny leaves curving away from the arch upward-right in a fibonacci spiral dissolving into vast cosmic darkness, the form quiet and solitary — a passage with nowhere left to go condensed into one small ruin, photorealistic ancient stone and living vine against infinite dark, nearly the entire frame generous empty void with scattered luminous motes, asymmetric composition with the arch small and anchored lower-left, no maze walls no labyrinth no hedge no grid no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "single small stone archway resting on a floating platform of dark carved stone with a few grains of sand at its edges, anchored in the lower-left region of absolute black infinite void, the stone weathered smooth with faint warm amber light caught where the keystone meets the arch, a gossamer trail of tiny luminous dust particles curving away from the arch upward-right in a fibonacci spiral dissolving into vast cosmic darkness, the form quiet and solitary — a passage with nowhere left to go condensed into one small ruin, photorealistic ancient stone against infinite dark, nearly the entire frame generous empty void with scattered luminous motes, asymmetric composition with the arch small and anchored lower-left, no maze walls no labyrinth no hedge no grid no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you carry the maze...", "the labyrinth lives in you..."],
         poetryMood: "flowing",
       },
@@ -822,7 +872,7 @@ export const JOURNEYS: Journey[] = [
         voice: "fable",
       },
       illumination: {
-        aiPrompt: "PURE WHITE BACKGROUND — single ancient wind-sculpted rock balanced impossibly on a tiny point against pure white void, a small twisted tree growing from the top of the rock with gnarled branches reaching into the white emptiness, three or four small dark birds perched on different branches, the rock anchored in the left third of the frame with photorealistic weathered granite texture showing wind-erosion patterns and orange lichen patches, fine bark fragments and tiny feathers dispersing rightward into generous pure white negative space filling two-thirds of the frame, connected thin root tendrils visible where the tree grips the rock surface, the tree casting a subtle warm shadow on the rock below it, asymmetric composition weighted left with boundless white above and right, no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PURE WHITE BACKGROUND — single ancient wind-sculpted rock balanced impossibly on a tiny point against pure white void, the rock anchored in the left third of the frame with photorealistic weathered granite texture showing wind-erosion patterns and orange lichen patches, a dusting of snow on the summit surface with ice crystals catching prismatic light, three or four small dark birds circling at a distance — silhouettes against the white, fine stone fragments and ice crystals dispersing rightward into generous pure white negative space filling two-thirds of the frame, the rock casting a subtle cool shadow beneath it, asymmetric composition weighted left with boundless white above and right, no figures no trees no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["see how far you've come...", "the view is the reward...", "everything is below you..."],
         poetryMood: "transcendent",
         voice: "fable",
@@ -900,7 +950,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Page", expansion: "Chapter", transcendence: "Library", illumination: "Mirror", return: "Closing", integration: "Memory" },
     phases: defaultPhases("archive", {
       threshold: {
-        aiPrompt: "DARK BACKGROUND, enormous leather-bound book lying open on a floating shelf of dark polished wood in the upper-right third of deep sepia-black void, from its open pages grow tiny ferns and bright green moss, the printed text on the visible pages transforming into delicate roots and thin vines that curl over the page edges, warm amber reading-lamp light illuminating the book from above-left casting soft shadows across the pages, fine pollen and paper-dust particles dispersing diagonally downward-left into vast open darkness filling two-thirds of the frame, the leather cover photorealistic with tooled patterns and the plants impossibly alive growing from paper, connected thin root tendrils trailing from the book spine downward, asymmetric composition with generous negative space, no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DARK BACKGROUND, enormous leather-bound book lying open on a floating shelf of dark polished wood in the upper-right third of deep sepia-black void, from its open pages rise wisps of warm amber luminous smoke that form faint ghostly shapes — a suggestion of distant mountains, a spiral galaxy, a cresting wave — the printed text on the visible pages dissolving at the edges into fine golden particles that float upward, warm amber reading-lamp light illuminating the book from above-left casting soft shadows across the pages, fine golden dust particles and letter-fragments dispersing diagonally downward-left into vast open darkness filling two-thirds of the frame, the leather cover photorealistic with tooled patterns and the pages impossibly alive with escaping light, connected thin trails of luminous text-particles trailing from the book spine downward, asymmetric composition with generous negative space, no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["open the first page...", "the library has been waiting...", "every book knows your name..."],
         poetryMood: "dreamy",
         voice: "fable",
@@ -948,7 +998,7 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Pressure", expansion: "Lightning", transcendence: "Fury", illumination: "Eye", return: "Clearing", integration: "Calm" },
     phases: defaultPhases("storm", {
       threshold: {
-        aiPrompt: "DARK BACKGROUND, massive storm cloud formation at cosmic scale floating in deep grey-violet void, towering cumulonimbus rendered with photorealistic volumetric texture in dark charcoal and bruise-violet, a single bare tree visible on a tiny floating island of earth and rock beneath the cloud — the tree bending in wind with its branches reaching upward, fallen leaves and debris being pulled upward toward the cloud base in spiraling paths, the cloud anchored in the upper-right two-thirds with the tiny tree-island below-center, fine rain droplets and dust particles dispersing leftward into vast deep grey-violet negative space filling one-third of the frame, impossible scale where the cloud dwarfs everything, photorealistic bark texture on the tree and volumetric cloud detail, no figures no buildings no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DARK BACKGROUND, massive storm cloud formation at cosmic scale floating in deep grey-violet void, towering cumulonimbus rendered with photorealistic volumetric texture in dark charcoal and bruise-violet, beneath the cloud a lone dark stone monolith on a tiny floating fragment of earth — the monolith ancient and wind-eroded, tilting slightly under the pressure of the gathering storm, debris of sand and small stones being pulled upward toward the cloud base in spiraling paths, the cloud anchored in the upper-right two-thirds with the tiny monolith-fragment below-center, fine rain droplets and dust particles dispersing leftward into vast deep grey-violet negative space filling one-third of the frame, impossible scale where the cloud dwarfs everything, photorealistic eroded stone and volumetric cloud detail, no figures no buildings no trees no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["it's coming...", "feel the pressure change...", "the storm knows you..."],
         poetryMood: "intense",
         voice: "echo",
@@ -996,37 +1046,37 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Chill", expansion: "Falling", transcendence: "Whiteout", illumination: "Silence", return: "Warmth", integration: "Stillness" },
     phases: defaultPhases("winter", {
       threshold: {
-        aiPrompt: "DARK BACKGROUND, lone bare tree on a small floating island of snow-covered earth drifting through deep blue-black void, the tree rendered with photorealistic bark texture — gnarled branches catching delicate frost crystals that glitter in cool blue starlight, the island a rough chunk of frozen soil with snow layered on top and roots dangling beneath, a few snowflakes beginning to fall around the tree in slow spiraling paths, the tree anchored in the right third with branches reaching leftward, fine ice particles and snowflakes dispersing into vast deep blue-black negative space filling two-thirds of the frame, cool blue and silver starlight illuminating the frost, the solitude of first winter at impossible scale, no figures no buildings no text no signatures no watermarks no letters no writing",
+        aiPrompt: "interconnected frost constellation entering from the lower right corner and radiating upward across deep black void, the dense interwoven ice and powder detail anchored in one third of the frame with the rest open darkness, white sand-like particles dispersed along geometric pathways, cool blue light at the crystalline joints, a slow spiral current carrying the finest particles outward toward the upper left emptiness, cosmic scale where the frost could be star clusters or nebulae, asymmetric composition with visual weight low and right, no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the air changes...", "feel it cooling...", "something is coming..."],
         poetryMood: "melancholic",
         voice: "shimmer",
       },
       expansion: {
-        aiPrompt: "PURE WHITE BACKGROUND — enormous snowdrift landscape at impossible scale against brilliant white sky, soft rolling snow contours with photorealistic powder texture stretching toward a dissolving white horizon, one small red winter bird perched on a single bare dark branch in the lower-right third — the only color in the entire frame, the bird rendered with photorealistic feather detail in vivid crimson against the white, a line of small footprints in the snow leading from the branch toward the left edge and trailing off into white nothingness, the horizon dissolving seamlessly into the white void above, fine snow particles barely visible drifting in still air, the overwhelming quiet of pure white winter at cosmic scale, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "PURE WHITE BACKGROUND — three-dimensional fractal ice architecture sweeping diagonally from upper left toward lower right against brilliant white void, the structure has real depth and volume with ice-blue shadows cast behind translucent crystalline forms, connected branches made of dispersed powder particles in fibonacci spirals with deep cobalt blue and electric violet glowing at the fractal joints and fissures, the densest sculptural detail in the upper third trailing into scattered particles and open white below, layered translucency creating genuine depth where rear structures show through front ones in different focus planes, cool steel-blue and deep indigo color concentrated in the thickest ice sections fading to pale silver at the thinnest edges, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["sound is softening...", "the world is changing...", "let the white take everything..."],
         poetryMood: "dreamy",
         voice: "shimmer",
       },
       transcendence: {
-        aiPrompt: "cosmic-scale connected lattice of ice-light and dispersed luminous particles sweeping across infinite black in a vast spiral arc, deep blue and electric purple light pulsing within the nodes, the structure dense and intricate where it crosses the frame but dissolving into scattered particle trails and open void at both edges, the frozen cosmos mid-expansion with fractal ridges and luminous bridges stretching toward infinite darkness, dynamic and powerful, the spiral core upper-right with spiraling streamers reaching across, no trees no roots no plants, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "cosmic-scale connected lattice of ice and dispersed powder sweeping across infinite black in a vast spiral arc, deep blue and electric purple light pulsing within the nodes, the structure is dense and intricate where it crosses the frame but dissolves into particle trails and open void at both edges, fractal ridges and powder bridges stretching toward infinite darkness, dynamic and powerful, the frozen cosmos mid-explosion, composition fills the frame but is not centered — the spiral core sits upper right with streamers reaching across, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["you are inside the snow...", "there is only white...", "surrender to the crystal..."],
         poetryMood: "mystical",
         voice: "shimmer",
       },
       illumination: {
-        aiPrompt: "vast field of luminous micro-particles suspended in deep blue-black void like frozen starlight at galactic scale, thousands of tiny interconnected points at different depths creating infinite three-dimensional space, the densest cluster along the left edge and lower third with the finest particles scattered rightward into open cosmic darkness, each point catching pale silver and ice-blue light at different angles, faint aurora-like veils of cold green and violet light threading between the clusters, the silence of absolute zero rendered as still light at cosmic scale, asymmetric composition leaving the upper right vast and open, no trees no roots no plants, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "vast field of crystalline micro-structures suspended in deep blue-black void like frozen starlight, thousands of tiny interconnected ice forms at different depths creating a sense of infinite three-dimensional space, the densest cluster anchored along the left edge and lower third with the finest particles scattered rightward into open cosmic darkness, each micro-crystal catching pale silver and ice-blue light at different angles revealing internal geometric facets, faint aurora-like veils of cold green and violet light threading between the crystal clusters, the silence of absolute zero rendered as still architecture at galactic scale, asymmetric composition leaving the upper right vast and open, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["listen to the silence...", "the world is new...", "everything is clean..."],
         poetryMood: "transcendent",
         voice: "shimmer",
       },
       return: {
-        aiPrompt: "DARK BACKGROUND, single pine tree branch heavy with snow entering from the upper-right corner and bending gracefully downward under the weight, the branch rendered with photorealistic green needles visible beneath the snow load, the snow catching warm prismatic light — blue and violet at the shadows through rose and gold at the highlights where sunlight hits, ice melting at the branch tips where warmth returns with photorealistic water droplets forming and falling, the droplets catching prismatic color as they detach, fine mist and ice particles dispersing leftward into vast deep indigo-violet negative space filling two-thirds of the frame, the beautiful moment of thaw beginning at impossible scale, no figures no buildings no text no signatures no watermarks no letters no writing",
+        aiPrompt: "connected fractal ice lattice arcing from lower left across a deep indigo field, prismatic light threading through the structure — blue to violet to rose to gold, dispersed powder particles catching warm spectrum as they spiral outward into generous dark negative space above and right, channels of amber and copper light glowing through the geometry, the interwoven form is dynamic and flowing not static, composition weighted to the lower half with cosmic darkness opening above, the tension between frozen precision and warm dissolution, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["warmth returns...", "home is near...", "the cold made this warmth possible..."],
         poetryMood: "flowing",
         voice: "shimmer",
       },
       integration: {
-        aiPrompt: "DARK BACKGROUND, single small snow-covered stone with one tiny green sprout emerging through the white snow, the stone floating on a fragment of frozen earth in the lower-left corner of vast deep blue-black void, the sprout rendered with photorealistic detail — two tiny pale green leaves unfurling bravely through the ice, a faint warm light seeming to emanate from the sprout itself, the snow on the stone beginning to recede around the green growth, fine water droplets and melting ice particles trailing upward-right in a gentle arc dissolving into infinite darkness, nearly the entire frame is vast dark silence with only this small sign of returning life, the first thaw at impossible scale, no figures no buildings no text no signatures no watermarks no letters no writing",
+        aiPrompt: "sparse dispersed powder particles and fading fractal ice traces drifting across vast blue-black silence, the last connected forms clustered small in the lower left corner dissolving into scattered particles that trail diagonally toward infinite upper darkness, faint violet light tracing the final geometric connections, enormous open cosmos everywhere, the particles carry the structure's memory as they scatter, asymmetric and quiet — almost nothing against everything, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the snow remembers...", "carry this stillness..."],
         poetryMood: "melancholic",
         voice: "shimmer",
@@ -1189,13 +1239,13 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Numbness", expansion: "Weight", transcendence: "Fracture", illumination: "Thaw", return: "Aftermath", integration: "Scar" },
     phases: defaultPhases("pain", {
       threshold: {
-        aiPrompt: "DEEP DARK VOID BACKGROUND, frozen lake surface viewed from above floating in absolute black void, the ice rendered with photorealistic translucent texture in pale blue-grey and deep charcoal, a single crack running through the ice from the upper-left third toward center — the crack revealing dark water beneath through the fissure, the ice surface reflecting a faint grey sky, a lone bare tree visible on a tiny distant shore fragment at the far edge of the frozen lake rendered as a dark silhouette, the lake fragment anchored in the lower-right two-thirds with the crack creating asymmetric tension, fine particles of frost and ice dust trailing from the crack edges leftward into vast deep dark negative space filling one-third of the frame, cold and still at impossible scale, the first sign of something breaking beneath the surface, no blood no tears no faces no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DEEP DARK VOID BACKGROUND, frozen lake surface viewed from above floating in absolute black void, the ice rendered with photorealistic translucent texture in pale blue-grey and deep charcoal, a single crack running through the ice from the upper-left third toward center — the crack revealing dark water beneath through the fissure, the ice surface reflecting a faint grey sky, a lone dark stone visible on a tiny distant shore fragment at the far edge of the frozen lake rendered as a worn silhouette, the lake fragment anchored in the lower-right two-thirds with the crack creating asymmetric tension, fine particles of frost and ice dust trailing from the crack edges leftward into vast deep dark negative space filling one-third of the frame, cold and still at impossible scale, the first sign of something breaking beneath the surface, no blood no tears no faces no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["be still...", "let it come...", "you don't have to be strong here..."],
         poetryMood: "melancholic",
         voice: "onyx",
       },
       expansion: {
-        aiPrompt: "DARK BACKGROUND, enormous rock being slowly split apart by tree roots growing through it — the rock anchored in the upper-left third of deep grey-black void, rendered with photorealistic granite texture in dark grey and bruise-violet, thick pale roots forcing their way through widening cracks in the stone with patient vegetable power, the roots rendered with photorealistic bark texture showing fine root-hairs gripping the stone surfaces, dark green moss covering portions of the rock surface in soft velvet patches, tiny fragments of stone falling from the widening cracks and dispersing diagonally downward-right into vast deep grey-black negative space filling the lower two-thirds, connected threads of root tendrils reaching between the separating rock halves, the slow unstoppable force of growth through grief at cosmic scale, no blood no tears no faces no figures no text no signatures no watermarks no letters no writing",
+        aiPrompt: "DARK BACKGROUND, enormous rock being slowly split apart by the expansion of ice forming within its cracks — the rock anchored in the upper-left third of deep grey-black void, rendered with photorealistic granite texture in dark grey and bruise-violet, thick ice formations forcing their way through widening fissures in the stone with crystalline precision, the ice rendered with translucent depth showing internal fracture patterns and trapped air bubbles catching cold blue light, tiny fragments of stone falling from the widening cracks and dispersing diagonally downward-right into vast deep grey-black negative space filling the lower two-thirds, connected threads of frost extending between the separating rock halves, the slow unstoppable force of ice through stone at cosmic scale, no blood no tears no faces no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["feel it...", "the weight is real...", "don't look away..."],
         poetryMood: "melancholic",
         voice: "onyx",
@@ -1246,7 +1296,14 @@ export function regenerateJourneyShaders(
   random: () => number = Math.random,
   trackDuration = 300,
 ): Journey {
-  const allShaders = pickJourneyShaders(journey.realmId, random);
+  // Use theme's shader categories if available, otherwise fall back to realm
+  const allShaders = pickJourneyShaders(
+    {
+      realmId: journey.theme ? undefined : journey.realmId,
+      shaderCategories: journey.theme?.shaderCategories,
+    },
+    random,
+  );
   const usedShaders = new Set<string>();
 
   // Base budgets for a ~5min track (30 total). Scale up for longer tracks

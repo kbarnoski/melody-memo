@@ -3,9 +3,147 @@
 import { useState, useCallback, useEffect, useSyncExternalStore } from "react";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { MODE_META } from "@/lib/shaders";
 import type { Snapshot } from "@/lib/journeys/adaptive-engine";
 
 const STORAGE_KEY = "resonance-journey-feedback";
+const BLOCKED_SHADERS_KEY = "resonance-blocked-shaders";
+const LOVED_SHADERS_KEY = "resonance-loved-shaders";
+const DELETED_SHADERS_KEY = "resonance-deleted-shaders";
+const SHADER_STATS_KEY = "resonance-shader-stats";
+
+/** Get the set of user-blocked shader modes (runtime exclusion) */
+export function getBlockedShaders(): Set<string> {
+  try {
+    const raw = localStorage.getItem(BLOCKED_SHADERS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+/** Block a shader — persists to localStorage for runtime exclusion */
+function blockShader(mode: string): void {
+  const blocked = getBlockedShaders();
+  blocked.add(mode);
+  try {
+    localStorage.setItem(BLOCKED_SHADERS_KEY, JSON.stringify([...blocked]));
+  } catch { /* full */ }
+  incrementShaderStat(mode, "blockedCount");
+}
+
+/** Love a shader — persists for future reference */
+function loveShader(mode: string): void {
+  try {
+    const raw = localStorage.getItem(LOVED_SHADERS_KEY);
+    const loved: string[] = raw ? JSON.parse(raw) : [];
+    if (!loved.includes(mode)) {
+      loved.push(mode);
+      localStorage.setItem(LOVED_SHADERS_KEY, JSON.stringify(loved));
+    }
+  } catch { /* full */ }
+  incrementShaderStat(mode, "lovedCount");
+}
+
+/** Unblock a shader — remove from blocked set */
+export function unblockShader(mode: string): void {
+  const blocked = getBlockedShaders();
+  blocked.delete(mode);
+  try {
+    localStorage.setItem(BLOCKED_SHADERS_KEY, JSON.stringify([...blocked]));
+  } catch { /* full */ }
+}
+
+/** Get the set of loved shader modes */
+export function getLovedShaders(): string[] {
+  try {
+    const raw = localStorage.getItem(LOVED_SHADERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+/** Get the set of deleted shader modes */
+export function getDeletedShaders(): Set<string> {
+  try {
+    const raw = localStorage.getItem(DELETED_SHADERS_KEY);
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch { return new Set(); }
+}
+
+/** Delete a shader permanently — stronger than block */
+export function deleteShader(mode: string): void {
+  const deleted = getDeletedShaders();
+  deleted.add(mode);
+  try {
+    localStorage.setItem(DELETED_SHADERS_KEY, JSON.stringify([...deleted]));
+  } catch { /* full */ }
+  // Also remove from blocked if present (deleted supersedes blocked)
+  unblockShader(mode);
+}
+
+/** Restore a deleted shader — remove from deleted set */
+export function undeleteShader(mode: string): void {
+  const deleted = getDeletedShaders();
+  deleted.delete(mode);
+  try {
+    localStorage.setItem(DELETED_SHADERS_KEY, JSON.stringify([...deleted]));
+  } catch { /* full */ }
+}
+
+/** Shader usage stats shape */
+export interface ShaderStats {
+  [mode: string]: {
+    usageCount: number;
+    dualCount: number;
+    lovedCount: number;
+    blockedCount: number;
+    lastUsed: string;
+  };
+}
+
+/** Read shader stats from localStorage */
+export function getShaderStats(): ShaderStats {
+  try {
+    const raw = localStorage.getItem(SHADER_STATS_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch { return {}; }
+}
+
+/** Increment a stat field for a shader */
+function incrementShaderStat(mode: string, field: "usageCount" | "dualCount" | "lovedCount" | "blockedCount"): void {
+  const stats = getShaderStats();
+  if (!stats[mode]) stats[mode] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
+  stats[mode][field]++;
+  stats[mode].lastUsed = new Date().toISOString();
+  try {
+    localStorage.setItem(SHADER_STATS_KEY, JSON.stringify(stats));
+  } catch { /* full */ }
+}
+
+/** Batch-update usage stats from journey phase data */
+export function updateShaderUsageFromJourney(phases: { shader: string; dualShader?: string | null }[]): void {
+  const stats = getShaderStats();
+  const now = new Date().toISOString();
+  for (const phase of phases) {
+    if (phase.shader) {
+      if (!stats[phase.shader]) stats[phase.shader] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
+      stats[phase.shader].usageCount++;
+      stats[phase.shader].lastUsed = now;
+    }
+    if (phase.dualShader) {
+      if (!stats[phase.dualShader]) stats[phase.dualShader] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
+      stats[phase.dualShader].dualCount++;
+      stats[phase.dualShader].lastUsed = now;
+    }
+  }
+  try {
+    localStorage.setItem(SHADER_STATS_KEY, JSON.stringify(stats));
+  } catch { /* full */ }
+}
+
+/** Get the display label for a shader mode */
+export function getShaderLabel(mode: string): string {
+  const meta = MODE_META.find((m) => m.mode === mode);
+  return meta?.label ?? mode;
+}
 
 // ── Buffered storage writes ──
 // All persistence is deferred — zero I/O during playback.
@@ -41,7 +179,7 @@ function scheduleFlush() {
   }, FLUSH_INTERVAL);
 }
 
-function appendEntry(entry: Snapshot) {
+export function appendEntry(entry: Snapshot) {
   _pendingEntries.push(entry);
   scheduleFlush();
 }
@@ -200,7 +338,7 @@ export function stopPerfMonitor() {
 }
 
 /** Build a full context snapshot of the current moment */
-function buildSnapshot(type: Snapshot["type"], fpsRef: { current: number | null }): Snapshot {
+export function buildSnapshot(type: Snapshot["type"], fpsRef: { current: number | null }): Snapshot {
   const state = useAudioStore.getState();
   const journey = state.activeJourney;
 
@@ -239,6 +377,7 @@ function buildSnapshot(type: Snapshot["type"], fpsRef: { current: number | null 
       const engine = getJourneyEngine();
       const frame = engine.getFrame(progress);
       if (frame) {
+        entry.shader = frame.shaderMode;
         entry.phase = frame.phase;
         entry.dualShader = frame.dualShaderMode ?? null;
         entry.shaderOpacity = frame.shaderOpacity;
@@ -267,15 +406,129 @@ function buildSnapshot(type: Snapshot["type"], fpsRef: { current: number | null 
   return entry;
 }
 
+// ── Inline icons (SVG paths) ──
+
+function ThumbDownIcon({ size = 16, color = "rgba(255,255,255,0.5)" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transition: "stroke 150ms ease" }}>
+      <path d="M17 14V2" />
+      <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+    </svg>
+  );
+}
+
+function ThumbUpIcon({ size = 16, color = "rgba(255,255,255,0.5)" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transition: "stroke 150ms ease", transform: "scaleY(-1)" }}>
+      <path d="M17 14V2" />
+      <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
+    </svg>
+  );
+}
+
+// ── Reusable inline rating row ──
+
+function RatingRow({
+  label,
+  onDown,
+  onUp,
+  flashState,
+}: {
+  label: string;
+  onDown: () => void;
+  onUp: () => void;
+  flashState: "down" | "up" | null;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 32 }}>
+      {/* Thumbs down */}
+      <button
+        onClick={onDown}
+        style={{
+          width: 28, height: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: flashState === "down" ? "rgba(239, 68, 68, 0.35)" : "rgba(255,255,255,0.06)",
+          border: `1px solid ${flashState === "down" ? "rgba(239, 68, 68, 0.5)" : "rgba(255,255,255,0.10)"}`,
+          borderRadius: 6, cursor: "pointer", padding: 0,
+          transform: flashState === "down" ? "scale(1.12)" : "scale(1)",
+          transition: "all 150ms ease",
+        }}
+        title={`Dislike: ${label}`}
+      >
+        <ThumbDownIcon size={13} color={flashState === "down" ? "rgba(239,68,68,0.9)" : "rgba(255,255,255,0.45)"} />
+      </button>
+
+      {/* Label */}
+      <span
+        style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.72rem",
+          fontWeight: 500,
+          color: "rgba(255, 255, 255, 0.55)",
+          letterSpacing: "0.03em",
+          textTransform: "uppercase",
+          whiteSpace: "nowrap",
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {label}
+      </span>
+
+      {/* Thumbs up */}
+      <button
+        onClick={onUp}
+        style={{
+          width: 28, height: 28,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: flashState === "up" ? "rgba(74, 222, 128, 0.35)" : "rgba(255,255,255,0.06)",
+          border: `1px solid ${flashState === "up" ? "rgba(74, 222, 128, 0.5)" : "rgba(255,255,255,0.10)"}`,
+          borderRadius: 6, cursor: "pointer", padding: 0,
+          transform: flashState === "up" ? "scale(1.12)" : "scale(1)",
+          transition: "all 150ms ease",
+        }}
+        title={`Love: ${label}`}
+      >
+        <ThumbUpIcon size={13} color={flashState === "up" ? "rgba(74,222,128,0.9)" : "rgba(255,255,255,0.45)"} />
+      </button>
+    </div>
+  );
+}
+
+// ── Helpers ──
+
+/** Extract a short readable snippet from the AI prompt (first meaningful clause) */
+function getImageryLabel(prompt: string | undefined): string {
+  if (!prompt) return "...";
+  // Strip the trailing "no text no signatures..." boilerplate
+  const clean = prompt.replace(/,?\s*no text no signatures.*$/i, "").trim();
+  // Take first ~60 chars at a word boundary
+  if (clean.length <= 60) return clean;
+  const cut = clean.slice(0, 60);
+  const lastSpace = cut.lastIndexOf(" ");
+  return (lastSpace > 30 ? cut.slice(0, lastSpace) : cut) + "...";
+}
+
 // ── Component ──
 
 interface JourneyFeedbackProps {
   visible: boolean;
+  shaderMode?: string;
+  dualShaderMode?: string;
+  tertiaryShaderMode?: string;
+  aiPrompt?: string;
 }
 
-export function JourneyFeedback({ visible }: JourneyFeedbackProps) {
-  const [flash, setFlash] = useState<"dislike" | "love" | null>(null);
-  const [hoveredBtn, setHoveredBtn] = useState<"dislike" | "love" | null>(null);
+export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryShaderMode, aiPrompt }: JourneyFeedbackProps) {
+  // Flash states: keyed by category+mode
+  const [flashes, setFlashes] = useState<Record<string, "down" | "up" | null>>({});
+  const [blockedToast, setBlockedToast] = useState<string | null>(null);
 
   const { count: issueCount, log: eventLog } = useSyncExternalStore(
     subscribeIssues, getIssueSnapshot, getIssueSnapshot,
@@ -299,125 +552,130 @@ export function JourneyFeedback({ visible }: JourneyFeedbackProps) {
     return () => clearInterval(id);
   }, [eventLog.length]);
 
-  const recordFeedback = useCallback((type: "dislike" | "love") => {
+  const flash = useCallback((key: string, dir: "down" | "up") => {
+    setFlashes((prev) => ({ ...prev, [key]: dir }));
+    setTimeout(() => setFlashes((prev) => ({ ...prev, [key]: null })), 600);
+  }, []);
+
+  const recordMoment = useCallback((type: "dislike" | "love") => {
     const entry = buildSnapshot(type, _sharedFps);
     appendEntry(entry);
-    setFlash(type);
-    setTimeout(() => setFlash(null), 600);
-  }, []);
+    flash("moment", type === "love" ? "up" : "down");
+  }, [flash]);
+
+  const rateShader = useCallback((mode: string, action: "block" | "love") => {
+    const entry = buildSnapshot(action === "block" ? "dislike" : "love", _sharedFps);
+    entry.aiPromptSnippet = `shader-${action}: ${mode}`;
+    appendEntry(entry);
+
+    if (action === "block") {
+      blockShader(mode);
+      setBlockedToast(getShaderLabel(mode));
+      setTimeout(() => setBlockedToast(null), 2000);
+    } else {
+      loveShader(mode);
+    }
+    flash(`shader-${mode}`, action === "love" ? "up" : "down");
+  }, [flash]);
+
+  const rateImagery = useCallback((action: "dislike" | "love") => {
+    const entry = buildSnapshot(action, _sharedFps);
+    entry.aiPromptSnippet = `imagery-${action}: ${(aiPrompt ?? "").slice(0, 120)}`;
+    appendEntry(entry);
+    flash("imagery", action === "love" ? "up" : "down");
+  }, [flash, aiPrompt]);
 
   if (!visible) return null;
 
   const now = performance.now();
-  const dislikeActive = flash === "dislike";
-  const dislikeHover = hoveredBtn === "dislike" && !dislikeActive;
-  const loveActive = flash === "love";
-  const loveHover = hoveredBtn === "love" && !loveActive;
-
-  // Filter log to entries within last 12s
   const recentLog = eventLog.filter((e) => now - e.ts < 12000);
+
+  // Collect active shaders with role labels (deduplicated)
+  const activeShaders: { mode: string; role: string }[] = [];
+  if (shaderMode) activeShaders.push({ mode: shaderMode, role: "Primary" });
+  if (dualShaderMode && dualShaderMode !== shaderMode) activeShaders.push({ mode: dualShaderMode, role: "Blend" });
+  if (tertiaryShaderMode && tertiaryShaderMode !== shaderMode && tertiaryShaderMode !== dualShaderMode) activeShaders.push({ mode: tertiaryShaderMode, role: "Tertiary" });
 
   return (
     <div
-      className="absolute top-5 left-1/2 -translate-x-1/2 flex flex-col items-center"
+      className="absolute top-4 right-4"
       style={{ zIndex: 60, pointerEvents: "auto" }}
     >
-      {/* Buttons row */}
-      <div className="flex items-center gap-2">
-        {/* Thumbs down */}
-        <button
-          onClick={() => recordFeedback("dislike")}
-          onMouseEnter={() => setHoveredBtn("dislike")}
-          onMouseLeave={() => setHoveredBtn(null)}
-          className="flex items-center justify-center rounded-full"
-          style={{
-            width: 36,
-            height: 36,
-            background: dislikeActive
-              ? "rgba(239, 68, 68, 0.4)"
-              : dislikeHover
-                ? "rgba(255, 255, 255, 0.12)"
-                : "rgba(0, 0, 0, 0.3)",
-            border: `1px solid ${
-              dislikeActive
-                ? "rgba(239, 68, 68, 0.5)"
-                : dislikeHover
-                  ? "rgba(255, 255, 255, 0.25)"
-                  : "rgba(255, 255, 255, 0.12)"
-            }`,
-            backdropFilter: "blur(8px)",
-            transform: dislikeActive ? "scale(1.15)" : "scale(1)",
-            transition: "all 150ms ease",
-            cursor: "pointer",
-          }}
-          title="Dislike this moment"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-            stroke={dislikeActive ? "rgba(239, 68, 68, 0.9)" : dislikeHover ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.5)"}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transition: "stroke 150ms ease" }}>
-            <path d="M17 14V2" />
-            <path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z" />
-          </svg>
-        </button>
+      {/* Dark panel */}
+      <div
+        style={{
+          background: "rgba(0, 0, 0, 0.70)",
+          backdropFilter: "blur(20px) saturate(1.1)",
+          WebkitBackdropFilter: "blur(20px) saturate(1.1)",
+          borderRadius: 14,
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          padding: "14px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          minWidth: 260,
+          maxWidth: 340,
+        }}
+      >
+        {/* ── Section: Moment ── */}
+        <SectionLabel text="moment" issueCount={issueCount} />
+        <RatingRow
+          label="Overall vibe"
+          onDown={() => recordMoment("dislike")}
+          onUp={() => recordMoment("love")}
+          flashState={flashes["moment"] ?? null}
+        />
 
-        {/* Heart */}
-        <button
-          onClick={() => recordFeedback("love")}
-          onMouseEnter={() => setHoveredBtn("love")}
-          onMouseLeave={() => setHoveredBtn(null)}
-          className="flex items-center justify-center rounded-full"
-          style={{
-            width: 36,
-            height: 36,
-            background: loveActive
-              ? "rgba(236, 72, 153, 0.4)"
-              : loveHover
-                ? "rgba(255, 255, 255, 0.12)"
-                : "rgba(0, 0, 0, 0.3)",
-            border: `1px solid ${
-              loveActive
-                ? "rgba(236, 72, 153, 0.5)"
-                : loveHover
-                  ? "rgba(255, 255, 255, 0.25)"
-                  : "rgba(255, 255, 255, 0.12)"
-            }`,
-            backdropFilter: "blur(8px)",
-            transform: loveActive ? "scale(1.15)" : "scale(1)",
-            transition: "all 150ms ease",
-            cursor: "pointer",
-          }}
-          title="Love this moment"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24"
-            fill={loveActive ? "rgba(236, 72, 153, 0.8)" : loveHover ? "rgba(255, 255, 255, 0.15)" : "none"}
-            stroke={loveActive ? "rgba(236, 72, 153, 0.9)" : loveHover ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.5)"}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transition: "all 150ms ease" }}>
-            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-          </svg>
-        </button>
+        {/* ── Section: Shaders ── */}
+        {activeShaders.length > 0 && (
+          <>
+            <Divider />
+            <SectionLabel text="shaders" />
+            {activeShaders.map(({ mode, role }) => (
+              <RatingRow
+                key={mode}
+                label={`${role}: ${getShaderLabel(mode)}`}
+                onDown={() => rateShader(mode, "block")}
+                onUp={() => rateShader(mode, "love")}
+                flashState={flashes[`shader-${mode}`] ?? null}
+              />
+            ))}
+          </>
+        )}
 
-        {/* Issue counter */}
-        <span
-          style={{
-            fontFamily: "var(--font-geist-mono)",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: issueCount > 0 ? "rgba(239, 68, 68, 0.85)" : "rgba(255, 255, 255, 0.3)",
-            letterSpacing: "0.02em",
-            minWidth: "20px",
-            textAlign: "center",
-            transition: "color 300ms ease",
-            textShadow: issueCount > 0 ? "0 1px 6px rgba(239, 68, 68, 0.3)" : "none",
-          }}
-          title={`${issueCount} performance issue${issueCount !== 1 ? "s" : ""} detected`}
-        >
-          {issueCount}
-        </span>
+        {/* ── Section: Imagery ── */}
+        {aiPrompt && (
+          <>
+            <Divider />
+            <SectionLabel text="imagery" />
+            <RatingRow
+              label={getImageryLabel(aiPrompt)}
+              onDown={() => rateImagery("dislike")}
+              onUp={() => rateImagery("love")}
+              flashState={flashes["imagery"] ?? null}
+            />
+          </>
+        )}
+
+        {/* Blocked toast */}
+        {blockedToast && (
+          <div
+            style={{
+              fontFamily: "var(--font-geist-mono)",
+              fontSize: "0.65rem",
+              fontWeight: 500,
+              color: "rgba(239, 68, 68, 0.85)",
+              letterSpacing: "0.03em",
+              textAlign: "center",
+              paddingTop: 2,
+            }}
+          >
+            {blockedToast} blocked
+          </div>
+        )}
       </div>
 
-      {/* Live event log — shows what caused each issue */}
+      {/* Live perf event log — below the panel */}
       {recentLog.length > 0 && (
         <div
           style={{
@@ -454,4 +712,43 @@ export function JourneyFeedback({ visible }: JourneyFeedbackProps) {
       )}
     </div>
   );
+}
+
+// ── Small sub-components ──
+
+function SectionLabel({ text, issueCount }: { text: string; issueCount?: number }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <span
+        style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.6rem",
+          fontWeight: 600,
+          color: "rgba(255, 255, 255, 0.30)",
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+        }}
+      >
+        {text}
+      </span>
+      {issueCount != null && issueCount > 0 && (
+        <span
+          style={{
+            fontFamily: "var(--font-geist-mono)",
+            fontSize: "0.6rem",
+            fontWeight: 600,
+            color: "rgba(239, 68, 68, 0.85)",
+            letterSpacing: "0.02em",
+          }}
+          title={`${issueCount} performance issue${issueCount !== 1 ? "s" : ""}`}
+        >
+          {issueCount}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "2px 0" }} />;
 }

@@ -9,7 +9,8 @@ import { TonnetzOverlay } from "./tonnetz-overlay";
 import { JourneySelector } from "./journey-selector";
 import { JourneyCompositor } from "./journey-compositor";
 import { JourneyPhaseIndicator } from "./journey-phase-indicator";
-import { JourneyFeedback, resetPerfMonitor, flushFeedbackEntries } from "./journey-feedback";
+import { JourneyFeedback, resetPerfMonitor, flushFeedbackEntries, buildSnapshot, appendEntry, getSharedFpsRef, updateShaderUsageFromJourney } from "./journey-feedback";
+import { AdminPanel } from "./admin-panel";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
 import { getAudioEngine, getAnalyserNode, getNativeAnalyser, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
@@ -86,6 +87,7 @@ export function VisualizerClient({
   const installationMode = useAudioStore((s) => s.installationMode);
   const activeJourney = useAudioStore((s) => s.activeJourney);
   const activeRealm = useAudioStore((s) => s.activeRealm);
+  const activeTheme = useAudioStore((s) => s.activeTheme);
   const startJourney = useAudioStore((s) => s.startJourney);
   const aiImageEnabled = useAudioStore((s) => s.aiImageEnabled);
 
@@ -142,6 +144,11 @@ export function VisualizerClient({
       prevJourneyIdRef.current = activeJourney.id;
       resetPerfMonitor();
       getRealtimeImageService().resetSession();
+
+      // Log journey-start lifecycle event
+      const startEntry = buildSnapshot("journey-start", getSharedFpsRef());
+      startEntry.aiPromptSnippet = `journey-start: ${activeJourney.name}`;
+      appendEntry(startEntry);
     }
     if (!activeJourney) {
       prevJourneyIdRef.current = null;
@@ -182,6 +189,18 @@ export function VisualizerClient({
       completedJourneyRef.current = activeJourney.id;
       // Record completion in path progress store
       usePathProgressStore.getState().completeJourney(activeJourney.id);
+
+      // Log journey-end lifecycle event
+      const endEntry = buildSnapshot("journey-end", getSharedFpsRef());
+      endEntry.aiPromptSnippet = `journey-end: ${activeJourney.name}`;
+      appendEntry(endEntry);
+
+      // Update shader usage stats from the journey's shader pool
+      const phaseData = activeJourney.phases.flatMap((p) =>
+        p.shaderModes.map((s) => ({ shader: s, dualShader: null as string | null }))
+      );
+      updateShaderUsageFromJourney(phaseData);
+
       // Flush any buffered glitch/feedback entries before analysis
       flushFeedbackEntries();
       // Analyze feedback and adapt for next journey
@@ -262,6 +281,7 @@ export function VisualizerClient({
   const [hudVisible, setHudVisible] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   // Default to journey browser unless entering with a specific recording or journey
   const [journeyOpen, setJourneyOpen] = useState(!recording && !initialJourney);
@@ -764,6 +784,9 @@ export function VisualizerClient({
         case "f":
           handleFullscreenToggle();
           break;
+        case "a":
+          setAdminOpen((v) => !v);
+          break;
       }
     }
 
@@ -795,6 +818,7 @@ export function VisualizerClient({
         aiPrompt={aiPrompt}
         aiOnly={isAiOnlyMode}
         aiGenerating={isPlaying}
+        journeyId={activeJourney?.id}
       >
         {/* Shader layer */}
         <VisualizerCore
@@ -836,8 +860,9 @@ export function VisualizerClient({
           journeyVoice={journeyFrame?.voice}
           journeyPoetryInterval={journeyFrame?.poetryIntervalSeconds}
           journeyPoetryMood={journeyFrame?.poetryMood}
-          journeyRealmImagery={activeRealm?.poetryImagery}
+          journeyRealmImagery={activeTheme?.poetryImagery ?? activeRealm?.poetryImagery}
           journeyRealmId={activeRealm?.id}
+          journeyThemeMood={activeTheme?.poetryMood ?? null}
           journeyStoryText={activeJourney?.storyText}
           journeyActive={journeyActive}
           journeyBrowsing={journeyOpen}
@@ -859,7 +884,7 @@ export function VisualizerClient({
           isFullscreen={isFullscreen}
           onFullscreenToggle={handleFullscreenToggle}
           onSwitchToVisualize={handleSwitchToVisualize}
-          journeyAccent={activeRealm?.palette.accent ?? null}
+          journeyAccent={activeTheme?.palette.accent ?? activeRealm?.palette.accent ?? null}
         >
           {/* Analysis HUD — top layer (hidden during journeys) */}
           {hudVisible && showHud && !journeyActive && (
@@ -889,8 +914,17 @@ export function VisualizerClient({
         />
       )}
 
+      {/* Admin panel — toggle with 'A' key */}
+      <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} />
+
       {/* Journey tuning buttons — always visible during journey for love/dislike feedback */}
-      <JourneyFeedback visible={journeyActive && !journeyOpen} />
+      <JourneyFeedback
+        visible={journeyActive && !journeyOpen}
+        shaderMode={journeyFrame?.shaderMode}
+        dualShaderMode={journeyFrame?.dualShaderMode}
+        tertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
+        aiPrompt={journeyFrame?.aiPrompt}
+      />
 
       {/* Journey intro screen — exact same treatment as completion overlay */}
       {journeyIntroVisible && activeJourney && (

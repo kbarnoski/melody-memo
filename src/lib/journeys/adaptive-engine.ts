@@ -18,7 +18,7 @@
 // ─── Snapshot: everything captured at the moment of a button press ───
 
 export interface Snapshot {
-  type: "performance" | "love" | "dislike" | "glitch";
+  type: "performance" | "love" | "dislike" | "glitch" | "journey-start" | "journey-end";
   ts: string;
   journeyId: string | null;
   journeyName: string | null;
@@ -412,7 +412,7 @@ export function analyzeAndAdapt(): AdaptiveProfile {
 
 let _cached: AdaptiveProfile | null = null;
 
-function getProfile(): AdaptiveProfile {
+export function getProfile(): AdaptiveProfile {
   if (!_cached) _cached = loadProfile();
   return _cached;
 }

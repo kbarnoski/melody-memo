@@ -8,7 +8,7 @@ import {
   getDeletedShaders,
   getLovedShaders,
   getShaderStats,
-  getShaderLabel,
+  blockShader,
   unblockShader,
   deleteShader,
   undeleteShader,
@@ -45,8 +45,11 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
+type Tab = "library" | "blocked" | "deleted" | "loved" | "stats";
+
 export function AdminPanel({ visible, onClose }: AdminPanelProps) {
   const [revision, setRevision] = useState(0);
+  const [activeTab, setActiveTab] = useState<Tab>("library");
   const refresh = useCallback(() => setRevision((r) => r + 1), []);
 
   // Close on Escape
@@ -69,9 +72,17 @@ export function AdminPanel({ visible, onClose }: AdminPanelProps) {
   // Suppress unused var warning — revision drives re-render
   void revision;
 
-  const totalShaders = MODE_META.filter((m) => m.category !== "AI Imagery").length;
-  const activeCount = totalShaders - blocked.length - deleted.length;
+  const allShaders = MODE_META.filter((m) => m.category !== "AI Imagery");
+  const totalShaders = allShaders.length;
+  const blockedSet = new Set(blocked);
+  const deletedSet = new Set(deleted);
+  const lovedSet = new Set(loved);
+  const activeShaders = allShaders.filter((m) => !blockedSet.has(m.mode) && !deletedSet.has(m.mode));
+  const activeCount = activeShaders.length;
   const activeRules = profile.rules.filter((r) => r.confidence >= 0.3).length;
+
+  // Group all shaders by category for the library view
+  const allGrouped = groupByCategory(allShaders.map((m) => m.mode));
 
   const handleUnblock = useCallback((mode: string) => {
     unblockShader(mode);
@@ -80,6 +91,11 @@ export function AdminPanel({ visible, onClose }: AdminPanelProps) {
 
   const handleDelete = useCallback((mode: string) => {
     deleteShader(mode);
+    refresh();
+  }, [refresh]);
+
+  const handleBlock = useCallback((mode: string) => {
+    blockShader(mode);
     refresh();
   }, [refresh]);
 
@@ -122,7 +138,7 @@ export function AdminPanel({ visible, onClose }: AdminPanelProps) {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={headerStyle}>Admin</span>
-          <button onClick={onClose} style={closeBtnStyle} title="Close (Esc)">
+          <button onClick={onClose} style={closeBtnStyle} title="Close (A)">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
               stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -130,71 +146,123 @@ export function AdminPanel({ visible, onClose }: AdminPanelProps) {
           </button>
         </div>
 
-        {/* Blocked Shaders */}
-        <Section title="blocked" count={blocked.length}>
-          {blocked.length === 0 ? (
-            <EmptyText>No blocked shaders</EmptyText>
-          ) : (
-            groupByCategory(blocked).map((group) => (
-              <CategoryGroup key={group.category} category={group.category}>
-                {group.shaders.map(({ mode, label }) => (
-                  <ShaderRow key={mode} label={label} stats={stats[mode]}>
-                    <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
-                    <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
-                  </ShaderRow>
-                ))}
-              </CategoryGroup>
-            ))
-          )}
-        </Section>
+        {/* Tab bar */}
+        <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+          {([
+            ["library", `All (${activeCount})`],
+            ["blocked", `Blocked (${blocked.length})`],
+            ["deleted", `Deleted (${deleted.length})`],
+            ["loved", `Loved (${loved.length})`],
+            ["stats", "Stats"],
+          ] as [Tab, string][]).map(([tab, label]) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                fontFamily: "var(--font-geist-mono)",
+                fontSize: "0.55rem",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                color: activeTab === tab ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.30)",
+                background: activeTab === tab ? "rgba(255,255,255,0.10)" : "none",
+                border: `1px solid ${activeTab === tab ? "rgba(255,255,255,0.15)" : "transparent"}`,
+                borderRadius: 5,
+                padding: "4px 8px",
+                cursor: "pointer",
+                transition: "all 150ms ease",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         <Divider />
+
+        {/* Library — all shaders with status + actions */}
+        {activeTab === "library" && allGrouped.map((group) => (
+          <CategoryGroup key={group.category} category={group.category}>
+            {group.shaders.map(({ mode, label }) => {
+              const isBlocked = blockedSet.has(mode);
+              const isDeleted = deletedSet.has(mode);
+              const isLoved = lovedSet.has(mode);
+              return (
+                <ShaderRow key={mode} label={label} stats={stats[mode]} status={isDeleted ? "deleted" : isBlocked ? "blocked" : isLoved ? "loved" : undefined}>
+                  {isDeleted ? (
+                    <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
+                  ) : isBlocked ? (
+                    <>
+                      <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
+                      <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                    </>
+                  ) : (
+                    <>
+                      <SmallButton onClick={() => handleBlock(mode)} color="yellow">Block</SmallButton>
+                      <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                    </>
+                  )}
+                </ShaderRow>
+              );
+            })}
+          </CategoryGroup>
+        ))}
+
+        {/* Blocked Shaders */}
+        {activeTab === "blocked" && (blocked.length === 0 ? (
+          <EmptyText>No blocked shaders</EmptyText>
+        ) : (
+          groupByCategory(blocked).map((group) => (
+            <CategoryGroup key={group.category} category={group.category}>
+              {group.shaders.map(({ mode, label }) => (
+                <ShaderRow key={mode} label={label} stats={stats[mode]}>
+                  <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
+                  <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                </ShaderRow>
+              ))}
+            </CategoryGroup>
+          ))
+        ))}
 
         {/* Deleted Shaders */}
-        <Section title="deleted" count={deleted.length}>
-          {deleted.length === 0 ? (
-            <EmptyText>No deleted shaders</EmptyText>
-          ) : (
-            groupByCategory(deleted).map((group) => (
-              <CategoryGroup key={group.category} category={group.category}>
-                {group.shaders.map(({ mode, label }) => (
-                  <ShaderRow key={mode} label={label} stats={stats[mode]}>
-                    <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
-                  </ShaderRow>
-                ))}
-              </CategoryGroup>
-            ))
-          )}
-        </Section>
-
-        <Divider />
+        {activeTab === "deleted" && (deleted.length === 0 ? (
+          <EmptyText>No deleted shaders</EmptyText>
+        ) : (
+          groupByCategory(deleted).map((group) => (
+            <CategoryGroup key={group.category} category={group.category}>
+              {group.shaders.map(({ mode, label }) => (
+                <ShaderRow key={mode} label={label} stats={stats[mode]}>
+                  <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
+                </ShaderRow>
+              ))}
+            </CategoryGroup>
+          ))
+        ))}
 
         {/* Loved Shaders */}
-        <Section title="loved" count={loved.length}>
-          {loved.length === 0 ? (
-            <EmptyText>No loved shaders</EmptyText>
-          ) : (
-            groupByCategory(loved).map((group) => (
-              <CategoryGroup key={group.category} category={group.category}>
-                {group.shaders.map(({ mode, label }) => (
-                  <ShaderRow key={mode} label={label} stats={stats[mode]} />
-                ))}
-              </CategoryGroup>
-            ))
-          )}
-        </Section>
-
-        <Divider />
+        {activeTab === "loved" && (loved.length === 0 ? (
+          <EmptyText>No loved shaders</EmptyText>
+        ) : (
+          groupByCategory(loved).map((group) => (
+            <CategoryGroup key={group.category} category={group.category}>
+              {group.shaders.map(({ mode, label }) => (
+                <ShaderRow key={mode} label={label} stats={stats[mode]} />
+              ))}
+            </CategoryGroup>
+          ))
+        ))}
 
         {/* Stats */}
-        <Section title="stats">
-          <StatLine label="Active shaders" value={`${activeCount} / ${totalShaders}`} />
-          <StatLine label="Blocked" value={String(blocked.length)} />
-          <StatLine label="Deleted" value={String(deleted.length)} />
-          <StatLine label="Loved" value={String(loved.length)} />
-          <StatLine label="Adaptive rules" value={String(activeRules)} />
-          <StatLine label="Snapshots processed" value={String(profile.totalProcessed)} />
-        </Section>
+        {activeTab === "stats" && (
+          <Section title="stats">
+            <StatLine label="Active shaders" value={`${activeCount} / ${totalShaders}`} />
+            <StatLine label="Blocked" value={String(blocked.length)} />
+            <StatLine label="Deleted" value={String(deleted.length)} />
+            <StatLine label="Loved" value={String(loved.length)} />
+            <StatLine label="Adaptive rules" value={String(activeRules)} />
+            <StatLine label="Snapshots processed" value={String(profile.totalProcessed)} />
+          </Section>
+        )}
       </div>
     </div>
   );
@@ -223,11 +291,17 @@ function CategoryGroup({ category, children }: { category: string; children: Rea
   );
 }
 
-function ShaderRow({ label, stats, children }: {
+function ShaderRow({ label, stats, status, children }: {
   label: string;
   stats?: { usageCount: number; lovedCount: number; blockedCount: number };
+  status?: "blocked" | "deleted" | "loved";
   children?: React.ReactNode;
 }) {
+  const statusColors: Record<string, string> = {
+    blocked: "rgba(239, 68, 68, 0.6)",
+    deleted: "rgba(239, 68, 68, 0.4)",
+    loved: "rgba(74, 222, 128, 0.6)",
+  };
   return (
     <div style={{
       display: "flex",
@@ -235,8 +309,22 @@ function ShaderRow({ label, stats, children }: {
       gap: 6,
       minHeight: 28,
       paddingLeft: 8,
+      opacity: status === "deleted" ? 0.45 : status === "blocked" ? 0.6 : 1,
     }}>
       <span style={shaderLabelStyle}>{label}</span>
+      {status && (
+        <span style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.45rem",
+          fontWeight: 600,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          color: statusColors[status],
+          flexShrink: 0,
+        }}>
+          {status === "loved" ? "\u2665" : status}
+        </span>
+      )}
       {stats && stats.usageCount > 0 && (
         <span style={usageStyle} title={`Used ${stats.usageCount}x`}>{stats.usageCount}x</span>
       )}
@@ -249,13 +337,14 @@ function ShaderRow({ label, stats, children }: {
 
 function SmallButton({ onClick, color, children }: {
   onClick: () => void;
-  color: "green" | "red" | "blue";
+  color: "green" | "red" | "blue" | "yellow";
   children: React.ReactNode;
 }) {
   const colors = {
     green: { bg: "rgba(74, 222, 128, 0.12)", border: "rgba(74, 222, 128, 0.25)", text: "rgba(74, 222, 128, 0.85)" },
     red: { bg: "rgba(239, 68, 68, 0.12)", border: "rgba(239, 68, 68, 0.25)", text: "rgba(239, 68, 68, 0.85)" },
     blue: { bg: "rgba(96, 165, 250, 0.12)", border: "rgba(96, 165, 250, 0.25)", text: "rgba(96, 165, 250, 0.85)" },
+    yellow: { bg: "rgba(251, 191, 36, 0.12)", border: "rgba(251, 191, 36, 0.25)", text: "rgba(251, 191, 36, 0.85)" },
   };
   const c = colors[color];
   return (

@@ -12,12 +12,15 @@ export default async function VisualizerPage({
   const journey = params.journey;
   const autoplay = params.autoplay !== "0";
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const isAdmin = !!user;
+
   let recording: { id: string; title?: string; audio_url: string } | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let analysis: any | null = null;
 
   if (recordingId) {
-    const supabase = await createClient();
     const [recResult, analysisResult] = await Promise.all([
       supabase.from("recordings").select("id, title, audio_url").eq("id", recordingId).single(),
       supabase.from("analyses").select("*").eq("recording_id", recordingId).single(),
@@ -40,6 +43,7 @@ export default async function VisualizerPage({
       initialLive={liveMode}
       initialJourney={journey}
       autoplay={autoplay}
+      isAdmin={isAdmin}
     />
   );
 }

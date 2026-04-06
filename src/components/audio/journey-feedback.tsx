@@ -21,7 +21,7 @@ export function getBlockedShaders(): Set<string> {
 }
 
 /** Block a shader — persists to localStorage for runtime exclusion */
-function blockShader(mode: string): void {
+export function blockShader(mode: string): void {
   const blocked = getBlockedShaders();
   blocked.add(mode);
   try {

@@ -62,6 +62,7 @@ interface VisualizerClientProps {
   initialLive?: boolean;
   initialJourney?: string;
   autoplay?: boolean;
+  isAdmin?: boolean;
 }
 
 export function VisualizerClient({
@@ -70,6 +71,7 @@ export function VisualizerClient({
   initialLive = false,
   initialJourney,
   autoplay = true,
+  isAdmin = false,
 }: VisualizerClientProps) {
   const router = useRouter();
 
@@ -793,20 +795,20 @@ export function VisualizerClient({
           handleFullscreenToggle();
           break;
         case "a":
-          setAdminOpen((v) => !v);
+          if (isAdmin) setAdminOpen((v) => !v);
           break;
         case "r":
-          setIsolatePrimary((v) => !v);
+          if (isAdmin) setIsolatePrimary((v) => !v);
           break;
         case "i":
-          setHideImagery((v) => !v);
+          if (isAdmin) setHideImagery((v) => !v);
           break;
       }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleExit, libraryOpen, journeyOpen, togglePlayPause, seekBy, handleFullscreenToggle]);
+  }, [handleExit, libraryOpen, journeyOpen, togglePlayPause, seekBy, handleFullscreenToggle, isAdmin]);
 
   // Show HUD when analysis is available and completed
   const showHud = activeAnalysis?.status === "completed";
@@ -928,19 +930,21 @@ export function VisualizerClient({
         />
       )}
 
-      {/* Admin panel — toggle with 'A' key */}
-      <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} />
+      {/* Admin panel — toggle with 'A' key (admin only) */}
+      {isAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} />}
 
-      {/* Journey tuning — rating panel with shader names */}
-      <JourneyFeedback
-        visible={journeyActive && !journeyOpen}
-        shaderMode={journeyFrame?.shaderMode}
-        dualShaderMode={journeyFrame?.dualShaderMode}
-        tertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
-        aiPrompt={journeyFrame?.aiPrompt}
-        isolatePrimary={isolatePrimary}
-        hideImagery={hideImagery}
-      />
+      {/* Rating panel — admin only, visible during journeys or non-journey viz */}
+      {isAdmin && (
+        <JourneyFeedback
+          visible={(journeyActive && !journeyOpen) || (!journeyActive && !journeyOpen)}
+          shaderMode={journeyFrame?.shaderMode ?? storeVizMode}
+          dualShaderMode={journeyFrame?.dualShaderMode}
+          tertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
+          aiPrompt={journeyFrame?.aiPrompt}
+          isolatePrimary={isolatePrimary}
+          hideImagery={hideImagery}
+        />
+      )}
 
       {/* Journey intro screen — exact same treatment as completion overlay */}
       {journeyIntroVisible && activeJourney && (

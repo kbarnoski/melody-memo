@@ -523,9 +523,10 @@ interface JourneyFeedbackProps {
   dualShaderMode?: string;
   tertiaryShaderMode?: string;
   aiPrompt?: string;
+  isolatePrimary?: boolean;
 }
 
-export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryShaderMode, aiPrompt }: JourneyFeedbackProps) {
+export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryShaderMode, aiPrompt, isolatePrimary }: JourneyFeedbackProps) {
   // Flash states: keyed by category+mode
   const [flashes, setFlashes] = useState<Record<string, "down" | "up" | null>>({});
   const [blockedToast, setBlockedToast] = useState<string | null>(null);
@@ -577,6 +578,12 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
     }
     flash(`shader-${mode}`, action === "love" ? "up" : "down");
   }, [flash]);
+
+  const handleDeleteShader = useCallback((mode: string) => {
+    deleteShader(mode);
+    setBlockedToast(`${getShaderLabel(mode)} deleted`);
+    setTimeout(() => setBlockedToast(null), 2000);
+  }, []);
 
   const rateImagery = useCallback((action: "dislike" | "love") => {
     const entry = buildSnapshot(action, _sharedFps);
@@ -630,15 +637,34 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
         {activeShaders.length > 0 && (
           <>
             <Divider />
-            <SectionLabel text="shaders" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <SectionLabel text="shaders" />
+              {isolatePrimary && (
+                <span style={{
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.55rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "rgba(251, 191, 36, 0.85)",
+                }}>
+                  solo
+                </span>
+              )}
+            </div>
             {activeShaders.map(({ mode, role }) => (
-              <RatingRow
-                key={mode}
-                label={`${role}: ${getShaderLabel(mode)}`}
-                onDown={() => rateShader(mode, "block")}
-                onUp={() => rateShader(mode, "love")}
-                flashState={flashes[`shader-${mode}`] ?? null}
-              />
+              <div key={mode} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <RatingRow
+                  label={`${role}: ${getShaderLabel(mode)}`}
+                  onDown={() => rateShader(mode, "block")}
+                  onUp={() => rateShader(mode, "love")}
+                  flashState={flashes[`shader-${mode}`] ?? null}
+                />
+                <div style={{ display: "flex", gap: 4, paddingLeft: 36 }}>
+                  <MiniAction label="block" color="rgba(239, 68, 68, 0.7)" onClick={() => rateShader(mode, "block")} />
+                  <MiniAction label="delete" color="rgba(239, 68, 68, 0.9)" onClick={() => handleDeleteShader(mode)} />
+                </div>
+              </div>
             ))}
           </>
         )}
@@ -746,6 +772,32 @@ function SectionLabel({ text, issueCount }: { text: string; issueCount?: number 
         </span>
       )}
     </div>
+  );
+}
+
+function MiniAction({ label, color, onClick }: { label: string; color: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        fontFamily: "var(--font-geist-mono)",
+        fontSize: "0.55rem",
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        color,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: "1px 0",
+        opacity: 0.7,
+        transition: "opacity 150ms ease",
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.opacity = "1"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.opacity = "0.7"; }}
+    >
+      {label}
+    </button>
   );
 }
 

@@ -105,7 +105,7 @@ export function VisualizerClient({
   }, []);
 
   // Journey system
-  const { frame: journeyFrame, active: journeyActive, phase: journeyPhase, progress: journeyProgress } = useJourney();
+  const { frame: rawJourneyFrame, active: journeyActive, phase: journeyPhase, progress: journeyProgress } = useJourney();
   const audioFeaturesRef = useRef({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
 
   // Journey completion state
@@ -282,11 +282,18 @@ export function VisualizerClient({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
+  const [isolatePrimary, setIsolatePrimary] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   // Default to journey browser unless entering with a specific recording or journey
   const [journeyOpen, setJourneyOpen] = useState(!recording && !initialJourney);
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iosImmersiveRef = useRef(false);
+
+  // Isolate primary shader — strips dual/tertiary when toggled with R key
+  const journeyFrame = useMemo(() => {
+    if (!rawJourneyFrame || !isolatePrimary) return rawJourneyFrame;
+    return { ...rawJourneyFrame, dualShaderMode: undefined, tertiaryShaderMode: undefined };
+  }, [rawJourneyFrame, isolatePrimary]);
 
   // Installation mode auto-cycling
   useInstallationMode();
@@ -787,6 +794,9 @@ export function VisualizerClient({
         case "a":
           setAdminOpen((v) => !v);
           break;
+        case "r":
+          setIsolatePrimary((v) => !v);
+          break;
       }
     }
 
@@ -917,13 +927,14 @@ export function VisualizerClient({
       {/* Admin panel — toggle with 'A' key */}
       <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} />
 
-      {/* Journey tuning buttons — always visible during journey for love/dislike feedback */}
+      {/* Journey tuning — rating panel with shader names */}
       <JourneyFeedback
         visible={journeyActive && !journeyOpen}
         shaderMode={journeyFrame?.shaderMode}
         dualShaderMode={journeyFrame?.dualShaderMode}
         tertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
         aiPrompt={journeyFrame?.aiPrompt}
+        isolatePrimary={isolatePrimary}
       />
 
       {/* Journey intro screen — exact same treatment as completion overlay */}

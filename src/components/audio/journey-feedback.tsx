@@ -524,9 +524,10 @@ interface JourneyFeedbackProps {
   tertiaryShaderMode?: string;
   aiPrompt?: string;
   isolatePrimary?: boolean;
+  hideImagery?: boolean;
 }
 
-export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryShaderMode, aiPrompt, isolatePrimary }: JourneyFeedbackProps) {
+export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryShaderMode, aiPrompt, isolatePrimary, hideImagery }: JourneyFeedbackProps) {
   // Flash states: keyed by category+mode
   const [flashes, setFlashes] = useState<Record<string, "down" | "up" | null>>({});
   const [blockedToast, setBlockedToast] = useState<string | null>(null);
@@ -564,20 +565,25 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
     flash("moment", type === "love" ? "up" : "down");
   }, [flash]);
 
-  const rateShader = useCallback((mode: string, action: "block" | "love") => {
-    const entry = buildSnapshot(action === "block" ? "dislike" : "love", _sharedFps);
+  const rateShader = useCallback((mode: string, action: "dislike" | "love") => {
+    const entry = buildSnapshot(action, _sharedFps);
     entry.aiPromptSnippet = `shader-${action}: ${mode}`;
     appendEntry(entry);
 
-    if (action === "block") {
-      blockShader(mode);
-      setBlockedToast(getShaderLabel(mode));
-      setTimeout(() => setBlockedToast(null), 2000);
-    } else {
+    if (action === "love") {
       loveShader(mode);
     }
     flash(`shader-${mode}`, action === "love" ? "up" : "down");
   }, [flash]);
+
+  const handleBlockShader = useCallback((mode: string) => {
+    blockShader(mode);
+    const entry = buildSnapshot("dislike", _sharedFps);
+    entry.aiPromptSnippet = `shader-block: ${mode}`;
+    appendEntry(entry);
+    setBlockedToast(`${getShaderLabel(mode)} blocked`);
+    setTimeout(() => setBlockedToast(null), 2000);
+  }, []);
 
   const handleDeleteShader = useCallback((mode: string) => {
     deleteShader(mode);
@@ -656,13 +662,12 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
               <div key={mode} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <RatingRow
                   label={`${role}: ${getShaderLabel(mode)}`}
-                  onDown={() => rateShader(mode, "block")}
+                  onDown={() => rateShader(mode, "dislike")}
                   onUp={() => rateShader(mode, "love")}
                   flashState={flashes[`shader-${mode}`] ?? null}
                 />
                 <div style={{ display: "flex", gap: 4, paddingLeft: 36 }}>
-                  <MiniAction label="block" color="rgba(239, 68, 68, 0.7)" onClick={() => rateShader(mode, "block")} />
-                  <MiniAction label="delete" color="rgba(239, 68, 68, 0.9)" onClick={() => handleDeleteShader(mode)} />
+                  <MiniAction label="block" color="rgba(239, 68, 68, 0.7)" onClick={() => handleBlockShader(mode)} />
                 </div>
               </div>
             ))}
@@ -673,7 +678,21 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
         {aiPrompt && (
           <>
             <Divider />
-            <SectionLabel text="imagery" />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <SectionLabel text="imagery" />
+              {hideImagery && (
+                <span style={{
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.55rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "rgba(251, 191, 36, 0.85)",
+                }}>
+                  hidden
+                </span>
+              )}
+            </div>
             <RatingRow
               label={getImageryLabel(aiPrompt)}
               onDown={() => rateImagery("dislike")}

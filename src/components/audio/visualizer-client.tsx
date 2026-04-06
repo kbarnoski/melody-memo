@@ -283,6 +283,7 @@ export function VisualizerClient({
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const [isolatePrimary, setIsolatePrimary] = useState(false);
+  const [hideImagery, setHideImagery] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   // Default to journey browser unless entering with a specific recording or journey
   const [journeyOpen, setJourneyOpen] = useState(!recording && !initialJourney);
@@ -797,6 +798,9 @@ export function VisualizerClient({
         case "r":
           setIsolatePrimary((v) => !v);
           break;
+        case "i":
+          setHideImagery((v) => !v);
+          break;
       }
     }
 
@@ -824,7 +828,7 @@ export function VisualizerClient({
         frame={journeyFrame}
         audioAmplitude={audioFeaturesRef.current.amplitude}
         audioBass={audioFeaturesRef.current.bass}
-        aiEnabled={(journeyActive && aiImageEnabled) || isAiOnlyMode}
+        aiEnabled={((journeyActive && aiImageEnabled) || isAiOnlyMode) && !hideImagery}
         aiPrompt={aiPrompt}
         aiOnly={isAiOnlyMode}
         aiGenerating={isPlaying}
@@ -935,6 +939,7 @@ export function VisualizerClient({
         tertiaryShaderMode={journeyFrame?.tertiaryShaderMode}
         aiPrompt={journeyFrame?.aiPrompt}
         isolatePrimary={isolatePrimary}
+        hideImagery={hideImagery}
       />
 
       {/* Journey intro screen — exact same treatment as completion overlay */}

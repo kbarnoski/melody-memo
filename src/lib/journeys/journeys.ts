@@ -260,7 +260,7 @@ export function defaultPhases(
       start: 0.0,
       end: 0.10,
       shaderModes: pickShaders(allShaders, phaseBudgets.threshold, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "luminous geometry condensing from deep space, glowing non-representational forms emerging at the edge of perception, radiant points in vast emptiness, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         lowAmplitude: "near total darkness, just the faintest breath of light on a surface",
@@ -287,7 +287,7 @@ export function defaultPhases(
       start: 0.10,
       end: 0.26,
       shaderModes: pickShaders(allShaders, phaseBudgets.expansion, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "radiant abstract topologies unfolding, luminous energy fields pulsing with light, pressure gradients made visible as glowing color and bright form, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         highBass: "tectonic scale, massive cliff faces or canyons, deep geological weight",
@@ -315,7 +315,7 @@ export function defaultPhases(
       start: 0.26,
       end: 0.48,
       shaderModes: pickShaders(allShaders, phaseBudgets.transcendence, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "pure radiant abstraction at peak intensity, brilliant color fields dissolving into blinding light, the visual equivalent of every frequency at once, overwhelming luminous saturation, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         highBass: "earthquake scale, ground splitting open, massive geological upheaval",
@@ -344,7 +344,7 @@ export function defaultPhases(
       start: 0.48,
       end: 0.65,
       shaderModes: pickShaders(allShaders, phaseBudgets.illumination, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "abstract clarity, luminous negative space, simple geometric forms hovering in warm light, the mathematics of understanding, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         highTreble: "light refracting through crystal formations or stained glass, casting real caustic patterns on stone",
@@ -371,7 +371,7 @@ export function defaultPhases(
       start: 0.65,
       end: 0.82,
       shaderModes: pickShaders(allShaders, phaseBudgets.return, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "luminous warmth condensing, soft radiant gradients resolving, gentle glowing comfort, bright color fields settling into harmony, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         lowAmplitude: "almost dark, just the last trace of sunset color on the edge of the world",
@@ -398,7 +398,7 @@ export function defaultPhases(
       start: 0.82,
       end: 1.0,
       shaderModes: pickShaders(allShaders, phaseBudgets.integration, usedShaders),
-      shaderOpacity: 0.50,
+      shaderOpacity: 0.60,
       aiPrompt: "minimal radiant abstraction, a single bright luminous form in vast space, the glowing geometry of stillness, no text no signatures no watermarks no letters no writing",
       aiPromptModifiers: {
         lowAmplitude: "near darkness, just one small warm light source in an enormous quiet space",
@@ -683,7 +683,7 @@ export const JOURNEYS: Journey[] = [
         guidancePhrases: ["there is no you...", "everything is this...", "..."],
         poetryMood: "transcendent",
         voice: "alloy",
-        shaderOpacity: 0.50,
+        shaderOpacity: 0.60,
       },
       illumination: {
         aiPrompt: "PURE WHITE BACKGROUND — water droplets of varying sizes suspended in white void, the largest droplets in the left third photorealistic and crystal clear, each droplet acting as a tiny lens containing a miniature landscape visible through refraction — one holds a spiral galaxy in violet and gold, another a nebula in deep blue, another a star cluster in warm amber, another swirling aurora light — like snow globes made of water containing entire universes, warm gold light refracting through the curved water surfaces casting soft rainbow caustics, smaller droplets scattered sparsely rightward into generous white negative space containing only hints of cosmic color within, three-dimensional depth through size variation and the impossibly detailed miniature universes visible inside each drop, no planets no figures no trees no roots no plants, no text no signatures no watermarks no letters no writing",

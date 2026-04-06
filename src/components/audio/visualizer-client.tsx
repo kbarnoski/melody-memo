@@ -95,6 +95,7 @@ export function VisualizerClient({
   const activeTheme = useAudioStore((s) => s.activeTheme);
   const startJourney = useAudioStore((s) => s.startJourney);
   const aiImageEnabled = useAudioStore((s) => s.aiImageEnabled);
+  const storeCueMarkers = useAudioStore((s) => s.cueMarkers);
 
   // Local analyser state (for VisualizerCore)
   const [analyser, setAnalyser] = useState<AnalyserLike | null>(null);
@@ -147,6 +148,7 @@ export function VisualizerClient({
       }, 7000);
 
       prevJourneyIdRef.current = activeJourney.id;
+      setAdminOpen(false);
       resetPerfMonitor();
       getRealtimeImageService().resetSession();
 
@@ -287,7 +289,7 @@ export function VisualizerClient({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [ratingOpen, setRatingOpen] = useState(true);
+  const [ratingOpen, setRatingOpen] = useState(false);
   const [isolatePrimary, setIsolatePrimary] = useState(false);
   const [hideImagery, setHideImagery] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -479,27 +481,29 @@ export function VisualizerClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
-  // Wire auto-detected events + manual cue markers to journey engine
+  // Wire auto-detected events + manual cue markers to journey engine.
+  // Reactive on cueMarkers + analysis so late-arriving data still gets wired.
   useEffect(() => {
     if (!activeJourney) return;
+    // Skip if duration hasn't settled yet — effect will re-run when it does
+    if (duration <= 0) return;
     const engine = getJourneyEngine();
-    const d = duration > 0 ? duration : 300;
 
     // Auto-detected events from analysis
     const analysis = useAudioStore.getState().analysis;
     const autoEvents = (analysis?.events ?? []) as MusicalEvent[];
 
-    // Manual cue markers from Studio
-    const manualCues = useAudioStore.getState().cueMarkers;
-    const manualAsEvents = manualCues.map(c => ({
-      time: c.time, type: "bass_hit" as const, intensity: 0.8,
+    // Manual cue markers from Studio (reactive via storeCueMarkers)
+    const manualAsEvents = storeCueMarkers.map(c => ({
+      time: c.time, type: "bass_hit" as const, intensity: 1.0,
     }));
 
     const allEvents = [...autoEvents, ...manualAsEvents];
     if (allEvents.length > 0) {
-      engine.setEvents(allEvents, d);
+      console.log(`[journey-events] wiring ${allEvents.length} events (${manualAsEvents.length} cue markers) for duration ${duration}s`);
+      engine.setEvents(allEvents, duration);
     }
-  }, [activeJourney, duration]);
+  }, [activeJourney, duration, storeCueMarkers]);
 
   // Don't auto-open library — let the welcome screen guide the user
 

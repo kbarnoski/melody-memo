@@ -4,6 +4,7 @@ export const PAIRED_TRACKS: Record<string, string> = {
   "inferno": "%KB_REALIZED%",
   "cosmic-drift": "%17th St 61%",
   "neural-link": "%17th St 64%",
+  "ghost": "%KB_GHOST_REF%",
 };
 
 /** Storage file search patterns — fallback when track isn't in recordings table */

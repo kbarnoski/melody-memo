@@ -62,6 +62,151 @@ const KEN_BURNS_DURATION = 50; // seconds — full motion cycle
 const MAX_LAYERS = 6; // 6 overlapping layers — denser visual flow, more layered depth
 const MAX_CONCURRENT_GENS = 2; // 2 parallel REST requests for faster imagery fill
 
+/**
+ * Phase-aware cinematic perspectives — POV evolves through the journey arc.
+ *
+ * Inspired by:
+ *   Kubrick — one-point perspective, symmetrical framing, slow zooms
+ *   Tarkovsky — contemplative drift, water surfaces, rooms as mindscapes
+ *   Malick — nature POV, looking up through canopy, magic hour backlight
+ *   Villeneuve — vast negative space, scale contrast, silhouettes against geometry
+ *   Spielberg — low-angle wonder, reaction before reveal
+ *   Hitchcock — subjective POV, deep focus tension, overhead moral reckoning
+ */
+const CINEMATIC_PERSPECTIVES: Record<string, string[]> = {
+  // ── Threshold: grounding, orientation, gentle entry ──
+  threshold: [
+    "extreme wide aerial view looking down at 45 degrees, single figure in vast landscape, soft diffused light",
+    "eye-level symmetrical one-point perspective down a dimly lit corridor, warm light at vanishing point",
+    "camera at water surface level half submerged, looking across still lake toward distant forms",
+    "low angle looking up through bare branches at overcast sky, natural geometric patterns",
+    "medium wide shot subject centered in archway, silhouetted against soft interior light",
+    "bird's eye view looking straight down at lone figure at a crossroads, long shadow extending",
+    "slow dolly-forward perspective through empty room toward a window, foreground soft focus",
+    "wide landscape with deep atmospheric perspective, three distinct depth layers: dark foreground silhouette, mid-ground subject, bright distant horizon",
+    "camera low to ground looking across a textured surface toward the horizon, shallow depth of field",
+    "centered symmetrical composition through a natural frame of rock or foliage, subject distant and small",
+  ],
+  // ── Expansion: growing intensity, deepening engagement ──
+  expansion: [
+    "tracking shot alongside subject at shoulder height, motion blur on background, subject sharp",
+    "low angle looking up at towering vertical forms, converging lines creating dramatic forced perspective",
+    "over-the-shoulder perspective looking into deep space, back of head in soft focus foreground",
+    "worm's eye view from ground level looking straight up through organic forms at bright sky above",
+    "slowly ascending perspective, camera rising, world expanding outward revealing hidden patterns",
+    "telephoto compression flattening subject against vast background, embedded in surroundings",
+    "split-depth composition: sharp foreground detail on one side, deep background in focus on the other",
+    "extreme close-up of a single reflective surface showing the world within its curved shape",
+    "diagonal composition with strong leading lines pulling eye from lower left to upper right",
+    "medium shot through layers of translucent material, each layer adding depth and color",
+  ],
+  // ── Transcendence: peak intensity, rule-breaking, the sublime ──
+  transcendence: [
+    "Dutch angle 25 degrees, dramatic chiaroscuro, subject half-lit half-shadow, tilting diagonally",
+    "extreme close-up macro detail, shallow depth of field, single point of sharp focus surrounded by abstract bokeh",
+    "symmetrical one-point perspective with blinding white light at vanishing point, all detail dissolving into radiance",
+    "bird's eye from extreme height looking straight down, tiny figure at center of enormous pattern",
+    "abstract perspective with no clear up or down, floating in space, contradictory light sources, gravity dissolved",
+    "vast negative space, single point of luminous color where subject exists, overwhelming emptiness in all directions",
+    "camera inside looking out through fractured prismatic surface, world broken into shifted copies, chromatic edges",
+    "extreme low angle looking straight up at overwhelming scale, subject tiny at base of immense form",
+    "radial composition emanating from center, energy and light bursting outward in all directions",
+    "tilted overhead perspective looking down at subject reaching upward, face lit from above, arms extended",
+  ],
+  // ── Illumination: revelation, clarity emerging from intensity ──
+  illumination: [
+    "wide panoramic view from a high vantage point, world laid out below in golden light, vast and clear",
+    "medium shot with subject perfectly centered in a pool of warm directional light, darkness around",
+    "camera looking through crystalline transparent forms, light refracting into spectral colors, sharp detail",
+    "overhead view at 45 degrees looking down at intricate patterns revealed by raking side light",
+    "eye-level perspective across a threshold, looking from shadow into brilliance, subject walking toward light",
+    "extreme close-up of luminous surface texture, backlit, every detail revealed, ethereal translucence",
+    "slow zoom into a single detail that contains the whole — fractal, recursive, infinite",
+    "two-point perspective with converging horizontals, subject at the intersection, balanced and centered",
+    "panoramic sweep with subject small but sharp against soft atmospheric background, sense of revelation",
+    "looking up from below at light streaming through an opening, volumetric rays, particles visible in beams",
+  ],
+  // ── Return: descent, grounding, coming back to earth ──
+  return: [
+    "same wide establishing perspective as opening but now at golden hour, warmer light, longer shadows",
+    "medium close-up, subject looking off-camera into soft natural light, rim light on edges, peaceful",
+    "still centered overhead view looking down at calm surface with subtle ripples expanding from center",
+    "eye-level across a threshold, looking from interior into exterior light, subject moving through",
+    "extreme wide landscape with subject in middle distance, in proportion with environment, balanced light",
+    "close-up of hands at rest, natural light, fine texture detail, warmth, objects suggesting completion",
+    "long perspective down a gently curving path, softer geometry than rigid corridors, warm ambient light",
+    "camera slowly pulling back from subject, revealing more of the surrounding world, gentle recession",
+    "low angle through grass or low vegetation, subject in mid-ground, sky above, grounded and intimate",
+    "reflected image in still water, both the real and reflected world equally sharp, perfect symmetry",
+  ],
+  // ── Integration: resolution, stillness, transformed view ──
+  integration: [
+    "perfectly still wide shot, subject and environment in equilibrium, natural light, no dramatic angles",
+    "intimate close-up with eyes closed or face in repose, soft wrap-around light, shallow focus",
+    "bird's eye looking down at a complete pattern or mandala, the whole journey visible as a single form",
+    "eye-level one-point perspective but with the corridor now opening into vast bright space, doors open",
+    "extreme wide with subject as part of the landscape, not separate from it, integrated into the scene",
+    "medium shot through a window or frame, subject inside looking out, inner and outer worlds connected",
+    "camera at rest, observational, wide and unhurried, the composition breathes with generous space",
+    "looking up at sky with no ground visible, pure atmosphere and light, weightless and free",
+    "close-up of a small natural detail — leaf, stone, water drop — containing reflected light of the whole",
+    "wide symmetric composition with warm golden tones, everything in its place, resolved and complete",
+  ],
+};
+
+/**
+ * Spiritual figure system — angelic feminine presences that emerge organically
+ * from the cosmic/earthly scenes. Never in the opening. Rare and surprising.
+ * Diverse, spiritual, beautiful but never sexual. Long flowing hair, auras,
+ * uplifting. Dancing figures welcome. They appear as if scene and spirit are
+ * one entity — not pasted on, but emerging from the environment itself.
+ */
+
+/** Probability of a figure appearing per phase (0 = never, 1 = always) */
+const FIGURE_PROBABILITY: Record<string, number> = {
+  threshold: 0,        // NEVER in the opening
+  expansion: 0.10,     // very rare — first possible surprise
+  transcendence: 0.18, // more likely at peak moments
+  illumination: 0.22,  // revelation phase — most natural fit
+  return: 0.14,        // occasional gentle presence
+  integration: 0.12,   // soft closing presences
+};
+
+/**
+ * Figure descriptions — half-spirit half-real. Long-haired beautiful women
+ * emerging from ether. Their bodies dissolve into the scene at the edges.
+ * Lower half or limbs becoming mist, light, particles, smoke, water.
+ * Never fully solid. Never cheesy. Never sexual. Always transcendent.
+ */
+const SPIRITUAL_FIGURES: string[] = [
+  // ── Dissolving into light / cosmos ──
+  "a beautiful woman with very long dark hair spiraling in loose da Vinci curls interwoven with threads of golden light, her lower body dissolving into luminous mist, half-real half-spirit, soft warm aura, dark skin, serene closed eyes, photorealistic face, hair fading into ethereal filaments below the waist",
+  "a stunning woman with long silver-white hair in flowing Mucha-style waves interlaced with tiny glowing wildflowers and light particles, her arms and torso real but her legs dissolving into particles of light, emerging from ether, golden-brown skin, peaceful expression, photorealistic",
+  "a beautiful long-haired woman seen from behind, her dark curly hair in spiraling Renaissance curls cascading down her back with delicate light woven between strands, her figure half-solid half-translucent, edges dissolving into atmosphere like smoke becoming air, warm bronze skin, photorealistic",
+  "a woman with long straight black hair that transitions into spiraling tendrils interwoven with soft luminous threads, her face and shoulders photorealistic, body becoming transparent and merging with beams of light, rich dark skin, gentle expression of knowing",
+
+  // ── Emerging from environment ──
+  "a beautiful woman with very long auburn hair in da Vinci spirals with small pale flowers caught in the curls, materializing from mist — upper body real but below the ribs she dissolves into fog and light, she is the mist becoming human, fair skin, calm steady gaze, photorealistic",
+  "a long-haired woman emerging from water, her hair spreading across the surface in Mucha-style flowing waves interwoven with water lilies and bioluminescent light, face breaking through into air with closed eyes, body still part of the water below, photorealistic",
+  "a stunning woman with long flowing hair forming from cosmic dust, her hair in spiraling curls interlaced with starlight and tiny nebula-flowers, face photorealistic and serene but shoulders and arms trailing off into nebula, warm brown skin",
+  "a beautiful woman with long dark hair in loose spiraling braids threaded with filaments of golden light, her figure condensing from radiance, core solid but edges shimmering and dissolving, not fully arrived yet, deep brown skin, quiet strength, photorealistic",
+
+  // ── Movement / dance ──
+  "a long-haired woman mid-dance, her hair in da Vinci spirals sweeping in a wide arc with light woven through each curl, torso photorealistic but arms leaving trails of light, feet dissolving into luminous vapor, half-body half-energy, dark skin, joyful",
+  "a beautiful dancer with long flowing black hair in Mucha-style waves adorned with luminous blossoms, spinning slowly, body real at center but edges blurring into translucent spirit-form, movement leaving traces of golden light, photorealistic face, eyes closed in bliss",
+  "a woman with long wavy hair in graceful spirals interlaced with threads of warm light and tiny flowers, in slow movement, hands real and detailed but lower body fading into swirling mist, she dances between physical and ethereal, warm olive skin, photorealistic",
+
+  // ── Contemplative ──
+  "a beautiful woman with very long dark hair drifting upward in spiraling Renaissance curls with light filaments woven between strands, face in profile photorealistic and peaceful, body becoming translucent from the chest down dissolving into warm light, brown skin, she exists in two worlds",
+  "a long-haired woman standing still looking into the distance, her dark hair in flowing Mucha-style waves interlaced with tiny glowing flowers and spiraling light, shoulders and face solid but from the waist down pure light and vapor, golden-brown skin, photorealistic",
+  "a stunning woman with long flowing hair in da Vinci spirals interwoven with luminous particles, seen from slightly below, face and neck photorealistic, body below fading into thousands of tiny light particles drifting upward, dark skin, serene half-smile",
+
+  // ── Ascending ──
+  "a beautiful woman with long hair streaming downward in spiraling curls threaded with light and delicate flowers, rising slowly, upper body real, lower body dissolving into mist and warm light, leaving the material world gently, rich brown skin, eyes upward, photorealistic",
+  "a long-haired woman ascending through atmosphere, her hair in flowing Mucha-style waves interlaced with glowing botanical tendrils and spiraling light, face photorealistic and beautiful, body progressively more translucent, at her feet pure spirit, warm dark skin, quiet wonder",
+  "a woman with very long dark hair in loose da Vinci spirals woven with threads of light and tiny luminous blossoms, floating in a column of soft light, body half-solid half-ether, real where the light is brightest, dissolving at the edges, photorealistic face",
+];
+
 /** Smooth ease-in-out cubic — no jarring linear interpolation */
 function easeInOutCubic(t: number): number {
   return t < 0.5
@@ -121,19 +266,17 @@ export function AiImageLayer({
     journeyIdRef.current = journeyId;
     promptRef.current = prompt;
 
-    // Cancel in-flight requests and clear the LRU image cache so old
-    // images can't resurface via cache hits on the new prompt's first generation.
-    const service = getRealtimeImageService();
-    service.cancelInFlight();
-    service.clearImageCache();
-    promptChangeTimeRef.current = performance.now();
-    lastGenTimeRef.current = 0;
-
-    // Only PURGE (fast 0.5s fade) when switching to an entirely different journey.
-    // Phase transitions within the same journey use graceful crossfade — old images
-    // fade naturally (8s) while new ones emerge, creating smooth visual flow.
     const isNewJourney = journeyId !== prevJourneyId && prevJourneyId != null;
+
     if (isNewJourney) {
+      // New journey: aggressive reset — cancel everything, clear cache, trigger fast fill
+      const service = getRealtimeImageService();
+      service.cancelInFlight();
+      service.clearImageCache();
+      promptChangeTimeRef.current = performance.now();
+      lastGenTimeRef.current = 0;
+
+      // Fast-fade old journey's images
       const layers = layersRef.current;
       const now = performance.now();
       for (const layer of layers) {
@@ -144,10 +287,16 @@ export function AiImageLayer({
           layer.purge = true;
         }
       }
+    } else {
+      // Same-journey phase transition: gentle handoff.
+      // DON'T cancel in-flight requests — let them land and be discarded by prompt check.
+      // DON'T clear image cache — reusable across phases.
+      // DON'T reset lastGenTimeRef — prevents rushed generation burst.
+      // Just note the prompt change time for debounce.
+      promptChangeTimeRef.current = performance.now();
+      // Old images stay visible and fade naturally via MAX_LAYERS eviction
+      // when new images arrive — no flash, no rush.
     }
-    // For same-journey phase transitions: old images stay visible and fade naturally
-    // via the normal MAX_LAYERS eviction when new images arrive. This prevents the
-    // "images come and go really fast" flash at phase boundaries.
   }, [prompt, journeyId]);
   useEffect(() => { denoisingRef.current = denoisingStrength; }, [denoisingStrength]);
 
@@ -259,19 +408,14 @@ export function AiImageLayer({
     loadingCountRef.current++;
     lastGenTimeRef.current = performance.now();
 
-    // Three independent variation axes — each generation picks one from each,
-    // producing thousands of unique combinations from the same base prompt.
-    // This prevents consecutive images from looking similar.
-    const compositions = [
-      "extreme close-up macro detail", "wide aerial view",
-      "diagonal composition", "centered symmetrical",
-      "off-center with vast negative space", "tightly cropped abstract fragment",
-      "layered depth with foreground blur", "radial emanating from center",
-      "scattered elements with generous empty space",
-      "single dominant form filling the frame", "two contrasting fields meeting",
-      "spiral composition", "minimal elements in vast emptiness",
-      "small forms against expansive void", "dense texture filling the frame",
-    ];
+    // ── Cinematic POV system ──
+    // Perspectives evolve through the journey arc, inspired by Kubrick's
+    // one-point perspective, Tarkovsky's contemplative duration, Malick's
+    // nature POV, Villeneuve's scale contrast, and Spielberg's low-angle awe.
+    // Each phase gets perspectives appropriate to its emotional register.
+    const phase = getJourneyEngine().getCurrentPhase();
+    const perspectives = CINEMATIC_PERSPECTIVES[phase ?? "threshold"] ?? CINEMATIC_PERSPECTIVES.threshold;
+
     const interpretations = [
       "painterly and impressionistic", "photographic and textural",
       "geometric and structured", "fluid and organic",
@@ -291,10 +435,18 @@ export function AiImageLayer({
     const rng = promptSeedRef.current != null
       ? createSeededRandom(promptSeedRef.current + genCountRef.current)
       : Math.random;
-    const comp = compositions[Math.floor(rng() * compositions.length)];
+    const pov = perspectives[Math.floor(rng() * perspectives.length)];
     const interp = interpretations[Math.floor(rng() * interpretations.length)];
     const mood = moods[Math.floor(rng() * moods.length)];
-    const variedPrompt = `${currentPrompt}, ${comp}, ${interp}, ${mood}, no snowflakes`;
+
+    // Spiritual figure — rare, surprising, never in threshold
+    const figureChance = FIGURE_PROBABILITY[phase ?? "threshold"] ?? 0;
+    const figureRoll = rng();
+    const figureDesc = figureRoll < figureChance
+      ? `, with ${SPIRITUAL_FIGURES[Math.floor(rng() * SPIRITUAL_FIGURES.length)]}`
+      : "";
+
+    const variedPrompt = `${currentPrompt}, ${pov}, ${interp}, ${mood}${figureDesc}, no snowflakes`;
 
     // Capture current prompt to discard stale responses after a prompt change
     const requestPrompt = currentPrompt;

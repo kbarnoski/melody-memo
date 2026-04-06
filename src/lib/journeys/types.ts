@@ -180,6 +180,8 @@ export interface JourneyFrame {
   eventImpulse?: number;
   /** Type of the current event impulse */
   eventType?: "bass_hit" | "texture_change" | "climax" | "drop" | "silence" | "new_idea";
+  /** Approach ramp 0-1 — builds up ~1.5s before the next bass_hit event fires */
+  eventApproach?: number;
   /** @deprecated Use eventImpulse — kept for backward compat */
   cueImpulse?: number;
 }

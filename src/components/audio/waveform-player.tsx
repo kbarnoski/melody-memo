@@ -270,6 +270,16 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
           onTimeUpdateRef.current?.(time);
         });
 
+        // Capture exact time on pause — audioprocess stops firing so the last
+        // reported time can be stale. Without this, cue markers placed while
+        // paused land at the wrong position.
+        ws.on("pause", () => {
+          if (useAudioStore.getState().currentTrack?.id !== recordingId) return;
+          const time = ws.getCurrentTime();
+          setCurrentTime(time);
+          onTimeUpdateRef.current?.(time);
+        });
+
         // No play/pause/finish event handlers needed — store state drives UI
 
         ws.on("error", (err: unknown) => {

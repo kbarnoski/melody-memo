@@ -80,7 +80,7 @@ class JourneyEngine {
   private static readonly SHADER_MAX_SECS_ABSOLUTE = 55;
   /** Decay duration per event type (seconds) */
   private static readonly EVENT_DECAY: Record<string, number> = {
-    bass_hit: 1.2,
+    bass_hit: 2.5,
     texture_change: 2.5,
     climax: 3.0,
     drop: 2.0,
@@ -268,6 +268,20 @@ class JourneyEngine {
       }
     }
 
+    // Approach ramp — builds up ~1.5s before the next bass_hit event.
+    // Shaders and images should get more active right before the impact.
+    let eventApproach = 0;
+    const approachWindow = this.trackDuration > 0 ? 1.5 / this.trackDuration : 0.007;
+    for (const evt of this.eventMarkers) {
+      if (this.firedEvents.has(evt.progress)) continue;
+      if (evt.type !== "bass_hit") continue;
+      const distance = evt.progress - clamped;
+      if (distance > 0 && distance <= approachWindow) {
+        // 0 at edge of window → 1 at the event marker
+        eventApproach = Math.max(eventApproach, 1 - (distance / approachWindow));
+      }
+    }
+
     const { phaseIndex, nextPhaseIndex, blend } = getPhaseBlend(clamped, phases);
     const currentPhase = phases[phaseIndex];
     const phaseProgress = getPhaseProgress(clamped, currentPhase);
@@ -439,6 +453,7 @@ class JourneyEngine {
       tertiaryShaderMode: this.tertiaryShaderMode ?? undefined,
       eventImpulse: this.eventImpulse,
       eventType: this.eventType as JourneyFrame["eventType"],
+      eventApproach,
       cueImpulse: this.eventImpulse, // backward compat alias
     };
 

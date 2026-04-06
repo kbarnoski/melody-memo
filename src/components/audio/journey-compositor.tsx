@@ -87,6 +87,8 @@ export function JourneyCompositor({
   // Per-type event impulse reactions
   const impulse = frame?.eventImpulse ?? 0;
   const evtType = frame?.eventType ?? null;
+  // Pre-activation ramp — builds ~1.5s before bass hit (0→1)
+  const approach = frame?.eventApproach ?? 0;
 
   const eventReaction = useMemo(() => {
     if (impulse === 0 || !evtType) {
@@ -94,7 +96,8 @@ export function JourneyCompositor({
     }
     switch (evtType) {
       case "bass_hit":
-        return { bloom: impulse * 0.80, chromatic: impulse * 0.20, vignetteOpen: impulse * 0.40, halation: 0 };
+        // MASSIVE subsonic reverberation — unmissable visual shockwave
+        return { bloom: impulse * 4.0, chromatic: impulse * 0.60, vignetteOpen: impulse * 0.80, halation: impulse * 0.50 };
       case "texture_change":
         return { bloom: impulse * 0.20, chromatic: 0, vignetteOpen: 0, halation: impulse * 0.15 };
       case "climax":
@@ -156,6 +159,33 @@ export function JourneyCompositor({
     return () => cancelAnimationFrame(shaderFadeRef.current);
   }, [aiReady, showAi, effectiveShaderOpacity]);
 
+  // Pre-activation + bass hit shader boost.
+  // Approach ramp: shaders get brighter ~1.5s before the hit.
+  // On hit: spike to max then settle back fast.
+  useEffect(() => {
+    if (!rootRef.current) return;
+    if (approach > 0 && impulse <= 0) {
+      // Building up — ramp shader opacity toward 1.0
+      const ramped = Math.min(1.0, shaderOpacityRef.current + approach * approach * 0.6);
+      rootRef.current.style.setProperty("--shader-opacity", String(ramped));
+      return;
+    }
+    if (impulse > 0 && evtType === "bass_hit") {
+      // Hit! Spike to max so shaders flash with the white overlay
+      rootRef.current.style.setProperty("--shader-opacity", "1");
+      const timer = setTimeout(() => {
+        if (rootRef.current) {
+          rootRef.current.style.setProperty("--shader-opacity", String(shaderOpacityRef.current));
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+    // Neither approaching nor firing — restore normal
+    if (approach <= 0 && impulse <= 0 && rootRef.current) {
+      rootRef.current.style.setProperty("--shader-opacity", String(shaderOpacityRef.current));
+    }
+  }, [approach, impulse, evtType]);
+
   if (!showAi && !frame) {
     return <>{children}</>;
   }
@@ -184,16 +214,58 @@ export function JourneyCompositor({
         />
       )}
 
+      {/* Pre-activation glow — bloom buildup before bass hit */}
+      {approach > 0.1 && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 3,
+            pointerEvents: "none",
+            background: `radial-gradient(ellipse at center, rgba(200,220,255,${approach * approach * 0.25}) 0%, transparent 60%)`,
+            mixBlendMode: "screen",
+          }}
+        />
+      )}
+
+      {/* Bass hit full-screen flash — fast bright flash then settles quickly */}
+      {impulse > 0 && evtType === "bass_hit" && (
+        <>
+          {/* Full-screen white flash — impulse⁴ decays FAST (bright→gone in <0.5s) */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 4,
+              pointerEvents: "none",
+              backgroundColor: `rgba(255, 255, 255, ${Math.min(1, impulse * impulse * impulse * impulse * 0.95)})`,
+            }}
+          />
+          {/* Subsonic shockwave ring expanding outward beneath the flash */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 3,
+              pointerEvents: "none",
+              background: `radial-gradient(ellipse at center, transparent ${(1 - impulse) * 30}%, rgba(200,220,255,${impulse * impulse * 0.35}) ${(1 - impulse) * 50 + 20}%, transparent ${(1 - impulse) * 70 + 30}%)`,
+              transform: `scale(${1 + (1 - impulse) * 0.5})`,
+              mixBlendMode: "screen",
+            }}
+          />
+        </>
+      )}
+
       {/* Post-processing — adaptive scaling from feedback + light-phase reduction + typed event reactions */}
       {frame && (
         <PostProcessingLayer
           chromaticAberration={frame.chromaticAberration * adaptiveScale + eventReaction.chromatic}
-          vignette={(isLightPhase ? frame.vignette * 0.3 : frame.vignette) * adaptiveScale * (1 - eventReaction.vignetteOpen)}
-          bloomIntensity={(isLightPhase ? frame.bloomIntensity * 0.2 : frame.bloomIntensity) * adaptiveScale * adaptiveBloom * (1 + eventReaction.bloom)}
+          vignette={(isLightPhase ? frame.vignette * 0.3 : frame.vignette) * adaptiveScale * Math.max(0, 1 - eventReaction.vignetteOpen)}
+          bloomIntensity={Math.min(1.5, (isLightPhase ? frame.bloomIntensity * 0.2 : frame.bloomIntensity) * adaptiveScale * adaptiveBloom + eventReaction.bloom * 0.3 + approach * approach * 0.4)}
           audioAmplitude={audioAmplitude}
           filmGrain={0}
           particleDensity={(isLightPhase ? frame.particleDensity * 0.3 : frame.particleDensity) * adaptiveScale}
-          halation={(isLightPhase ? 0 : frame.halation) * adaptiveScale + eventReaction.halation}
+          halation={Math.min(0.8, (isLightPhase ? 0 : frame.halation) * adaptiveScale + eventReaction.halation)}
           palette={frame.palette}
         />
       )}

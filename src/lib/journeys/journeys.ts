@@ -1276,6 +1276,136 @@ export const JOURNEYS: Journey[] = [
       },
     }),
   },
+  {
+    id: "ghost",
+    name: "Ghost",
+    subtitle: "what haunts the edge of everything",
+    description:
+      "Something moves in the corner of an empty room. Not evil — just ancient, and alone. You follow it through abandoned hallways, ancient forests, and the places between worlds until the last note breaks open into light.",
+    realmId: "cosmos",
+    aiEnabled: true,
+    recordingId: "549fc519-f7fc-4c38-a771-adaad2edbc81",
+    phaseLabels: { threshold: "Apparition", expansion: "Haunting", transcendence: "Possession", illumination: "Recognition", return: "Release", integration: "Grace" },
+    phases: defaultPhases("cosmos", {
+
+      // ── Apparition (0:00–0:27) ──
+      // Opening Theme A: CM/G pedal with Fm6 alternation.
+      // Gentle, bittersweet C major. The ghost is barely perceptible.
+      // EARTHLY MICRO → COSMIC PORTAL: haunted room whose window opens onto infinite void.
+      threshold: {
+        start: 0.0,
+        end: 0.12,
+        aiPrompt: "a dimly lit empty room in an ancient house at night — bare wooden floorboards worn smooth by centuries, a single tall window on the right but through the window instead of a garden there is infinite deep black cosmic void with faint distant stars, pale starlight casting a diagonal shaft across the floor, in the far left corner where the light doesn't reach a barely-perceptible translucent feminine form made of faint luminous mist, her very long dark hair drifting slowly upward as if weightless, the hair impossibly long trailing along the ceiling and dissolving into fine threads of pale light that spread across the room like spectral cobweb, fine luminous particles dispersing from her hair threads drifting slowly toward the cosmic window as if drawn into the void beyond, you can almost see through her to the peeling wallpaper behind, she is caught in the corner of your eye — the moment before you turn to look, photorealistic room textures with age and patina, generous dark negative space filling three-quarters of the frame, asymmetric composition with visual weight in the left corner and the cosmic window right, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "deep subsonic pressure ripple passing through the room, the windowpanes vibrating, the starlight shaft shuddering, the ghost's hair rippling with the invisible force, particles scattering outward",
+          lowAmplitude: "near-total darkness, only the faintest pale shimmer in the corner barely distinguishable from shadow, the cosmos beyond the window black and still",
+        },
+        guidancePhrases: ["something moves in the dark...", "do you feel it...", "it has always been here..."],
+        poetryMood: "mystical",
+        voice: "ash",
+      },
+
+      // ── Haunting (0:27–1:28) ──
+      // Development 1 + Theme A Return + Theme B.
+      // Chromaticism grows, harmonic rhythm accelerates.
+      // SURREAL BLEND: ancient stone staircase descending INTO starfield.
+      // Architecture dissolving into cosmos. Overhead perspective.
+      // Hair threading between stone and stars. Particles dispersing.
+      expansion: {
+        start: 0.12,
+        end: 0.40,
+        aiPrompt: "overhead bird's-eye view looking straight down into a dark stone spiral staircase — the worn steps descend from photorealistic ancient stone at the top into deep cosmic void below, the staircase physically dissolving where stone meets stars, the bottom steps becoming translucent then vanishing into infinite black space with distant nebula light, on the staircase a translucent woman descends slowly toward the cosmos, her very long dark hair in spiraling da Vinci curls trailing behind her up the stairs impossibly long, the hair threading along the stone walls like living vines of pale light then continuing beyond where the stone ends — spiraling outward into the cosmic void below becoming luminous filaments connecting to distant star clusters, each curl unwinding into individual threads that trace paths between the earthly staircase and infinite space, fine spectral particles dispersing from the hair strands trailing downward into the void like luminous dust, the woman is barely there but her hair fills both worlds — the ancient and the infinite, cool silver and deep indigo palette, generous dark void filling the lower two-thirds of the frame, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "subsonic shockwave reverberating through both stone and cosmos, the steps vibrating, the void rippling, luminous hair threads pulsing with the deep frequency, particles scattering outward in a pressure wave",
+          highTreble: "luminous threads of hair glowing brighter at their cosmic tips, fine particles of starlight scattering from each strand into the void",
+        },
+        guidancePhrases: ["it's closer now...", "the dark has shape...", "listen between the notes..."],
+        poetryMood: "hypnotic",
+        voice: "ash",
+      },
+
+      // ── Possession (1:28–2:04) ──
+      // C Minor Section — tonal shift to darkness. C/Db oscillation.
+      // ★ BASS HIT 1 at 1:38 (progress ~0.45) — massive subsonic impact.
+      // PURE COSMIC: infinite dark void filled with layered translucent spirit
+      // women receding into infinite depth. Hair networks spanning the cosmos.
+      // Wispy, dreamy, alive. Particles everywhere.
+      transcendence: {
+        start: 0.40,
+        end: 0.57,
+        aiPrompt: "infinite deep black cosmic void — at different depths and scales multiple translucent ghostly women float weightless, the nearest large and luminous in the lower-right third, a second smaller and further away in the upper-left, a third barely visible in the far distance, a fourth just a wisp of hair and starlight, each progressively more transparent receding into infinite depth like reflections in facing mirrors, each woman has impossibly long flowing hair in Mucha-style waves — their hair streams outward connecting to each other across the void creating a vast luminous web of spiraling interweaving strands that spans the entire frame, the hair network alive and breathing with soft pulses of silver-blue light traveling along the strands like signals between spirits, each woman wispy and dreamlike with serene closed eyes, photorealistic faces and shoulders where visible with diverse dark skin tones but their bodies dissolving into luminous mist and trailing particles, fine spectral particles dispersing in every direction from the hair intersections like pollen from cosmic flowers, the feeling of contacting the other side — an infinite field of ancestral feminine presences, generous dark void between them, deep indigo and spectral silver palette against pure black, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "massive subsonic pulse rippling through the entire hair network, every strand vibrating visibly in a wave expanding outward from the center, the spirits brightening simultaneously as the bass passes through them, particles exploding outward from every intersection point, the void itself shuddering with the deep frequency",
+          highAmplitude: "every thread of hair blazing with sudden cold light, all the layered spirits illuminated at once revealing the full infinite depth of their network spanning the cosmos",
+        },
+        guidancePhrases: ["she is everywhere...", "the boundary has dissolved...", "they were always here..."],
+        poetryMood: "intense",
+        voice: "ash",
+      },
+
+      // ── Recognition (2:04–2:44) ──
+      // Restatement — returns to C major with renewed energy.
+      // ★ BASS HIT 2 at 2:39 (progress ~0.726) — subsonic reverberation.
+      // SURREAL BLEND: ancient gnarled tree with roots reaching down into
+      // starfield below. Ghost woman's hair weaving through branches into cosmos.
+      // Out-of-body overhead perspective. Layered figures at cosmic scale.
+      illumination: {
+        start: 0.57,
+        end: 0.76,
+        aiPrompt: "surreal impossible landscape — a single massive ancient gnarled tree rooted in a floating island of dark earth in the upper-left third, its roots extending downward through open air into deep cosmic void below where they become luminous filaments connecting to distant star clusters, the tree's branches reaching upward into starfield above, woven through the branches and roots a ghostly translucent woman — her face barely visible among the upper branches with serene expression and warm dark skin, her very long hair in spiraling Renaissance curls streaming downward along the trunk and through every root becoming the luminous connections to the cosmos below, a second translucent spirit woman floats in the void to the right her hair interweaving with the first woman's root-threads creating a shimmering network between earth and stars, a third barely-visible wispy figure far below among the star clusters only her trailing hair visible as luminous threads, fine particles dispersing from the hair intersections into the generous void like seeds scattered into infinity, photorealistic bark texture on the tree and rich dark earth on the floating island against infinite cosmic depth, overhead perspective looking slightly down revealing the full tree-to-cosmos connection, deep earth tones and spectral blue with amber light glowing at the root-star intersections, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "deep bass reverberation shaking the ancient tree, every root-thread pulsing simultaneously, the hair network flaring bright, particles exploding outward from the intersections, the floating earth trembling, the cosmos rippling with the subsonic force",
+          lowAmplitude: "the spirits barely visible, only the faintest luminous traces of their hair threading between tree and stars, profound stillness suspended between worlds",
+        },
+        guidancePhrases: ["there is light inside the dark...", "the ghost was never lost...", "recognition..."],
+        poetryMood: "mystical",
+        voice: "ash",
+      },
+
+      // ── Release (2:44–3:24) ──
+      // A♭ Major Interlude + Final Theme. Warm chromatic mediant.
+      // COSMIC WITH WARMTH: ascending spirits in vast dark space.
+      // Hair spiraling upward becoming golden threads. Particles warm→gold.
+      // Multiple layered figures dissolving upward into light.
+      return: {
+        start: 0.76,
+        end: 0.93,
+        bloomIntensity: 0.35,
+        halation: 0.08,
+        vignette: 0.25,
+        palette: { primary: "#0a0808", secondary: "#1a1410", accent: "#c09060", glow: "#e0b080" },
+        aiPrompt: "vast dark cosmic space warming from deep indigo-black at the lower edges to the subtlest amber glow in the upper-right — multiple translucent spirit women ascending at different heights, the nearest in the lower-left third a beautiful woman with very long dark hair in spiraling da Vinci curls interwoven with threads of golden light, her face photorealistic with warm bronze skin and peaceful upward gaze, her lower body dissolving into luminous warmth and trailing particles, above her two more translucent figures at different scales already higher and more transparent, their hair streaming downward becoming ribbons of warm light connecting them to the space below, at the greatest distance a fourth figure barely a wisp of golden hair dissolving into the warming upper void, all their hair interweaving as they rise creating a spiraling column of luminous threads reaching from dark depths upward into growing light, the hair transitioning from cool silver at the lowest tendrils to warm gold at the highest, fine luminous particles trailing from each ascending figure like embers rising from sacred fire, generous dark void in the lower half contrasting the warming upper space, the feeling of witnessing spirits released from the earth ascending through cosmos toward something holy, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "subsonic vibration passing through the ascending column, every hair thread pulsing outward, the golden particles scattering in a warm shockwave, the spirits brightening with each bass reverberation",
+        },
+        guidancePhrases: ["it's rising...", "the dark is thinning...", "feel the warmth returning..."],
+        poetryMood: "flowing",
+        voice: "ash",
+      },
+
+      // ── Grace (3:24–3:39) ──
+      // Coda — Fm6/Fm69 resolves through Csus2 to pure CM triad held 8.5s.
+      // HEAVENLY: golden light, angelic woman, pure transcendence.
+      // Her hair has become pure light — the ghost is free.
+      integration: {
+        start: 0.93,
+        end: 1.0,
+        bloomIntensity: 0.7,
+        halation: 0.15,
+        chromaticAberration: 0.0,
+        vignette: 0.10,
+        palette: { primary: "#1a1408", secondary: "#2a2010", accent: "#f0c060", glow: "#ffe0a0" },
+        aiPrompt: "warm golden radiance flooding vast cosmic space from the upper-right — deep indigo-black receding to the far edges as amber-gold light fills the upper two-thirds like sunrise through the cosmos itself, volumetric golden rays streaming diagonally, within the warmest region a stunning angelic woman with very long flowing hair in Mucha-style waves interlaced with tiny luminous wildflowers and threads of pure gold light, her face photorealistic with serene closed eyes and rich dark skin glowing with warm light, her upper body real and luminous but from the waist down she dissolves into thousands of warm golden particles ascending gently like sacred embers, her hair spreading outward in every direction becoming the golden rays themselves — each curl unraveling into a beam of light that reaches across the cosmos, behind her at infinite depth more wispy translucent feminine forms barely visible in the golden haze — the spirits of every ghost from every phase now gathered and luminous, fine golden particles dispersing in all directions like pollen in cathedral sunlight, the feeling of resolution after darkness — pure hope, the ghost becoming light itself, no text no signatures no watermarks no letters no writing",
+        aiPromptModifiers: {
+          highBass: "the golden light pulsing with deep resonant warmth, each bass note sending a visible wave of gold radiance outward, the angelic figure and all the distant spirits glowing brighter with each pulse, particles scattering in golden shockwaves",
+          lowAmplitude: "profound sacred silence, the gold light soft and steady, the angelic figure at perfect peace, weightless in golden cosmic stillness",
+        },
+        guidancePhrases: ["there was always light...", "the ghost is free..."],
+        poetryMood: "transcendent",
+        voice: "shimmer",
+      },
+    }),
+  },
 ];
 
 export function getJourney(id: string): Journey | undefined {

@@ -14,6 +14,7 @@ import { CreateJourneyDialog } from "@/components/journeys/create-journey-dialog
 import { ShareSheet } from "@/components/ui/share-sheet";
 import type { Journey } from "@/lib/journeys/types";
 import { PAIRED_TRACKS, PAIRED_STORAGE } from "@/lib/journeys/paired-tracks";
+import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { JOURNEY_PATHS, getPathForJourney, isPathCulminationUnlocked, GRAND_CULMINATION_ID } from "@/lib/journeys/paths";
 import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { getCulminationJourney } from "@/lib/journeys/culmination-journeys";
@@ -262,6 +263,10 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     const pairedSearch = PAIRED_TRACKS[journey.id];
     const currentTrack = useAudioStore.getState().currentTrack;
 
+    // Hoist cue markers and duration for direct event wiring after startJourney
+    let pendingCues: { time: number; label: string }[] = [];
+    let pendingDuration = 0;
+
     // If this journey has a paired track, always load it from the beginning
     // (even if another track is currently playing)
     if (pairedSearch) {
@@ -270,15 +275,31 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("recordings")
-          .select("id, title, audio_url")
+          .select("id, title, audio_url, duration")
           .ilike("title", pairedSearch)
           .limit(1);
 
         if (!error && data?.[0]) {
           const row = data[0];
           console.log("[journey] loading paired track:", row.title);
-          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}` }, 0);
+          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, duration: row.duration ?? undefined }, 0);
           trackLoaded = true;
+          pendingDuration = row.duration ?? 0;
+
+          // Also load analysis + cue markers for the paired track
+          // so auto-detected events and manual bass hit markers fire during the journey
+          const [analysisRes, markersRes] = await Promise.all([
+            supabase.from("analyses").select("*").eq("recording_id", row.id).single(),
+            supabase.from("markers").select("time, label").eq("recording_id", row.id).eq("type", "cue").order("time"),
+          ]);
+          if (analysisRes.data) {
+            useAudioStore.getState().setAnalysis(analysisRes.data);
+          }
+          const cues = (markersRes.data ?? []) as { time: number; label: string }[];
+          if (cues.length > 0) {
+            useAudioStore.getState().setCueMarkers(cues);
+            pendingCues = cues;
+          }
 
         } else {
           // Fallback: track not in recordings table — try storage directly
@@ -362,6 +383,20 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     }
 
     startJourney(journey.id);
+
+    // Wire cue marker events directly to the engine AFTER start.
+    // The React effect in visualizer-client may not fire in time because
+    // engine.start() clears eventMarkers and duration may still be 0.
+    // Using the DB duration (pendingDuration) avoids the race condition.
+    if (pendingCues.length > 0 && pendingDuration > 0) {
+      const engine = getJourneyEngine();
+      engine.setEvents(
+        pendingCues.map(c => ({ time: c.time, type: "bass_hit" as const, intensity: 1.0 })),
+        pendingDuration
+      );
+      console.log(`[journey] direct-wired ${pendingCues.length} cue markers (duration: ${pendingDuration}s)`);
+    }
+
     onClose();
   };
 

@@ -488,26 +488,30 @@ export function VisualizerClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
-  // Wire auto-detected events + manual cue markers to journey engine.
-  // Reactive on cueMarkers + analysis so late-arriving data still gets wired.
+  // Wire auto-detected events to journey engine.
+  // Cue markers from Studio are NOT auto-wired — they only apply when a journey
+  // explicitly opts in (e.g. Ghost uses enableBassFlash + its own cue markers).
   useEffect(() => {
     if (!activeJourney) return;
     // Skip if duration hasn't settled yet — effect will re-run when it does
     if (duration <= 0) return;
     const engine = getJourneyEngine();
 
-    // Auto-detected events from analysis
+    // Auto-detected events from analysis (texture_change, climax, drop, silence, new_idea)
+    // bass_hit events are included but only rendered visually when enableBassFlash is true
     const analysis = useAudioStore.getState().analysis;
     const autoEvents = (analysis?.events ?? []) as MusicalEvent[];
 
-    // Manual cue markers from Studio (reactive via storeCueMarkers)
-    const manualAsEvents = storeCueMarkers.map(c => ({
-      time: c.time, type: "bass_hit" as const, intensity: 1.0,
-    }));
+    // Only wire cue markers as bass_hit events for journeys that opt in
+    let allEvents = autoEvents;
+    if (activeJourney.enableBassFlash && storeCueMarkers.length > 0) {
+      const manualAsEvents: MusicalEvent[] = storeCueMarkers.map(c => ({
+        time: c.time, type: "bass_hit" as const, intensity: 1.0, label: c.label || "Cue",
+      }));
+      allEvents = [...autoEvents, ...manualAsEvents];
+    }
 
-    const allEvents = [...autoEvents, ...manualAsEvents];
     if (allEvents.length > 0) {
-      console.log(`[journey-events] wiring ${allEvents.length} events (${manualAsEvents.length} cue markers) for duration ${duration}s`);
       engine.setEvents(allEvents, duration);
     }
   }, [activeJourney, duration, storeCueMarkers]);
@@ -883,6 +887,7 @@ export function VisualizerClient({
         aiOnly={isAiOnlyMode}
         aiGenerating={isPlaying}
         journeyId={activeJourney?.id}
+        enableBassFlash={activeJourney?.enableBassFlash}
       >
         {/* Shader layer */}
         <VisualizerCore

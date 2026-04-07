@@ -129,6 +129,8 @@ export interface Journey {
   theme?: JourneyTheme;
   /** Owner user ID — set on custom journeys loaded from DB */
   userId?: string;
+  /** Opt-in: enable bass-hit white flash + pre-activation glow (default false) */
+  enableBassFlash?: boolean;
 }
 
 /** A user-created journey stored in Supabase */

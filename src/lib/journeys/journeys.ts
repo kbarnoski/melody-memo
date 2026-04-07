@@ -1285,6 +1285,7 @@ export const JOURNEYS: Journey[] = [
       "Something moves in the corner of an empty room. Not evil — just ancient, and alone. You follow it through abandoned hallways, ancient forests, and the places between worlds until the last note breaks open into light.",
     realmId: "cosmos",
     aiEnabled: true,
+    enableBassFlash: true,
     recordingId: "549fc519-f7fc-4c38-a771-adaad2edbc81",
     phaseLabels: { threshold: "Apparition", expansion: "Haunting", transcendence: "Possession", illumination: "Recognition", return: "Release", integration: "Grace" },
     phases: defaultPhases("cosmos", {

@@ -21,6 +21,8 @@ interface JourneyCompositorProps {
   promptSeed?: number;
   /** Stable journey identifier — only purge AI images when this changes */
   journeyId?: string;
+  /** Opt-in: enable bass-hit white flash + pre-activation glow (Ghost only) */
+  enableBassFlash?: boolean;
   children: React.ReactNode;
 }
 
@@ -53,6 +55,7 @@ export function JourneyCompositor({
   aiGenerating = true,
   promptSeed,
   journeyId,
+  enableBassFlash = false,
   children,
 }: JourneyCompositorProps) {
   const effectivePrompt = frame?.aiPrompt ?? aiPrompt ?? "";
@@ -96,7 +99,8 @@ export function JourneyCompositor({
     }
     switch (evtType) {
       case "bass_hit":
-        // MASSIVE subsonic reverberation — unmissable visual shockwave
+        // MASSIVE subsonic reverberation — only on journeys with enableBassFlash
+        if (!enableBassFlash) return { bloom: 0, chromatic: 0, vignetteOpen: 0, halation: 0 };
         return { bloom: impulse * 4.0, chromatic: impulse * 0.60, vignetteOpen: impulse * 0.80, halation: impulse * 0.50 };
       case "texture_change":
         return { bloom: impulse * 0.20, chromatic: 0, vignetteOpen: 0, halation: impulse * 0.15 };
@@ -111,7 +115,7 @@ export function JourneyCompositor({
       default:
         return { bloom: impulse * 0.60, chromatic: impulse * 0.15, vignetteOpen: impulse * -0.30, halation: 0 };
     }
-  }, [impulse, evtType]);
+  }, [impulse, evtType, enableBassFlash]);
 
   // Intro gating: shaders start hidden, fade in after first AI image arrives.
   // This creates a clean intro where the user sees imagery first, then the
@@ -159,11 +163,11 @@ export function JourneyCompositor({
     return () => cancelAnimationFrame(shaderFadeRef.current);
   }, [aiReady, showAi, effectiveShaderOpacity]);
 
-  // Pre-activation + bass hit shader boost.
+  // Pre-activation + bass hit shader boost (Ghost-only, gated by enableBassFlash).
   // Approach ramp: shaders get brighter ~1.5s before the hit.
   // On hit: spike to max then settle back fast.
   useEffect(() => {
-    if (!rootRef.current) return;
+    if (!rootRef.current || !enableBassFlash) return;
     if (approach > 0 && impulse <= 0) {
       // Building up — ramp shader opacity toward 1.0
       const ramped = Math.min(1.0, shaderOpacityRef.current + approach * approach * 0.6);
@@ -184,7 +188,7 @@ export function JourneyCompositor({
     if (approach <= 0 && impulse <= 0 && rootRef.current) {
       rootRef.current.style.setProperty("--shader-opacity", String(shaderOpacityRef.current));
     }
-  }, [approach, impulse, evtType]);
+  }, [approach, impulse, evtType, enableBassFlash]);
 
   if (!showAi && !frame) {
     return <>{children}</>;
@@ -214,8 +218,8 @@ export function JourneyCompositor({
         />
       )}
 
-      {/* Pre-activation glow — bloom buildup before bass hit */}
-      {approach > 0.1 && (
+      {/* Pre-activation glow — bloom buildup before bass hit (Ghost only) */}
+      {enableBassFlash && approach > 0.1 && (
         <div
           style={{
             position: "absolute",
@@ -228,8 +232,8 @@ export function JourneyCompositor({
         />
       )}
 
-      {/* Bass hit full-screen flash — fast bright flash then settles quickly */}
-      {impulse > 0 && evtType === "bass_hit" && (
+      {/* Bass hit full-screen flash — Ghost only, gated by enableBassFlash */}
+      {enableBassFlash && impulse > 0 && evtType === "bass_hit" && (
         <>
           {/* Full-screen white flash — impulse⁴ decays FAST (bright→gone in <0.5s) */}
           <div

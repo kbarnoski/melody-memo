@@ -171,10 +171,10 @@ function getUserDeletedShaders(): Set<string> {
 }
 
 function pickJourneyShaders(
-  options: { realmId?: string; shaderCategories?: string[] },
+  options: { realmId?: string; shaderCategories?: string[]; applyUserPrefs?: boolean },
   random: () => number = Math.random,
 ): string[] {
-  const { realmId, shaderCategories } = options;
+  const { realmId, shaderCategories, applyUserPrefs = false } = options;
 
   // Determine affinity categories: from theme or realm
   const affinityCategories = shaderCategories ?? (realmId ? REALM_SHADER_AFFINITY[realmId] ?? [] : []);
@@ -184,8 +184,10 @@ function pickJourneyShaders(
   const globalBlocked = realmId
     ? GLOBAL_SHADER_BLOCKLIST.filter(s => !allowedGlobals.has(s))
     : []; // theme-based journeys have no global blocklist — full creative freedom
-  const userBlocked = getUserBlockedShaders();
-  const userDeleted = getUserDeletedShaders();
+  // User block/delete preferences only apply to custom journeys — built-in journeys
+  // always use the full curated shader pool regardless of user preferences
+  const userBlocked = applyUserPrefs ? getUserBlockedShaders() : new Set<string>();
+  const userDeleted = applyUserPrefs ? getUserDeletedShaders() : new Set<string>();
   const blocklist = new Set([
     ...globalBlocked,
     ...(realmId ? REALM_SHADER_BLOCKLIST[realmId] ?? [] : []),
@@ -1426,11 +1428,13 @@ export function regenerateJourneyShaders(
   random: () => number = Math.random,
   trackDuration = 300,
 ): Journey {
-  // Use theme's shader categories if available, otherwise fall back to realm
+  // Use theme's shader categories if available, otherwise fall back to realm.
+  // User block/delete preferences only apply to custom journeys (those with userId).
   const allShaders = pickJourneyShaders(
     {
       realmId: journey.theme ? undefined : journey.realmId,
       shaderCategories: journey.theme?.shaderCategories,
+      applyUserPrefs: !!journey.userId,
     },
     random,
   );

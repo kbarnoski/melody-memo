@@ -59,12 +59,14 @@ interface RecordingDetailProps {
     content: string;
     created_at: string;
   }[];
+  readOnly?: boolean;
 }
 
 export function RecordingDetail({
   recording,
   analysis: initialAnalysis,
   initialMessages,
+  readOnly,
 }: RecordingDetailProps) {
   const router = useRouter();
   const [analysis, setAnalysis] = useState(initialAnalysis);
@@ -182,97 +184,99 @@ export function RecordingDetail({
 
   return (
     <>
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Add a description..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          onBlur={saveDescription}
-          className="text-sm text-muted-foreground"
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={() => setJourneyDialogOpen(true)}
-          title="Create a journey"
-        >
-          <Sparkles className="h-4 w-4" />
-        </Button>
+      {!readOnly && (
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Add a description..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            onBlur={saveDescription}
+            className="text-sm text-muted-foreground"
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={() => setJourneyDialogOpen(true)}
+            title="Create a journey"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
 
-        <CreateJourneyDialog
-          open={journeyDialogOpen}
-          onOpenChange={setJourneyDialogOpen}
-          recordingId={recording.id}
-          onCreated={(j) => toast.success(`Journey "${j.name}" created`)}
-        />
+          <CreateJourneyDialog
+            open={journeyDialogOpen}
+            onOpenChange={setJourneyDialogOpen}
+            recordingId={recording.id}
+            onCreated={(j) => toast.success(`Journey "${j.name}" created`)}
+          />
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={handleShare}
-          disabled={sharing}
-        >
-          {shareToken ? <Link className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
+            onClick={handleShare}
+            disabled={sharing}
+          >
+            {shareToken ? <Link className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+          </Button>
 
-        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Share Recording</DialogTitle>
-              <DialogDescription>
-                Anyone with this link can view the recording and its analysis.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex items-center gap-2">
-              <Input
-                readOnly
-                value={getShareUrl()}
-                className="font-mono text-xs"
-              />
+          <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Share Recording</DialogTitle>
+                <DialogDescription>
+                  Anyone with this link can view the recording and its analysis.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={getShareUrl()}
+                  className="font-mono text-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={copyShareUrl}
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                className="shrink-0"
-                onClick={copyShareUrl}
+                className="shrink-0 text-muted-foreground hover:text-destructive"
+                disabled={deleting}
               >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <Trash2 className="h-4 w-4" />
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 text-muted-foreground hover:text-destructive"
-              disabled={deleting}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete recording?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete &ldquo;{recording.title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete recording?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete &ldquo;{recording.title}&rdquo; and remove its analysis, markers, and chat history. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
 
       <WaveformPlayer
         ref={playerRef}
@@ -336,15 +340,18 @@ export function RecordingDetail({
         duration={effectiveDuration}
         onSeek={handleSeek}
         onMarkersChange={setMarkers}
+        readOnly={readOnly}
       />
 
-      <AnalyzeButton
-        recordingId={recording.id}
-        recordingTitle={recording.title}
-        audioUrl={recording.audio_url}
-        onComplete={setAnalysis}
-        hasExisting={hasAnalysis}
-      />
+      {!readOnly && (
+        <AnalyzeButton
+          recordingId={recording.id}
+          recordingTitle={recording.title}
+          audioUrl={recording.audio_url}
+          onComplete={setAnalysis}
+          hasExisting={hasAnalysis}
+        />
+      )}
 
       {/* Two tabs: Analysis | Chat */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

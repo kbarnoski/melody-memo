@@ -32,6 +32,7 @@ interface RecordingCardProps {
   tags?: { id: string; name: string }[];
   keySignature?: string | null;
   tempo?: number | null;
+  readOnly?: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -60,6 +61,7 @@ export function RecordingCard({
   tags,
   keySignature,
   tempo,
+  readOnly,
 }: RecordingCardProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
@@ -155,19 +157,21 @@ export function RecordingCard({
               <span className="shrink-0 sm:hidden h-2 w-2 rounded-full bg-white/20" />
             </>
           )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="shrink-0 text-muted-foreground hover:text-destructive"
-            disabled={deleting}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setConfirmOpen(true);
-            }}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          {!readOnly && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setConfirmOpen(true);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </CardContent>
       </Card>
       </Link>

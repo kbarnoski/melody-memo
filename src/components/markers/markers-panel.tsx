@@ -23,6 +23,7 @@ interface MarkersPanelProps {
   onSeek: (time: number) => void;
   onMarkersChange?: (markers: Marker[]) => void;
   embedded?: boolean;
+  readOnly?: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -39,6 +40,7 @@ export function MarkersPanel({
   onSeek,
   onMarkersChange,
   embedded,
+  readOnly,
 }: MarkersPanelProps) {
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -126,7 +128,7 @@ export function MarkersPanel({
         <Flag className="h-4 w-4" />
         Markers ({markers.length})
       </div>
-      {!isAdding && (
+      {!isAdding && !readOnly && (
         <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
@@ -215,17 +217,19 @@ export function MarkersPanel({
                 <Flag className="h-3 w-3 shrink-0 text-primary" />
               )}
               <span className="flex-1 truncate">{marker.label}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteMarker(marker.id);
-                }}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteMarker(marker.id);
+                  }}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              )}
             </div>
           ))}
         </div>
@@ -250,7 +254,7 @@ export function MarkersPanel({
             <Flag className="h-4 w-4" />
             Markers ({markers.length})
           </CardTitle>
-          {!isAdding && (
+          {!isAdding && !readOnly && (
             <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"

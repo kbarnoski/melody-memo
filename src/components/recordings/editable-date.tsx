@@ -9,6 +9,7 @@ interface EditableDateProps {
   recordingId: string;
   recordedAt: string | null;
   createdAt: string;
+  readOnly?: boolean;
 }
 
 function formatDateDisplay(dateString: string): string {
@@ -39,7 +40,7 @@ function parseInput(value: string): Date | null {
   return date;
 }
 
-export function EditableDate({ recordingId, recordedAt, createdAt }: EditableDateProps) {
+export function EditableDate({ recordingId, recordedAt, createdAt, readOnly }: EditableDateProps) {
   const [editing, setEditing] = useState(false);
   const [currentDate, setCurrentDate] = useState(recordedAt || createdAt);
   const [inputValue, setInputValue] = useState("");
@@ -94,7 +95,7 @@ export function EditableDate({ recordingId, recordedAt, createdAt }: EditableDat
   return (
     <span className="flex items-center gap-1 text-sm text-muted-foreground">
       <Calendar className="h-3.5 w-3.5" />
-      {editing ? (
+      {editing && !readOnly ? (
         <input
           ref={inputRef}
           type="text"
@@ -105,6 +106,8 @@ export function EditableDate({ recordingId, recordedAt, createdAt }: EditableDat
           placeholder="MM/DD/YYYY"
           className="bg-transparent outline-none border-b border-primary w-28"
         />
+      ) : readOnly ? (
+        <span>Recorded {formatDateDisplay(currentDate)}</span>
       ) : (
         <button
           onClick={startEditing}

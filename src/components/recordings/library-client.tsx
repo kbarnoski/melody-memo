@@ -19,6 +19,7 @@ interface Recording {
   keySignature?: string | null;
   tempo?: number | null;
   tags: { id: string; name: string }[];
+  readOnly?: boolean;
 }
 
 interface Tag {
@@ -181,6 +182,7 @@ export function LibraryClient({ recordings, allTags }: LibraryClientProps) {
               keySignature={rec.keySignature}
               tempo={rec.tempo}
               tags={rec.tags}
+              readOnly={rec.readOnly}
             />
           ))}
         </div>

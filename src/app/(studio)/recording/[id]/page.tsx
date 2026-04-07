@@ -19,7 +19,7 @@ export default async function RecordingPage({
   const supabase = await createClient();
 
   // Run all queries in parallel to eliminate waterfall
-  const [recordingResult, analysisResult, messagesResult] = await Promise.all([
+  const [recordingResult, analysisResult, messagesResult, { data: { user } }] = await Promise.all([
     supabase.from("recordings").select("*").eq("id", id).single(),
     supabase.from("analyses").select("*").eq("recording_id", id).single(),
     supabase
@@ -27,10 +27,13 @@ export default async function RecordingPage({
       .select("*")
       .eq("recording_id", id)
       .order("created_at", { ascending: true }),
+    supabase.auth.getUser(),
   ]);
 
   const recording = recordingResult.data;
   if (!recording) notFound();
+
+  const readOnly = recording.user_id !== user?.id;
 
   // Use proxy API route — it detects ALAC and transcodes to AAC for Chrome
   const audioUrl = `/api/audio/${id}`;
@@ -50,6 +53,7 @@ export default async function RecordingPage({
             recordingId={recording.id}
             recordedAt={recording.recorded_at}
             createdAt={recording.created_at}
+            readOnly={readOnly}
           />
           {recording.duration && (
             <span className="flex items-center gap-1">
@@ -77,6 +81,7 @@ export default async function RecordingPage({
         }}
         analysis={analysis}
         initialMessages={messages ?? []}
+        readOnly={readOnly}
       />
     </div>
   );

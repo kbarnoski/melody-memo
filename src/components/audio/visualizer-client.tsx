@@ -64,6 +64,7 @@ interface VisualizerClientProps {
   initialJourney?: string;
   autoplay?: boolean;
   isAdmin?: boolean;
+  userId?: string;
   cueMarkers?: { time: number; label: string }[];
 }
 
@@ -74,6 +75,7 @@ export function VisualizerClient({
   initialJourney,
   autoplay = true,
   isAdmin = false,
+  userId,
   cueMarkers: cueMarkersProp = [],
 }: VisualizerClientProps) {
   const router = useRouter();
@@ -219,6 +221,11 @@ export function VisualizerClient({
   // Detect AI-only viz mode
   const storeVizMode = useAudioStore((s) => s.vizMode);
   const isAiOnlyMode = MODES_AI.has(storeVizMode);
+
+  // Scoped permissions: any logged-in user can open admin panel,
+  // but only admin or journey owner can rate
+  const canAdmin = !!userId;
+  const canRate = isAdmin || (!!userId && !!activeJourney?.userId && activeJourney.userId === userId);
 
   // Mood-based AI prompt for non-journey usage
   const MOOD_AI_PROMPTS: Record<string, string> = useMemo(() => ({
@@ -833,10 +840,10 @@ export function VisualizerClient({
           handleFullscreenToggle();
           break;
         case "a":
-          if (isAdmin) setAdminOpen((v) => !v);
+          if (canAdmin) setAdminOpen((v) => !v);
           break;
         case "r":
-          if (isAdmin) setRatingOpen((v) => !v);
+          if (canRate) setRatingOpen((v) => !v);
           break;
         case "s":
           if (isAdmin) setIsolatePrimary((v) => !v);
@@ -849,7 +856,7 @@ export function VisualizerClient({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleExit, libraryOpen, journeyOpen, togglePlayPause, seekBy, handleFullscreenToggle, isAdmin]);
+  }, [handleExit, libraryOpen, journeyOpen, togglePlayPause, seekBy, handleFullscreenToggle, isAdmin, canAdmin, canRate]);
 
   // Show HUD when analysis is available and completed
   const showHud = activeAnalysis?.status === "completed";
@@ -971,11 +978,11 @@ export function VisualizerClient({
         />
       )}
 
-      {/* Admin panel — toggle with 'A' key (admin only) */}
-      {isAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={journeyFrame?.shaderMode ?? storeVizMode} />}
+      {/* Admin panel — toggle with 'A' key (any logged-in user) */}
+      {canAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={journeyFrame?.shaderMode ?? storeVizMode} isAdmin={isAdmin} />}
 
-      {/* Rating panel — admin only, toggle with 'R' key, only during journeys */}
-      {isAdmin && (
+      {/* Rating panel — toggle with 'R' key, own custom journeys or admin */}
+      {canRate && (
         <JourneyFeedback
           visible={ratingOpen && journeyActive && !journeyOpen}
           shaderMode={journeyFrame?.shaderMode ?? storeVizMode}

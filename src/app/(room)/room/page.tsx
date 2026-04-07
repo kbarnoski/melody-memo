@@ -14,7 +14,7 @@ export default async function VisualizerPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const isAdmin = !!user;
+  const isAdmin = !!user && user.email === process.env.ADMIN_EMAIL;
 
   let recording: { id: string; title?: string; audio_url: string } | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,6 +47,7 @@ export default async function VisualizerPage({
       initialJourney={journey}
       autoplay={autoplay}
       isAdmin={isAdmin}
+      userId={user?.id}
       cueMarkers={cueMarkers}
     />
   );

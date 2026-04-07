@@ -127,6 +127,8 @@ export interface Journey {
   recordingId?: string | null;
   /** AI-generated theme for custom journeys (replaces realm lookup) */
   theme?: JourneyTheme;
+  /** Owner user ID — set on custom journeys loaded from DB */
+  userId?: string;
 }
 
 /** A user-created journey stored in Supabase */

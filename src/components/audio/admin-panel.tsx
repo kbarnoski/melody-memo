@@ -47,11 +47,12 @@ interface AdminPanelProps {
   visible: boolean;
   onClose: () => void;
   currentShader?: string;
+  isAdmin?: boolean;
 }
 
 type Tab = "library" | "blocked" | "deleted" | "loved" | "stats";
 
-export function AdminPanel({ visible, onClose, currentShader }: AdminPanelProps) {
+export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }: AdminPanelProps) {
   const [revision, setRevision] = useState(0);
   const [activeTab, setActiveTab] = useState<Tab>("library");
   const refresh = useCallback(() => setRevision((r) => r + 1), []);
@@ -166,7 +167,7 @@ export function AdminPanel({ visible, onClose, currentShader }: AdminPanelProps)
           {([
             ["library", `All (${activeCount})`],
             ["blocked", `Blocked (${blocked.length})`],
-            ["deleted", `Deleted (${deleted.length})`],
+            ...(isAdmin ? [["deleted", `Deleted (${deleted.length})`]] : []),
             ["loved", `Loved (${loved.length})`],
             ["stats", "Stats"],
           ] as [Tab, string][]).map(([tab, label]) => (
@@ -206,16 +207,16 @@ export function AdminPanel({ visible, onClose, currentShader }: AdminPanelProps)
               return (
                 <ShaderRow key={mode} ref={isActive ? activeRowRef : undefined} label={label} stats={stats[mode]} status={isDeleted ? "deleted" : isBlocked ? "blocked" : isLoved ? "loved" : undefined} active={isActive}>
                   {isDeleted ? (
-                    <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
+                    isAdmin && <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
                   ) : isBlocked ? (
                     <>
                       <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
-                      <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                      {isAdmin && <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>}
                     </>
                   ) : (
                     <>
                       <SmallButton onClick={() => handleBlock(mode)} color="yellow">Block</SmallButton>
-                      <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                      {isAdmin && <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>}
                     </>
                   )}
                 </ShaderRow>
@@ -233,7 +234,7 @@ export function AdminPanel({ visible, onClose, currentShader }: AdminPanelProps)
               {group.shaders.map(({ mode, label }) => (
                 <ShaderRow key={mode} label={label} stats={stats[mode]}>
                   <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
-                  <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>
+                  {isAdmin && <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>}
                 </ShaderRow>
               ))}
             </CategoryGroup>

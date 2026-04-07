@@ -100,6 +100,7 @@ export function CreateJourneyDialog({
         id: data.dbRecord.id,
         storyText: storyText.trim(),
         recordingId: selectedRecordingId || recordingId || null,
+        userId: data.dbRecord.user_id,
       };
       onCreated?.(fullJourney);
     } catch (err) {

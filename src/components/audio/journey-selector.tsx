@@ -171,7 +171,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         const err = await res.json();
         throw new Error(err.error || "Failed to generate");
       }
-      const { journey } = await res.json();
+      const { journey, dbRecord } = await res.json();
       // Add to custom journeys list
       const customJourney: Journey = {
         id: journey.id,
@@ -182,6 +182,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         phases: journey.phases,
         aiEnabled: true,
         recordingId: currentTrack.id,
+        userId: dbRecord?.user_id,
         ...(journey.theme ? { theme: journey.theme } : {}),
       };
       setCustomJourneys((prev) => [customJourney, ...prev]);

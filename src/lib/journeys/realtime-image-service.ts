@@ -15,7 +15,7 @@ interface RealtimeImageOptions {
 
 type FrameCallback = (imageUrl: string) => void;
 
-const STYLE_SUFFIX = "mystical art, luminous, sacred, transcendent, visionary, otherworldly beauty";
+const STYLE_SUFFIX = "mystical art, luminous, sacred, transcendent, visionary, otherworldly, ethereal";
 const DEFAULT_COST_CAP = 10.0;
 
 // ─── LRU Image Cache ───

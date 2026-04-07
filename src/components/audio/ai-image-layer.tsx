@@ -154,58 +154,8 @@ const CINEMATIC_PERSPECTIVES: Record<string, string[]> = {
   ],
 };
 
-/**
- * Spiritual figure system — angelic feminine presences that emerge organically
- * from the cosmic/earthly scenes. Never in the opening. Rare and surprising.
- * Diverse, spiritual, beautiful but never sexual. Long flowing hair, auras,
- * uplifting. Dancing figures welcome. They appear as if scene and spirit are
- * one entity — not pasted on, but emerging from the environment itself.
- */
-
-/** Probability of a figure appearing per phase (0 = never, 1 = always) */
-const FIGURE_PROBABILITY: Record<string, number> = {
-  threshold: 0,        // NEVER in the opening
-  expansion: 0.10,     // very rare — first possible surprise
-  transcendence: 0.18, // more likely at peak moments
-  illumination: 0.22,  // revelation phase — most natural fit
-  return: 0.14,        // occasional gentle presence
-  integration: 0.12,   // soft closing presences
-};
-
-/**
- * Figure descriptions — half-spirit half-real. Long-haired beautiful women
- * emerging from ether. Their bodies dissolve into the scene at the edges.
- * Lower half or limbs becoming mist, light, particles, smoke, water.
- * Never fully solid. Never cheesy. Never sexual. Always transcendent.
- */
-const SPIRITUAL_FIGURES: string[] = [
-  // ── Dissolving into light / cosmos ──
-  "a beautiful woman with very long dark hair spiraling in loose da Vinci curls interwoven with threads of golden light, her lower body dissolving into luminous mist, half-real half-spirit, soft warm aura, dark skin, serene closed eyes, photorealistic face, hair fading into ethereal filaments below the waist",
-  "a stunning woman with long silver-white hair in flowing Mucha-style waves interlaced with tiny glowing wildflowers and light particles, her arms and torso real but her legs dissolving into particles of light, emerging from ether, golden-brown skin, peaceful expression, photorealistic",
-  "a beautiful long-haired woman seen from behind, her dark curly hair in spiraling Renaissance curls cascading down her back with delicate light woven between strands, her figure half-solid half-translucent, edges dissolving into atmosphere like smoke becoming air, warm bronze skin, photorealistic",
-  "a woman with long straight black hair that transitions into spiraling tendrils interwoven with soft luminous threads, her face and shoulders photorealistic, body becoming transparent and merging with beams of light, rich dark skin, gentle expression of knowing",
-
-  // ── Emerging from environment ──
-  "a beautiful woman with very long auburn hair in da Vinci spirals with small pale flowers caught in the curls, materializing from mist — upper body real but below the ribs she dissolves into fog and light, she is the mist becoming human, fair skin, calm steady gaze, photorealistic",
-  "a long-haired woman emerging from water, her hair spreading across the surface in Mucha-style flowing waves interwoven with water lilies and bioluminescent light, face breaking through into air with closed eyes, body still part of the water below, photorealistic",
-  "a stunning woman with long flowing hair forming from cosmic dust, her hair in spiraling curls interlaced with starlight and tiny nebula-flowers, face photorealistic and serene but shoulders and arms trailing off into nebula, warm brown skin",
-  "a beautiful woman with long dark hair in loose spiraling braids threaded with filaments of golden light, her figure condensing from radiance, core solid but edges shimmering and dissolving, not fully arrived yet, deep brown skin, quiet strength, photorealistic",
-
-  // ── Movement / dance ──
-  "a long-haired woman mid-dance, her hair in da Vinci spirals sweeping in a wide arc with light woven through each curl, torso photorealistic but arms leaving trails of light, feet dissolving into luminous vapor, half-body half-energy, dark skin, joyful",
-  "a beautiful dancer with long flowing black hair in Mucha-style waves adorned with luminous blossoms, spinning slowly, body real at center but edges blurring into translucent spirit-form, movement leaving traces of golden light, photorealistic face, eyes closed in bliss",
-  "a woman with long wavy hair in graceful spirals interlaced with threads of warm light and tiny flowers, in slow movement, hands real and detailed but lower body fading into swirling mist, she dances between physical and ethereal, warm olive skin, photorealistic",
-
-  // ── Contemplative ──
-  "a beautiful woman with very long dark hair drifting upward in spiraling Renaissance curls with light filaments woven between strands, face in profile photorealistic and peaceful, body becoming translucent from the chest down dissolving into warm light, brown skin, she exists in two worlds",
-  "a long-haired woman standing still looking into the distance, her dark hair in flowing Mucha-style waves interlaced with tiny glowing flowers and spiraling light, shoulders and face solid but from the waist down pure light and vapor, golden-brown skin, photorealistic",
-  "a stunning woman with long flowing hair in da Vinci spirals interwoven with luminous particles, seen from slightly below, face and neck photorealistic, body below fading into thousands of tiny light particles drifting upward, dark skin, serene half-smile",
-
-  // ── Ascending ──
-  "a beautiful woman with long hair streaming downward in spiraling curls threaded with light and delicate flowers, rising slowly, upper body real, lower body dissolving into mist and warm light, leaving the material world gently, rich brown skin, eyes upward, photorealistic",
-  "a long-haired woman ascending through atmosphere, her hair in flowing Mucha-style waves interlaced with glowing botanical tendrils and spiraling light, face photorealistic and beautiful, body progressively more translucent, at her feet pure spirit, warm dark skin, quiet wonder",
-  "a woman with very long dark hair in loose da Vinci spirals woven with threads of light and tiny luminous blossoms, floating in a column of soft light, body half-solid half-ether, real where the light is brightest, dissolving at the edges, photorealistic face",
-];
+// Figures removed — Ghost journey has its own figure prompts baked into aiPrompts.
+// All other journeys generate imagery from their aiPrompt only.
 
 /** Smooth ease-in-out cubic — no jarring linear interpolation */
 function easeInOutCubic(t: number): number {
@@ -439,14 +389,7 @@ export function AiImageLayer({
     const interp = interpretations[Math.floor(rng() * interpretations.length)];
     const mood = moods[Math.floor(rng() * moods.length)];
 
-    // Spiritual figure — rare, surprising, never in threshold
-    const figureChance = FIGURE_PROBABILITY[phase ?? "threshold"] ?? 0;
-    const figureRoll = rng();
-    const figureDesc = figureRoll < figureChance
-      ? `, with ${SPIRITUAL_FIGURES[Math.floor(rng() * SPIRITUAL_FIGURES.length)]}`
-      : "";
-
-    const variedPrompt = `${currentPrompt}, ${pov}, ${interp}, ${mood}${figureDesc}, no snowflakes`;
+    const variedPrompt = `${currentPrompt}, ${pov}, ${interp}, ${mood}, no snowflakes`;
 
     // Capture current prompt to discard stale responses after a prompt change
     const requestPrompt = currentPrompt;

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { ThemeProvider } from "next-themes";
 import { AudioProvider } from "@/lib/audio/audio-provider";
+import { useShaderPreferences } from "@/lib/shader-preferences";
 import { isIOSApp } from "@/lib/capacitor";
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -12,6 +13,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         SplashScreen.hide();
       });
     }
+    useShaderPreferences.getState().load();
   }, []);
 
   return (

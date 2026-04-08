@@ -5,87 +5,53 @@ import { useAudioStore } from "@/lib/audio/audio-store";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { MODE_META } from "@/lib/shaders";
 import type { Snapshot } from "@/lib/journeys/adaptive-engine";
+import { useShaderPreferences } from "@/lib/shader-preferences";
 
 const STORAGE_KEY = "resonance-journey-feedback";
-const BLOCKED_SHADERS_KEY = "resonance-blocked-shaders";
-const LOVED_SHADERS_KEY = "resonance-loved-shaders";
-const DELETED_SHADERS_KEY = "resonance-deleted-shaders";
 const SHADER_STATS_KEY = "resonance-shader-stats";
 
-/** Get the set of user-blocked shader modes (runtime exclusion) */
+// ── Shader preference wrappers (delegate to Zustand store, keep stats in localStorage) ──
+
+/** Get the set of user-blocked shader modes */
 export function getBlockedShaders(): Set<string> {
-  try {
-    const raw = localStorage.getItem(BLOCKED_SHADERS_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch { return new Set(); }
+  return useShaderPreferences.getState().blocked;
 }
 
-/** Block a shader — persists to localStorage for runtime exclusion */
+/** Block a shader — persists to Supabase via store */
 export function blockShader(mode: string): void {
-  const blocked = getBlockedShaders();
-  blocked.add(mode);
-  try {
-    localStorage.setItem(BLOCKED_SHADERS_KEY, JSON.stringify([...blocked]));
-  } catch { /* full */ }
+  useShaderPreferences.getState().blockShader(mode);
   incrementShaderStat(mode, "blockedCount");
 }
 
-/** Love a shader — persists for future reference */
+/** Love a shader — persists to Supabase via store */
 function loveShader(mode: string): void {
-  try {
-    const raw = localStorage.getItem(LOVED_SHADERS_KEY);
-    const loved: string[] = raw ? JSON.parse(raw) : [];
-    if (!loved.includes(mode)) {
-      loved.push(mode);
-      localStorage.setItem(LOVED_SHADERS_KEY, JSON.stringify(loved));
-    }
-  } catch { /* full */ }
+  useShaderPreferences.getState().loveShader(mode);
   incrementShaderStat(mode, "lovedCount");
 }
 
-/** Unblock a shader — remove from blocked set */
+/** Unblock a shader */
 export function unblockShader(mode: string): void {
-  const blocked = getBlockedShaders();
-  blocked.delete(mode);
-  try {
-    localStorage.setItem(BLOCKED_SHADERS_KEY, JSON.stringify([...blocked]));
-  } catch { /* full */ }
+  useShaderPreferences.getState().unblockShader(mode);
 }
 
 /** Get the set of loved shader modes */
 export function getLovedShaders(): string[] {
-  try {
-    const raw = localStorage.getItem(LOVED_SHADERS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  return [...useShaderPreferences.getState().loved];
 }
 
 /** Get the set of deleted shader modes */
 export function getDeletedShaders(): Set<string> {
-  try {
-    const raw = localStorage.getItem(DELETED_SHADERS_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch { return new Set(); }
+  return useShaderPreferences.getState().deleted;
 }
 
 /** Delete a shader permanently — stronger than block */
 export function deleteShader(mode: string): void {
-  const deleted = getDeletedShaders();
-  deleted.add(mode);
-  try {
-    localStorage.setItem(DELETED_SHADERS_KEY, JSON.stringify([...deleted]));
-  } catch { /* full */ }
-  // Also remove from blocked if present (deleted supersedes blocked)
-  unblockShader(mode);
+  useShaderPreferences.getState().deleteShader(mode);
 }
 
 /** Restore a deleted shader — remove from deleted set */
 export function undeleteShader(mode: string): void {
-  const deleted = getDeletedShaders();
-  deleted.delete(mode);
-  try {
-    localStorage.setItem(DELETED_SHADERS_KEY, JSON.stringify([...deleted]));
-  } catch { /* full */ }
+  useShaderPreferences.getState().undeleteShader(mode);
 }
 
 /** Shader usage stats shape */

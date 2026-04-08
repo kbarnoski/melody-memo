@@ -1,13 +1,42 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import React, { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import {
-  WaveScene, SeabedScene, CageScene, PendulumScene,
+  WaveScene, SeabedScene, CageScene,
 } from "./visualizer-3d-extra";
 import type { AnalyserLike } from "@/lib/audio/audio-engine";
+
+// ─── Error boundary for WebGL context failures ───
+
+class Canvas3DErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return <div className="absolute inset-0 bg-black" />;
+    }
+    return this.props.children;
+  }
+}
+
+/** Create a WebGLRenderer with explicit context check to avoid Three.js null.alpha crash */
+function createSafeRenderer(defaults: Record<string, unknown>): THREE.WebGLRenderer {
+  const canvas = defaults.canvas as HTMLCanvasElement;
+  const ctx = canvas.getContext("webgl2", { antialias: true, alpha: false });
+  if (!ctx) throw new Error("WebGL2 context unavailable");
+  return new THREE.WebGLRenderer({ canvas, context: ctx as unknown as WebGLRenderingContext, antialias: true, alpha: false });
+}
 
 // ─── Audio data hook — reads analyser every frame ───
 
@@ -1359,198 +1388,33 @@ function CloudScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray
   );
 }
 
-// ─── Waterfall scene — cascading water particles ───
-
-function WaterfallScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const pointsRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-
-  const COUNT = 8000;
-
-  const { positions, randoms, types } = useMemo(() => {
-    const pos = new Float32Array(COUNT * 3);
-    const rnd = new Float32Array(COUNT);
-    const typ = new Float32Array(COUNT); // 0 = falling, 1 = splash, 2 = mist
-
-    for (let i = 0; i < COUNT; i++) {
-      rnd[i] = Math.random();
-
-      if (i < 5500) {
-        // Falling water
-        pos[i * 3] = (Math.random() - 0.5) * 2.5;
-        pos[i * 3 + 1] = Math.random() * 6.0;
-        pos[i * 3 + 2] = (Math.random() - 0.5) * 0.8;
-        typ[i] = 0;
-      } else if (i < 7000) {
-        // Splash particles at bottom
-        const angle = Math.random() * Math.PI * 2;
-        const r = Math.random() * 3.0;
-        pos[i * 3] = Math.cos(angle) * r;
-        pos[i * 3 + 1] = Math.random() * 1.5;
-        pos[i * 3 + 2] = Math.sin(angle) * r * 0.5;
-        typ[i] = 1;
-      } else {
-        // Mist particles rising
-        pos[i * 3] = (Math.random() - 0.5) * 4.0;
-        pos[i * 3 + 1] = Math.random() * 3.0;
-        pos[i * 3 + 2] = (Math.random() - 0.5) * 2.0;
-        typ[i] = 2;
-      }
-    }
-    return { positions: pos, randoms: rnd, types: typ };
-  }, []);
-
-  const waterfallVertexShader = `
-    uniform float u_time;
-    uniform float u_bass;
-    uniform float u_amplitude;
-    attribute float aRandom;
-    attribute float aType;
-    varying float vRandom;
-    varying float vType;
-    varying float vHeight;
-
-    void main() {
-      vRandom = aRandom;
-      vType = aType;
-      float t = u_time;
-
-      vec3 pos = position;
-
-      if (aType < 0.5) {
-        // Falling water — gravity-accelerated fall cycle
-        float fallSpeed = 1.5 + aRandom * 1.0;
-        float cycleTime = 2.5 + aRandom;
-        float phase = mod(t * 0.5 + aRandom * cycleTime, cycleTime) / cycleTime;
-
-        pos.y = 3.0 - phase * phase * 6.5; // Gravity curve
-        pos.x = position.x + sin(t * 0.3 + aRandom * 6.28) * 0.1;
-
-        // Audio: slightly wider fall
-        pos.x *= 1.0 + u_bass * 0.1;
-        vHeight = 1.0 - phase;
-      } else if (aType < 1.5) {
-        // Splash — radial burst at bottom
-        float splashCycle = 1.5 + aRandom * 1.0;
-        float phase = mod(t * 0.6 + aRandom * splashCycle, splashCycle) / splashCycle;
-
-        float angle = aRandom * 6.2831;
-        float speed = 1.0 + aRandom * 2.0;
-        pos.x = cos(angle) * phase * speed;
-        pos.z = sin(angle) * phase * speed * 0.5;
-        pos.y = -3.0 + phase * speed * 0.8 - phase * phase * speed * 1.5; // Arc up then down
-
-        vHeight = 1.0 - phase;
-      } else {
-        // Mist — slow rise
-        float mistCycle = 4.0 + aRandom * 3.0;
-        float phase = mod(t * 0.15 + aRandom * mistCycle, mistCycle) / mistCycle;
-
-        pos.x = position.x + sin(t * 0.2 + aRandom * 6.28) * 1.5;
-        pos.y = -2.5 + phase * 5.0;
-        pos.z = position.z + cos(t * 0.15 + aRandom * 3.14) * 0.8;
-
-        vHeight = phase;
-      }
-
-      vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-      float size;
-      if (aType < 0.5) size = 1.5 + aRandom;
-      else if (aType < 1.5) size = 1.0 + aRandom * 0.8;
-      else size = 2.5 + aRandom * 3.0;
-
-      size *= 1.0 + u_amplitude * 0.3;
-      gl_PointSize = size * (200.0 / -mvPos.z);
-      gl_Position = projectionMatrix * mvPos;
-    }
-  `;
-
-  const waterfallFragmentShader = `
-    uniform float u_time;
-    uniform float u_treble;
-    varying float vRandom;
-    varying float vType;
-    varying float vHeight;
-
-    void main() {
-      float d = length(gl_PointCoord - vec2(0.5));
-      if (d > 0.5) discard;
-      float alpha = smoothstep(0.5, 0.05, d);
-
-      vec3 color;
-      if (vType < 0.5) {
-        // Falling water: blue-white
-        color = vec3(0.6, 0.75, 1.0);
-        alpha *= 0.5 * vHeight;
-      } else if (vType < 1.5) {
-        // Splash: white with slight blue
-        color = vec3(0.8, 0.85, 1.0);
-        alpha *= 0.4 * vHeight;
-      } else {
-        // Mist: very faint, with rainbow hints
-        float rainbow = sin(vRandom * 6.28 + u_time * 0.2) * 0.5 + 0.5;
-        color = vec3(
-          0.5 + rainbow * 0.15 + u_treble * 0.1,
-          0.55 + (1.0 - rainbow) * 0.1,
-          0.6 + rainbow * 0.1
-        );
-        alpha *= 0.08 * (1.0 - vHeight * 0.5);
-      }
-
-      gl_FragColor = vec4(color, alpha);
-    }
-  `;
-
-  const uniforms = useMemo(() => ({
-    u_time: { value: 0 }, u_bass: { value: 0 },
-    u_treble: { value: 0 }, u_amplitude: { value: 0 },
-  }), []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-    if (materialRef.current) {
-      const u = materialRef.current.uniforms;
-      u.u_time.value = t; u.u_bass.value = a.bass;
-      u.u_treble.value = a.treble; u.u_amplitude.value = a.amplitude;
-    }
-  });
-
-  return (
-    <>
-      <points ref={pointsRef}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-          <bufferAttribute attach="attributes-aRandom" args={[randoms, 1]} />
-          <bufferAttribute attach="attributes-aType" args={[types, 1]} />
-        </bufferGeometry>
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={waterfallVertexShader}
-          fragmentShader={waterfallFragmentShader}
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.3} luminanceSmoothing={0.9} intensity={1.0} />
-      </EffectComposer>
-    </>
-  );
-}
-
 // ─── Mode type ───
 
 export type Visualizer3DMode =
   | "orb" | "field" | "aurora"
   | "galaxy" | "depths" | "bonfire" | "crystal" | "swarm"
-  | "lotus" | "cloud" | "waterfall"
-  | "wave" | "seabed" | "cage" | "pendulum";
+  | "lotus" | "cloud"
+  | "wave" | "seabed" | "cage";
 
 // ─── Main 3D visualizer component ───
+
+/** Probe WebGL2 availability once — recheck after failures */
+let _webgl2Available: boolean | null = null;
+function isWebGL2Available(): boolean {
+  if (_webgl2Available !== null) return _webgl2Available;
+  try {
+    const c = document.createElement("canvas");
+    const ctx = c.getContext("webgl2");
+    _webgl2Available = ctx !== null;
+    if (ctx) {
+      const ext = ctx.getExtension("WEBGL_lose_context");
+      ext?.loseContext();
+    }
+  } catch {
+    _webgl2Available = false;
+  }
+  return _webgl2Available;
+}
 
 export function Visualizer3D({
   analyser,
@@ -1561,29 +1425,33 @@ export function Visualizer3D({
   dataArray: Uint8Array<ArrayBuffer>;
   mode: Visualizer3DMode;
 }) {
+  if (!isWebGL2Available()) {
+    return <div className="absolute inset-0 bg-black" />;
+  }
+
   return (
-    <Canvas
-      className="absolute inset-0 w-full h-full"
-      camera={{ position: [0, 0, 5], fov: 60 }}
-      gl={{ antialias: true, alpha: false }}
-      style={{ background: "#000" }}
-    >
-      <color attach="background" args={["#000000"]} />
-      {mode === "orb" && <OrbScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "field" && <FieldScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "aurora" && <AuroraScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "galaxy" && <GalaxyScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "depths" && <DepthsScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "bonfire" && <BonfireScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "crystal" && <CrystalScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "swarm" && <SwarmScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "lotus" && <LotusScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "cloud" && <CloudScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "waterfall" && <WaterfallScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "wave" && <WaveScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "seabed" && <SeabedScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "cage" && <CageScene analyser={analyser} dataArray={dataArray} />}
-      {mode === "pendulum" && <PendulumScene analyser={analyser} dataArray={dataArray} />}
-    </Canvas>
+    <Canvas3DErrorBoundary>
+      <Canvas
+        className="absolute inset-0 w-full h-full"
+        camera={{ position: [0, 0, 5], fov: 60 }}
+        gl={createSafeRenderer}
+        style={{ background: "#000" }}
+      >
+        <color attach="background" args={["#000000"]} />
+        {mode === "orb" && <OrbScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "field" && <FieldScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "aurora" && <AuroraScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "galaxy" && <GalaxyScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "depths" && <DepthsScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "bonfire" && <BonfireScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "crystal" && <CrystalScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "swarm" && <SwarmScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "lotus" && <LotusScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "cloud" && <CloudScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "wave" && <WaveScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "seabed" && <SeabedScene analyser={analyser} dataArray={dataArray} />}
+        {mode === "cage" && <CageScene analyser={analyser} dataArray={dataArray} />}
+      </Canvas>
+    </Canvas3DErrorBoundary>
   );
 }

@@ -19,7 +19,9 @@ export function CreateJourneyDialog({
   recordingId,
   onCreated,
 }: CreateJourneyDialogProps) {
+  const [journeyName, setJourneyName] = useState("");
   const [storyText, setStoryText] = useState("");
+  const [audioReactive, setAudioReactive] = useState(false);
   const [creating, setCreating] = useState(false);
   const [statusText, setStatusText] = useState("");
   const abortRef = useRef<AbortController | null>(null);
@@ -82,6 +84,8 @@ export function CreateJourneyDialog({
         body: JSON.stringify({
           storyText: storyText.trim(),
           recordingId: selectedRecordingId || recordingId,
+          name: journeyName.trim() || undefined,
+          audioReactive,
         }),
         signal: abortRef.current.signal,
       });
@@ -95,12 +99,15 @@ export function CreateJourneyDialog({
       toast.success(`Journey "${data.journey.name}" created`);
       onOpenChange(false);
       setStoryText("");
+      setJourneyName("");
+      setAudioReactive(false);
       const fullJourney: Journey = {
         ...data.journey,
         id: data.dbRecord.id,
         storyText: storyText.trim(),
         recordingId: selectedRecordingId || recordingId || null,
         userId: data.dbRecord.user_id,
+        audioReactive,
       };
       onCreated?.(fullJourney);
     } catch (err) {
@@ -166,6 +173,30 @@ export function CreateJourneyDialog({
             >
               <X className="h-5 w-5" />
             </button>
+          </div>
+
+          {/* Journey name */}
+          <div className="mb-5">
+            <label
+              className="block text-white/40 mb-2"
+              style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+            >
+              Name
+            </label>
+            <input
+              type="text"
+              placeholder="Leave blank to auto-generate"
+              value={journeyName}
+              onChange={(e) => setJourneyName(e.target.value)}
+              disabled={creating}
+              className="w-full rounded-xl px-4 py-2.5 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+              style={{
+                fontSize: "0.9rem",
+                fontFamily: "var(--font-geist-sans)",
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+              }}
+            />
           </div>
 
           {/* Story input */}
@@ -244,6 +275,44 @@ export function CreateJourneyDialog({
               </div>
             </div>
           )}
+
+          {/* Audio reactive toggle */}
+          <div className="mb-6">
+            <button
+              type="button"
+              onClick={() => !creating && setAudioReactive(!audioReactive)}
+              disabled={creating}
+              className="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-colors disabled:opacity-50"
+              style={{
+                backgroundColor: audioReactive ? `${accent}18` : "rgba(255,255,255,0.04)",
+                border: audioReactive ? `1px solid ${accent}40` : "1px solid rgba(255,255,255,0.08)",
+              }}
+            >
+              <div
+                className="w-8 h-4 rounded-full relative flex-shrink-0 transition-colors"
+                style={{ backgroundColor: audioReactive ? accent : "rgba(255,255,255,0.15)" }}
+              >
+                <div
+                  className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform"
+                  style={{ transform: audioReactive ? "translateX(16px)" : "translateX(2px)" }}
+                />
+              </div>
+              <div className="text-left">
+                <span
+                  className="block text-white/70"
+                  style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-sans)" }}
+                >
+                  React to music
+                </span>
+                <span
+                  className="block text-white/30"
+                  style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)" }}
+                >
+                  Shaders respond to audio frequencies
+                </span>
+              </div>
+            </button>
+          </div>
 
           {/* Create button */}
           <button

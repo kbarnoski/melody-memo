@@ -58,13 +58,17 @@ const themeSchema = z.object({
  * The theme carries everything a realm used to provide: visual vocabulary,
  * shader categories, palette, voice, poetry imagery.
  */
-export async function generateTheme(storyText: string): Promise<JourneyTheme> {
+export async function generateTheme(storyText: string, musicalContext?: string): Promise<JourneyTheme> {
+  const musicSection = musicalContext
+    ? `\n\nMusical context for this song:\n${musicalContext}\n\nLet the music's character influence your visual choices — a minor-key piece might favor cooler palettes and darker atmospheres, while an upbeat major-key piece might lean warmer and brighter.`
+    : "";
+
   const { object } = await generateObject({
     model: defaultModel,
     schema: themeSchema,
     prompt: `You are designing the visual and sonic theme for an immersive audio-visual journey based on this story:
 
-"${storyText}"
+"${storyText}"${musicSection}
 
 Generate a complete theme with:
 1. Visual vocabulary — 4 arrays of 6-8 evocative phrases each (environments, entities, textures, atmospheres). Be cinematic and specific, not generic.
@@ -98,14 +102,31 @@ Make every choice deeply personal to the story. The visual vocabulary should fee
 export async function buildJourneyFromStory(
   storyText: string,
   realmId?: string,
+  analysis?: AnalysisResult | null,
 ): Promise<Journey> {
   // Use a default journey as base template for numeric values
   const templateJourney = JOURNEYS[0];
   if (!templateJourney) throw new Error("No template journey available");
 
+  // Build musical context from analysis if available
+  let musicalContext = "";
+  if (analysis && analysis.status === "completed") {
+    const parts: string[] = [];
+    if (analysis.key_signature) parts.push(`Key: ${analysis.key_signature}`);
+    if (analysis.tempo) parts.push(`Tempo: ${Math.round(analysis.tempo)} BPM`);
+    if (analysis.time_signature) parts.push(`Time signature: ${analysis.time_signature}`);
+    if (analysis.chords?.length) {
+      const uniqueChords = [...new Set(analysis.chords.map((c) => c.chord))];
+      parts.push(`Chords: ${uniqueChords.slice(0, 8).join(", ")}`);
+    }
+    const vibe = detectVibe(analysis);
+    parts.push(`Detected mood: ${vibe.mood}`);
+    musicalContext = parts.join(". ");
+  }
+
   // Realm path (built-in journeys) vs theme path (custom journeys)
   const realm = realmId ? getRealm(realmId) : null;
-  const theme = realm ? null : await generateTheme(storyText);
+  const theme = realm ? null : await generateTheme(storyText, musicalContext || undefined);
 
   const vocabContext = realm
     ? `Realm: ${realm.name} (${realm.subtitle}). Visual vocabulary: ${realm.visualVocabulary.environments.slice(0, 3).join(", ")}, ${realm.visualVocabulary.textures.slice(0, 3).join(", ")}.`
@@ -113,12 +134,16 @@ export async function buildJourneyFromStory(
       ? `Visual world: ${theme.visualVocabulary.environments.slice(0, 3).join(", ")}, ${theme.visualVocabulary.textures.slice(0, 3).join(", ")}. Mood: ${theme.poetryMood}.`
       : "";
 
+  const musicPromptContext = musicalContext
+    ? `\n\nThe song being played: ${musicalContext}. Let the music's qualities shape each phase — reference the key, tempo, or mood where it enriches the imagery.`
+    : "";
+
   const { object } = await generateObject({
     model: defaultModel,
     schema: journeySchema,
     prompt: `Design a musical journey for: "${storyText}"
 
-${vocabContext}
+${vocabContext}${musicPromptContext}
 
 Generate exactly 6 phases in order:
 1. Threshold — quiet entry
@@ -203,9 +228,9 @@ export async function buildJourneyFromAnalysis(
 
   // If explicit realm override, use the realm path
   if (overrideRealmId && getRealm(overrideRealmId)) {
-    return buildJourneyFromStory(contextString, overrideRealmId);
+    return buildJourneyFromStory(contextString, overrideRealmId, analysis);
   }
 
   // Otherwise, generate theme from the musical context (no realm)
-  return buildJourneyFromStory(contextString);
+  return buildJourneyFromStory(contextString, undefined, analysis);
 }

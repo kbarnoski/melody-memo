@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildJourneyFromStory } from "@/lib/journeys/journey-builder";
+import type { AnalysisResult } from "@/lib/audio/types";
 
 export async function POST(request: Request) {
   try {
@@ -10,14 +11,28 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { storyText, realmId, recordingId, name } = await request.json();
+    const { storyText, realmId, recordingId, name, audioReactive } = await request.json();
 
     if (!storyText) {
       return Response.json({ error: "Missing storyText" }, { status: 400 });
     }
 
+    // Fetch analysis if a recording is specified
+    let analysis: AnalysisResult | null = null;
+    if (recordingId) {
+      const { data: analysisRow } = await supabase
+        .from("analyses")
+        .select("*")
+        .eq("recording_id", recordingId)
+        .eq("status", "completed")
+        .single();
+      if (analysisRow) {
+        analysis = analysisRow as AnalysisResult;
+      }
+    }
+
     // Build journey from story using AI — realmId is optional now
-    const journey = await buildJourneyFromStory(storyText, realmId || undefined);
+    const journey = await buildJourneyFromStory(storyText, realmId || undefined, analysis);
 
     // Store in database
     const { data, error } = await supabase.from("journeys").insert({
@@ -30,6 +45,7 @@ export async function POST(request: Request) {
       realm_id: journey.realmId,
       phases: JSON.parse(JSON.stringify(journey.phases)),
       theme: journey.theme ? JSON.parse(JSON.stringify(journey.theme)) : null,
+      audio_reactive: audioReactive ?? false,
     }).select().single();
 
     if (error) {

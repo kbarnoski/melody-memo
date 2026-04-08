@@ -131,6 +131,8 @@ export interface Journey {
   userId?: string;
   /** Opt-in: enable bass-hit white flash + pre-activation glow (default false) */
   enableBassFlash?: boolean;
+  /** When true, shaders react to audio frequencies instead of smooth sine waves */
+  audioReactive?: boolean;
 }
 
 /** A user-created journey stored in Supabase */

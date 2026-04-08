@@ -225,8 +225,8 @@ export function VisualizerClient({
   // Only the owner of a custom journey can open admin/rating panels.
   // Built-in journeys (no userId) are frozen — no tuning in production.
   const isOwnCustomJourney = !!userId && !!activeJourney?.userId && activeJourney.userId === userId;
-  const canAdmin = isOwnCustomJourney;
-  const canRate = isOwnCustomJourney;
+  const canAdmin = isAdmin || isOwnCustomJourney;
+  const canRate = isAdmin || isOwnCustomJourney;
 
   // Mood-based AI prompt for non-journey usage
   const MOOD_AI_PROMPTS: Record<string, string> = useMemo(() => ({
@@ -301,8 +301,12 @@ export function VisualizerClient({
   const [isolatePrimary, setIsolatePrimary] = useState(false);
   const [hideImagery, setHideImagery] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
-  // Default to journey browser unless entering with a specific recording or journey
-  const [journeyOpen, setJourneyOpen] = useState(!recording && !initialJourney);
+  // Default to last room mode preference, unless entering with a specific recording or journey
+  const [journeyOpen, setJourneyOpen] = useState(() => {
+    if (recording) return false;
+    if (initialJourney) return false;
+    return useAudioStore.getState().roomMode === "journey";
+  });
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iosImmersiveRef = useRef(false);
 
@@ -694,6 +698,7 @@ export function VisualizerClient({
     setJourneyCompleted(false);
     completedJourneyRef.current = null;
     useAudioStore.setState({ textOverlayMode: "off" });
+    useAudioStore.getState().setRoomMode("viz");
     setJourneyOpen(false);
     // If no track is loaded, load the full library (paused) so the user
     // doesn't land on the empty welcome screen.
@@ -701,6 +706,14 @@ export function VisualizerClient({
       loadLibraryQueue(false);
     }
   }, [loadLibraryQueue]);
+
+  // Sign out handler — available in The Room
+  const handleSignOut = useCallback(async () => {
+    const supabase = createClient();
+    useAudioStore.getState().pause();
+    await supabase.auth.signOut();
+    router.push("/login");
+  }, [router]);
 
   const handleExit = useCallback(() => {
     setJourneyCompleted(false);
@@ -710,7 +723,7 @@ export function VisualizerClient({
       state.stopJourney();
       router.push("/library");
     } else if (state.currentTrack) {
-      router.push(`/recording/${state.currentTrack.id}`);
+      router.push("/library");
     } else {
       router.push("/library");
     }
@@ -914,6 +927,7 @@ export function VisualizerClient({
           onJourneyToggle={() => {
             const wasOpen = journeyOpen;
             setJourneyOpen((v) => !v);
+            useAudioStore.getState().setRoomMode(wasOpen ? "viz" : "journey");
             // Switching from viz to journey browser — pause audio
             if (!wasOpen && !activeJourney && useAudioStore.getState().isPlaying) {
               useAudioStore.getState().pause();
@@ -949,12 +963,15 @@ export function VisualizerClient({
               setJourneyOpen(false);
             }
           }}
-          onShareRoom={handleShareRoom}
           onShareJourney={journeyActive ? handleShareJourney : undefined}
           isFullscreen={isFullscreen}
           onFullscreenToggle={handleFullscreenToggle}
           onSwitchToVisualize={handleSwitchToVisualize}
           journeyAccent={activeTheme?.palette.accent ?? activeRealm?.palette.accent ?? null}
+          smoothMotion={activeJourney ? !activeJourney.audioReactive : false}
+          onSignOut={handleSignOut}
+          onPrevShader={() => useAudioStore.getState().cycleVizModePrev()}
+          onNextShader={() => useAudioStore.getState().cycleVizMode()}
         >
           {/* Analysis HUD — top layer (hidden during journeys) */}
           {hudVisible && showHud && !journeyActive && (
@@ -985,7 +1002,7 @@ export function VisualizerClient({
       )}
 
       {/* Admin panel — toggle with 'A' key (any logged-in user) */}
-      {canAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={journeyFrame?.shaderMode ?? storeVizMode} isAdmin={isAdmin} />}
+      {canAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={journeyFrame?.shaderMode ?? storeVizMode} isAdmin={isAdmin} onSwitchShader={(mode) => useAudioStore.getState().setVizMode(mode)} onPrevShader={() => useAudioStore.getState().cycleVizModePrev()} onNextShader={() => useAudioStore.getState().cycleVizMode()} />}
 
       {/* Rating panel — toggle with 'R' key, own custom journeys or admin */}
       {canRate && (

@@ -83,6 +83,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             storyText: (row.story_text as string) ?? null,
             recordingId: (row.recording_id as string) ?? null,
             userId: row.user_id as string,
+            audioReactive: !!(row.audio_reactive),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ...(row.theme ? { theme: row.theme as any } : {}),
           }));

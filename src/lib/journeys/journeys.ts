@@ -2,6 +2,30 @@ import type { Journey, JourneyPhase } from "./types";
 import { MODE_META } from "@/lib/shaders";
 import { seededShuffle } from "./seeded-random";
 import { applyShaderPreferences } from "./adaptive-engine";
+import { getUserBlockedShaders, getUserDeletedShaders } from "@/lib/shader-preferences";
+
+// ─── LRU Shader Recency Tracking ───
+// Soft bias: recently-used shaders sort toward the back so consecutive journeys
+// draw from different parts of the pool. Never blocks — just deprioritizes.
+const LRU_KEY = "resonance-shader-lru";
+const LRU_MAX = 60;
+
+function getRecentShaders(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(LRU_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function recordUsedShaders(shaders: string[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const recent = getRecentShaders();
+    const updated = [...new Set([...shaders, ...recent])].slice(0, LRU_MAX);
+    localStorage.setItem(LRU_KEY, JSON.stringify(updated));
+  } catch { /* localStorage full — ignore */ }
+}
 
 // ─── Full shader library: ALL registered shaders ───
 // Every journey draws from this pool — balanced across all categories.
@@ -14,55 +38,71 @@ const ALL_SHADERS_RAW: string[] = [
   "glacial", "tsunami", "permafrost", "mistral", "rime",
   "updraft", "cirrus", "torrent", "swell", "aurora-borealis",
   "tempest", "nimbostratus", "frost-bloom", "thermocline", "estuary",
-  // Visionary (23)
+  // Visionary (42)
   "astral", "portal",
   "revelation", "threshold", "rapture",
   "mandorla", "seraph",
-  "halo", "nimbus",
-  "anamnesis", "dharma", "gnosis", "chakra", "vestige",
+  "halo",
+  "dharma", "gnosis", "chakra", "vestige",
   "empyrean", "stigmata", "aureole", "pleroma", "apophatic",
   "theophany", "yantra", "satori", "merkaba", "soma",
+  "kenosis", "numinous", "ruach", "anima", "metanoia",
+  "covenant", "mysterion", "agape", "paraclete", "vespers",
+  "jubilee", "tabernacle", "pilgrimage", "benediction", "cataphatic",
+  "hesychasm", "kairos", "lectio", "credo", "sanctum",
   // Cosmic (36)
   "cosmos", "pulsar", "quasar", "supernova",
   "nebula", "singularity", "stardust", "drift", "expanse",
-  "comet", "magnetar", "protostar", "redshift", "aphelion",
+  "comet", "protostar", "redshift", "aphelion",
   "nadir", "parsec", "nova", "photon",
   "selene", "kepler", "hubble", "doppler",
-  "corona", "aurora-wave", "wormhole", "zodiac", "solaris",
-  "perihelion", "helios", "crescent", "eclipse", "zenith",
+  "corona", "aurora-wave", "solaris",
+  "zenith",
   "lightyear", "binary", "cosmic-web", "dark-matter", "event-horizon",
-  // Organic (27)
+  // Organic (40)
   "ember", "tide", "spore",
   "chrysalis", "plankton", "lichen", "growth",
   "enzyme", "pollen", "symbiosis",
-  "phylum", "kelp", "mangrove",
-  "dendrite", "flagella", "mycelium", "coral", "mitochondria",
-  "synapse", "biolume", "tendril", "osmosis", "alveoli",
-  "diatom", "protoplasm", "filament", "photosynthesis", "biofilm",
-  // Geometry (35)
+  "kelp", "mangrove",
+  "flagella", "mycelium", "coral",
+  "synapse", "biolume", "tendril",
+  "diatom", "biofilm",
+  "pelagic", "canopy", "zooid", "cortex", "fruiting",
+  "nectar", "chimerism", "laminar", "peristalsis", "xylem",
+  "calyx", "endospore", "murmuration", "whorl", "capsule",
+  "stamen", "meristem", "tropism", "epidermis", "cilium",
+  // Geometry (53)
   "neon", "spiral",
   "geodesic", "moire",
   "catenary",
   "astroid", "cardioid", "lissajous", "cymatic", "guilloche",
   "trefoil", "quatrefoil", "involute", "rosette", "roulette", "deltoid", "nephroid", "epicycle",
   "hyperbola", "penrose", "torus", "helix", "escher",
-  "harmonograph", "voronoi-flow", "klein", "mobius-strip", "fibonacci-spiral",
-  "interference", "topology", "fractal-tree", "weave", "kaleidoscope",
+  "harmonograph", "voronoi-flow", "mobius-strip", "fibonacci-spiral",
+  "interference", "topology", "fractal-tree", "weave",
   "aurora-trail", "constellation",
-  // Dark (21)
+  "parabola", "cassegrain", "conchoid", "cissoid", "agnesi",
+  "strophoid", "brachistochrone", "sinograph", "chladni", "caustic-pool",
+  "zoetrope", "osculating", "tangent-field", "pedal-curve", "cochlea",
+  "ruled-surface", "versor", "waveform", "epicycloid", "catenary-chain",
+  // Dark (40)
   "umbra", "inferno", "plasma",
   "vortex",
   "lament", "hollow",
   "obsidian", "eclipse-dark", "entropy", "miasma", "penumbra",
   "terminus", "cinder", "requiem", "maelstrom-dark", "obsidian-flow",
-  "wraith", "furnace", "abyssal-zone", "charcoal", "shadowplay",
+  "wraith", "furnace", "charcoal", "shadowplay",
+  "monolith", "sepulchre", "umbrage", "pyre", "lethe",
+  "catharsis", "tenebrae", "nocturne", "immolation", "void-bloom",
+  "soot", "residuum", "eclipse-ring", "smolder", "vigil",
+  "severance", "aftermath", "crucible", "ossuary", "eventide",
   // Nature (4)
   "river", "rain", "ripple", "flame",
   "starfield", "radiance",
   // 3D Worlds (13)
   "orb",
-  "galaxy", "depths", "bonfire", "crystal", "swarm", "lotus", "cloud", "waterfall",
-  "wave", "seabed", "cage", "pendulum",
+  "galaxy", "depths", "bonfire", "crystal", "swarm", "lotus", "cloud",
+  "wave", "seabed", "cage",
 ];
 const ALL_SHADERS = [...new Set(ALL_SHADERS_RAW)];
 
@@ -102,7 +142,16 @@ const REALM_SHADER_AFFINITY: Record<string, string[]> = {
 const GLOBAL_SHADER_BLOCKLIST: string[] = [
   "snow", // only appropriate for winter/snowflake or user-created journeys
   "rain", // only appropriate for water-related realms (ocean, storm)
-  // oracle, cassini, tesseract, chitin, lattice, aurora, ethereal, sacred — REMOVED from codebase entirely
+  // Safety net — these shaders were REMOVED from the codebase entirely.
+  // They can't be picked (not in MODE_META/SHADERS), but listed here
+  // to guard against accidental re-addition.
+  "aurora", "cassini", "chitin", "entity", "ethereal", "lattice",
+  "oracle", "prismatic", "sacred", "tesseract",
+  // Admin-deleted April 2026 — permanently removed from codebase
+  "waterfall", "anamnesis", "nimbus", "crescent", "eclipse", "helios",
+  "magnetar", "perihelion", "wormhole", "zodiac", "alveoli", "dendrite",
+  "filament", "mitochondria", "osmosis", "photosynthesis", "phylum",
+  "protoplasm", "kaleidoscope", "klein", "pendulum", "abyssal-zone",
 ];
 
 /** Realms that ARE allowed to use globally-blocked shaders */
@@ -122,11 +171,11 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "supernova", "nova", "photon", "pulsar", // yellow sun/hot graphics
     "thermal", "geyser", "lightning", // warm/fiery elemental
     "ember", // warm organic tones
-    "redshift", "comet", "magnetar", // warm cosmic
+    "redshift", "comet", // warm cosmic
   ],
   hell: [
     "ocean", "cascade", "whirlpool", "tide", "ripple", // water elemental
-    "waterfall", "wave", "seabed", // water 3D worlds
+    "wave", "seabed", // water 3D worlds
     "plankton", "kelp", "mangrove", "coral", // aquatic/botanical organic
     "snow", // cold/winter
     "lotus", "cloud", // serene — wrong vibe
@@ -152,23 +201,6 @@ const REALM_SHADER_MUSTINCLUDE: Record<string, string[]> = {
   hell: ["lightning", "flame", "magma", "inferno", "vortex"],
 };
 
-/** Read user-blocked shaders from localStorage (safe for SSR — returns empty set) */
-function getUserBlockedShaders(): Set<string> {
-  if (typeof localStorage === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem("resonance-blocked-shaders");
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch { return new Set(); }
-}
-
-/** Read user-deleted shaders from localStorage (permanent removal — stronger than blocked) */
-function getUserDeletedShaders(): Set<string> {
-  if (typeof localStorage === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem("resonance-deleted-shaders");
-    return raw ? new Set(JSON.parse(raw)) : new Set();
-  } catch { return new Set(); }
-}
 
 function pickJourneyShaders(
   options: { realmId?: string; shaderCategories?: string[]; isCustom?: boolean },
@@ -227,10 +259,19 @@ function pickJourneyShaders(
     ...shuffleArray(varietyPool, random).filter(s => !mustInclude.includes(s)).slice(0, varietyCount),
   ];
 
+  // LRU recency bias: sort recently-used shaders toward the back
+  const recent = new Set(getRecentShaders());
+  const shuffled = shuffleArray(picked, random);
+  shuffled.sort((a, b) => {
+    const aRecent = recent.has(a) ? 1 : 0;
+    const bRecent = recent.has(b) ? 1 : 0;
+    return aRecent - bRecent;
+  });
+
   // Adaptive shader preferences only for custom journeys
   return options.isCustom
-    ? applyShaderPreferences(shuffleArray(picked, random), realmId ?? "custom")
-    : shuffleArray(picked, random);
+    ? applyShaderPreferences(shuffled, realmId ?? "custom")
+    : shuffled;
 }
 
 /** Pick `count` shaders from pool, avoiding `used` set. Never duplicates. */
@@ -1464,6 +1505,10 @@ export function regenerateJourneyShaders(
       random,
     ),
   }));
+
+  // Record used shaders for LRU cross-journey variety
+  const allUsed = newPhases.flatMap((p) => p.shaderModes);
+  recordUsedShaders(allUsed);
 
   return { ...journey, phases: newPhases };
 }

@@ -73,6 +73,9 @@ interface AudioState {
   // Cue markers for The Room
   cueMarkers: { time: number; label: string }[];
 
+  // Room mode preference (persists across navigation)
+  roomMode: "journey" | "viz";
+
   // Language
   language: string;
 
@@ -121,6 +124,7 @@ interface AudioState {
   setJourneyPhase: (phase: JourneyPhaseId) => void;
   setAiImageEnabled: (enabled: boolean) => void;
   setAmbientEnabled: (enabled: boolean) => void;
+  setRoomMode: (mode: "journey" | "viz") => void;
   setLanguage: (lang: string) => void;
 }
 
@@ -154,6 +158,7 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   aiImageEnabled: true,
   ambientEnabled: true,
   cueMarkers: [],
+  roomMode: "journey" as const,
   language: "en",
   _skipLoad: false,
 
@@ -405,5 +410,6 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
 
   setAiImageEnabled: (enabled) => set({ aiImageEnabled: enabled }),
   setAmbientEnabled: (enabled) => set({ ambientEnabled: enabled }),
+  setRoomMode: (mode) => set({ roomMode: mode }),
   setLanguage: (lang) => set({ language: lang }),
 }));

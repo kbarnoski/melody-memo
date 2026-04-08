@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { X, Type, AudioLines, Share2, ChevronUp, ChevronDown, Pause, Play, SkipBack, SkipForward, BookOpen, Library, Globe, Search, Maximize2, Minimize2 } from "lucide-react";
+import { X, Type, AudioLines, Share2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward, BookOpen, Library, Globe, Search, Maximize2, Minimize2, LogOut } from "lucide-react";
 import { getAudioEngine, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
@@ -98,6 +98,14 @@ export interface VisualizerCoreProps {
   onSwitchToVisualize?: () => void;
   /** Realm accent color for journey pill dot */
   journeyAccent?: string | null;
+  /** When true, shaders use smooth sine waves instead of audio reactivity */
+  smoothMotion?: boolean;
+  /** Sign out handler */
+  onSignOut?: () => void;
+  /** Cycle to previous shader */
+  onPrevShader?: () => void;
+  /** Cycle to next shader */
+  onNextShader?: () => void;
 }
 
 interface VisualizerProps {
@@ -194,6 +202,12 @@ export function ShaderVisualizer({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const smoothRef = useRef({ bass: 0, mid: 0, treble: 0, amplitude: 0 });
+  const smoothMotionRef = useRef(smoothMotion);
+
+  // Keep ref in sync without tearing down GL program
+  useEffect(() => {
+    smoothMotionRef.current = smoothMotion;
+  }, [smoothMotion]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -248,7 +262,7 @@ export function ShaderVisualizer({
 
       const s = smoothRef.current;
 
-      if (smoothMotion) {
+      if (smoothMotionRef.current) {
         // Smooth continuous motion — gentle sine waves, no audio reactivity
         s.bass = 0.3 + 0.12 * Math.sin(time * 0.13);
         s.mid = 0.25 + 0.1 * Math.sin(time * 0.17 + 1.0);
@@ -307,7 +321,7 @@ export function ShaderVisualizer({
       canvas.width = 0;
       canvas.height = 0;
     };
-  }, [analyser, dataArray, fragShader]);
+  }, [analyser, dataArray, fragShader]); // smoothMotion read via ref — no need to tear down GL
 
   return (
     <canvas
@@ -374,6 +388,10 @@ export function VisualizerCore({
   onFullscreenToggle,
   onSwitchToVisualize,
   journeyAccent,
+  smoothMotion: smoothMotionProp,
+  onSignOut,
+  onPrevShader,
+  onNextShader,
 }: VisualizerCoreProps) {
   // Viz settings from store — persist across open/close
   const storeMode = useAudioStore((s) => s.vizMode) as VisualizerMode;
@@ -664,7 +682,7 @@ export function VisualizerCore({
     return (
       <div key={layerMode} style={outerStyle}>
         <div ref={ref} style={innerStyle}>
-          <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion />
+          <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion={smoothMotionProp ?? true} />
         </div>
       </div>
     );
@@ -705,7 +723,7 @@ export function VisualizerCore({
                 analyser={analyser}
                 dataArray={dataArray}
                 fragShader={SHADERS[dualShaderVisible as VisualizerMode]!}
-                smoothMotion
+                smoothMotion={smoothMotionProp ?? true}
               />
             </div>
           </div>
@@ -719,7 +737,7 @@ export function VisualizerCore({
                 analyser={analyser}
                 dataArray={dataArray}
                 fragShader={SHADERS[tertiaryShaderVisible as VisualizerMode]!}
-                smoothMotion
+                smoothMotion={smoothMotionProp ?? true}
               />
             </div>
           </div>
@@ -978,18 +996,38 @@ export function VisualizerCore({
             )}
             {/* Shader picker — visualize mode only */}
             {!inJourneyMode && (
-              <button
-                onClick={() => setModePaletteOpen((v) => !v)}
-                className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-colors duration-75 ${
-                  modePaletteOpen ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-              >
-                <span style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-mono)" }}>
-                  {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
-                </span>
-                <ChevronUp className={`h-3.5 w-3.5 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
-              </button>
+              <div className="flex items-center gap-1">
+                {onPrevShader && (
+                  <button
+                    onClick={onPrevShader}
+                    className="flex items-center justify-center rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/10 transition-colors duration-75"
+                    title="Previous shader"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setModePaletteOpen((v) => !v)}
+                  className={`flex items-center gap-2 rounded-lg px-3.5 py-2 transition-colors duration-75 ${
+                    modePaletteOpen ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                >
+                  <span style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-mono)" }}>
+                    {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
+                  </span>
+                  <ChevronUp className={`h-3.5 w-3.5 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
+                </button>
+                {onNextShader && (
+                  <button
+                    onClick={onNextShader}
+                    className="flex items-center justify-center rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/10 transition-colors duration-75"
+                    title="Next shader"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             )}
 
             {/* Poetry + Voice + Language — always rendered to avoid layout shift */}
@@ -1191,6 +1229,15 @@ export function VisualizerCore({
               <X className="h-4 w-4" />
             </button>
           )}
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              className="flex items-center justify-center p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors duration-75"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+            </button>
+          )}
           </div>
         </div>
 
@@ -1272,18 +1319,38 @@ export function VisualizerCore({
               )}
               {/* Mobile shader picker — viz mode only */}
               {!inJourneyMode && (
-                <button
-                  onClick={() => setModePaletteOpen((v) => !v)}
-                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors duration-75 ${
-                    modePaletteOpen ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                  style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-                >
-                  <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)" }}>
-                    {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
-                  </span>
-                  <ChevronUp className={`h-3 w-3 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
-                </button>
+                <div className="flex items-center gap-0.5">
+                  {onPrevShader && (
+                    <button
+                      onClick={onPrevShader}
+                      className="flex items-center justify-center rounded-lg p-1.5 text-white/40 hover:text-white/70 transition-colors duration-75"
+                      title="Previous shader"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setModePaletteOpen((v) => !v)}
+                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors duration-75 ${
+                      modePaletteOpen ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"
+                    }`}
+                    style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                  >
+                    <span style={{ fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)" }}>
+                      {MODE_META.find(m => m.mode === mode)?.label ?? "Mandala"}
+                    </span>
+                    <ChevronUp className={`h-3 w-3 transition-transform ${modePaletteOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {onNextShader && (
+                    <button
+                      onClick={onNextShader}
+                      className="flex items-center justify-center rounded-lg p-1.5 text-white/40 hover:text-white/70 transition-colors duration-75"
+                      title="Next shader"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
               )}
               {/* Poetry + Voice toggles */}
               {(journeyActive || (!inJourneyMode && currentTrack)) && (
@@ -1454,6 +1521,15 @@ export function VisualizerCore({
                     title="Close"
                   >
                     <X className="h-4 w-4" />
+                  </button>
+                )}
+                {onSignOut && (
+                  <button
+                    onClick={onSignOut}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 transition-colors duration-75"
+                    title="Sign out"
+                  >
+                    <LogOut className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>

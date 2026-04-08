@@ -1,18 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, forwardRef } from "react";
-import { MODE_META } from "@/lib/shaders";
+import { MODE_META, type ModeMeta } from "@/lib/shaders";
 import { getProfile } from "@/lib/journeys/adaptive-engine";
-import {
-  getBlockedShaders,
-  getDeletedShaders,
-  getLovedShaders,
-  getShaderStats,
-  blockShader,
-  unblockShader,
-  deleteShader,
-  undeleteShader,
-} from "./journey-feedback";
+import { useShaderPreferences } from "@/lib/shader-preferences";
+import { getShaderStats } from "./journey-feedback";
+
+function isNewShader(meta: ModeMeta): boolean {
+  if (!meta.addedDate) return false;
+  const added = new Date(meta.addedDate);
+  const now = new Date();
+  const diffDays = (now.getTime() - added.getTime()) / (1000 * 60 * 60 * 24);
+  return diffDays <= 14;
+}
 
 // ── Types ──
 
@@ -48,14 +48,16 @@ interface AdminPanelProps {
   onClose: () => void;
   currentShader?: string;
   isAdmin?: boolean;
+  onSwitchShader?: (mode: string) => void;
+  onPrevShader?: () => void;
+  onNextShader?: () => void;
 }
 
-type Tab = "library" | "blocked" | "deleted" | "loved" | "stats";
+type Tab = "library" | "new" | "blocked" | "deleted" | "loved" | "stats";
 
-export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }: AdminPanelProps) {
-  const [revision, setRevision] = useState(0);
+export function AdminPanel({ visible, onClose, currentShader, isAdmin = false, onSwitchShader, onPrevShader, onNextShader }: AdminPanelProps) {
+  const prefs = useShaderPreferences();
   const [activeTab, setActiveTab] = useState<Tab>("library");
-  const refresh = useCallback(() => setRevision((r) => r + 1), []);
   const activeRowRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
@@ -78,15 +80,12 @@ export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }:
     return () => clearTimeout(t);
   }, [currentShader, visible, activeTab]);
 
-  // Read state (re-reads on revision bump)
-  const blocked = Array.from(getBlockedShaders());
-  const deleted = Array.from(getDeletedShaders());
-  const loved = getLovedShaders();
+  // Read state from Zustand store (auto-rerenders on change)
+  const blocked = Array.from(prefs.blocked);
+  const deleted = Array.from(prefs.deleted);
+  const loved = Array.from(prefs.loved);
   const profile = getProfile();
   const stats = getShaderStats();
-
-  // Suppress unused var warning — revision drives re-render
-  void revision;
 
   const allShaders = MODE_META.filter((m) => m.category !== "AI Imagery");
   const totalShaders = allShaders.length;
@@ -96,29 +95,28 @@ export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }:
   const activeShaders = allShaders.filter((m) => !blockedSet.has(m.mode) && !deletedSet.has(m.mode));
   const activeCount = activeShaders.length;
   const activeRules = profile.rules.filter((r) => r.confidence >= 0.3).length;
+  const newShaders = allShaders.filter(isNewShader);
+  const newCount = newShaders.length;
 
   // Group all shaders by category for the library view
   const allGrouped = groupByCategory(allShaders.map((m) => m.mode));
+  const newGrouped = groupByCategory(newShaders.map((m) => m.mode));
 
   const handleUnblock = useCallback((mode: string) => {
-    unblockShader(mode);
-    refresh();
-  }, [refresh]);
+    prefs.unblockShader(mode);
+  }, [prefs]);
 
   const handleDelete = useCallback((mode: string) => {
-    deleteShader(mode);
-    refresh();
-  }, [refresh]);
+    prefs.deleteShader(mode);
+  }, [prefs]);
 
   const handleBlock = useCallback((mode: string) => {
-    blockShader(mode);
-    refresh();
-  }, [refresh]);
+    prefs.blockShader(mode);
+  }, [prefs]);
 
   const handleRestore = useCallback((mode: string) => {
-    undeleteShader(mode);
-    refresh();
-  }, [refresh]);
+    prefs.undeleteShader(mode);
+  }, [prefs]);
 
   return (
     <div
@@ -162,10 +160,81 @@ export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }:
           </button>
         </div>
 
+        {/* Current shader with prev/next arrows */}
+        {currentShader && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            padding: "6px 0",
+          }}>
+            <button
+              onClick={onPrevShader}
+              style={{
+                width: 24,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 5,
+                cursor: "pointer",
+                color: "rgba(255,255,255,0.4)",
+                padding: 0,
+                flexShrink: 0,
+              }}
+              title="Previous shader"
+            >
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+            <span style={{
+              fontFamily: "var(--font-geist-mono)",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              color: "rgba(255,255,255,0.85)",
+              letterSpacing: "0.02em",
+              textAlign: "center",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
+              {MODE_META.find((m) => m.mode === currentShader)?.label ?? currentShader}
+            </span>
+            <button
+              onClick={onNextShader}
+              style={{
+                width: 24,
+                height: 24,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.10)",
+                borderRadius: 5,
+                cursor: "pointer",
+                color: "rgba(255,255,255,0.4)",
+                padding: 0,
+                flexShrink: 0,
+              }}
+              title="Next shader"
+            >
+              <svg width={10} height={10} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* Tab bar */}
         <div style={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
           {([
             ["library", `All (${activeCount})`],
+            ...(newCount > 0 ? [["new", `New (${newCount})`]] : []),
             ["blocked", `Blocked (${blocked.length})`],
             ...(isAdmin ? [["deleted", `Deleted (${deleted.length})`]] : []),
             ["loved", `Loved (${loved.length})`],
@@ -204,8 +273,10 @@ export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }:
               const isDeleted = deletedSet.has(mode);
               const isLoved = lovedSet.has(mode);
               const isActive = mode === currentShader;
+              const metaEntry = MODE_META.find((m) => m.mode === mode);
+              const shaderIsNew = metaEntry ? isNewShader(metaEntry) : false;
               return (
-                <ShaderRow key={mode} ref={isActive ? activeRowRef : undefined} label={label} stats={stats[mode]} status={isDeleted ? "deleted" : isBlocked ? "blocked" : isLoved ? "loved" : undefined} active={isActive}>
+                <ShaderRow key={mode} ref={isActive ? activeRowRef : undefined} label={label} stats={stats[mode]} status={isDeleted ? "deleted" : isBlocked ? "blocked" : isLoved ? "loved" : undefined} isNew={shaderIsNew} active={isActive} onClick={onSwitchShader ? () => onSwitchShader(mode) : undefined}>
                   {isDeleted ? (
                     isAdmin && <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
                   ) : isBlocked ? (
@@ -223,6 +294,39 @@ export function AdminPanel({ visible, onClose, currentShader, isAdmin = false }:
               );
             })}
           </CategoryGroup>
+        ))}
+
+        {/* New Shaders */}
+        {activeTab === "new" && (newCount === 0 ? (
+          <EmptyText>No new shaders</EmptyText>
+        ) : (
+          newGrouped.map((group) => (
+            <CategoryGroup key={group.category} category={group.category}>
+              {group.shaders.map(({ mode, label }) => {
+                const isBlocked = blockedSet.has(mode);
+                const isDeleted = deletedSet.has(mode);
+                const isLoved = lovedSet.has(mode);
+                const isActive = mode === currentShader;
+                return (
+                  <ShaderRow key={mode} ref={isActive ? activeRowRef : undefined} label={label} stats={stats[mode]} status={isDeleted ? "deleted" : isBlocked ? "blocked" : isLoved ? "loved" : undefined} isNew active={isActive} onClick={onSwitchShader ? () => onSwitchShader(mode) : undefined}>
+                    {isDeleted ? (
+                      isAdmin && <SmallButton onClick={() => handleRestore(mode)} color="blue">Restore</SmallButton>
+                    ) : isBlocked ? (
+                      <>
+                        <SmallButton onClick={() => handleUnblock(mode)} color="green">Unblock</SmallButton>
+                        {isAdmin && <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>}
+                      </>
+                    ) : (
+                      <>
+                        <SmallButton onClick={() => handleBlock(mode)} color="yellow">Block</SmallButton>
+                        {isAdmin && <SmallButton onClick={() => handleDelete(mode)} color="red">Delete</SmallButton>}
+                      </>
+                    )}
+                  </ShaderRow>
+                );
+              })}
+            </CategoryGroup>
+          ))
         ))}
 
         {/* Blocked Shaders */}
@@ -312,9 +416,11 @@ const ShaderRow = forwardRef<HTMLDivElement, {
   label: string;
   stats?: { usageCount: number; lovedCount: number; blockedCount: number };
   status?: "blocked" | "deleted" | "loved";
+  isNew?: boolean;
   active?: boolean;
+  onClick?: () => void;
   children?: React.ReactNode;
-}>(function ShaderRow({ label, stats, status, active, children }, ref) {
+}>(function ShaderRow({ label, stats, status, isNew, active, onClick, children }, ref) {
   const statusColors: Record<string, string> = {
     blocked: "rgba(239, 68, 68, 0.6)",
     deleted: "rgba(239, 68, 68, 0.4)",
@@ -332,11 +438,32 @@ const ShaderRow = forwardRef<HTMLDivElement, {
       borderRadius: active ? 6 : undefined,
       transition: "background 200ms ease",
     }}>
-      <span style={{
-        ...shaderLabelStyle,
-        color: active ? "rgba(255,255,255,0.95)" : shaderLabelStyle.color,
-        fontWeight: active ? 600 : shaderLabelStyle.fontWeight,
-      }}>{label}</span>
+      <span
+        onClick={onClick}
+        style={{
+          ...shaderLabelStyle,
+          color: active ? "rgba(255,255,255,0.95)" : shaderLabelStyle.color,
+          fontWeight: active ? 600 : shaderLabelStyle.fontWeight,
+          cursor: onClick ? "pointer" : undefined,
+        }}
+      >{label}</span>
+      {isNew && (
+        <span style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.45rem",
+          fontWeight: 700,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          color: "rgba(168, 85, 247, 0.9)",
+          background: "rgba(168, 85, 247, 0.12)",
+          border: "1px solid rgba(168, 85, 247, 0.25)",
+          borderRadius: 3,
+          padding: "1px 4px",
+          flexShrink: 0,
+        }}>
+          NEW
+        </span>
+      )}
       {status && (
         <span style={{
           fontFamily: "var(--font-geist-mono)",

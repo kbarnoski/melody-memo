@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users to login (except for auth and public pages)
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password" || pathname === "/update-password" || pathname.startsWith("/auth/callback");
 
   const isPublicRoute =
     pathname.startsWith("/share/") ||
@@ -51,8 +51,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
-  if (user && isAuthPage) {
+  // Redirect authenticated users away from auth pages (except update-password which requires auth)
+  if (user && isAuthPage && pathname !== "/update-password") {
     const url = request.nextUrl.clone();
     url.pathname = "/library";
     return NextResponse.redirect(url);

@@ -225,7 +225,7 @@ export function JourneyCompositor({
       ref={rootRef}
       className="absolute inset-0"
     >
-      {/* AI imagery — z-2 normally, z-5 during bass hit flash (multiply blend shows dark content against white) */}
+      {/* AI imagery — z-2, above shader but below controls */}
       {showAi && (
         <AiImageLayer
           prompt={effectivePrompt}
@@ -239,14 +239,6 @@ export function JourneyCompositor({
           shaderOpacity={effectiveShaderOpacity}
           promptSeed={promptSeed}
           journeyId={journeyId}
-          flashOverride={enableBassFlash && impulse > 0.05 && evtType === "bass_hit" ? {
-            position: "absolute" as const,
-            inset: 0,
-            zIndex: 5,
-            mixBlendMode: "multiply" as const,
-            opacity: Math.min(1, impulse * impulse * 0.9),
-            filter: `contrast(${1 + impulse * 2}) brightness(${0.25 + (1 - impulse) * 0.5})`,
-          } : undefined}
         />
       )}
 
@@ -277,7 +269,47 @@ export function JourneyCompositor({
               backgroundColor: `rgba(255, 255, 255, ${Math.min(1, impulse * impulse * impulse * impulse * 0.95)})`,
             }}
           />
-          {/* AI imagery promoted to z-5 with multiply blend during flash — see flashOverride above */}
+          {/* Dark feminine angel silhouette — clear hourglass body, defined wings, flowing hair */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 5,
+              pointerEvents: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: Math.min(1, impulse * impulse * 0.92),
+              filter: `blur(${(1 - impulse) * 2}px)`,
+            }}
+          >
+            <svg
+              viewBox="0 0 1000 1000"
+              style={{ width: "70vmin", height: "90vmin", maxWidth: "100%", maxHeight: "100%" }}
+            >
+              {/* Head */}
+              <ellipse cx="500" cy="100" rx="42" ry="50" fill="rgba(5,0,12,0.94)" />
+              {/* Body — feminine hourglass: wide shoulders, narrow waist, hips, flowing robe */}
+              <path
+                d="M480,148 C460,170 425,210 405,245 C385,280 380,300 390,320 C405,345 435,360 468,368 C478,372 475,390 465,410 C448,440 435,465 430,490 C415,550 375,660 335,790 C322,840 332,870 362,870 L638,870 C668,870 678,840 665,790 C625,660 585,550 570,490 C565,465 552,440 535,410 C525,390 522,372 532,368 C565,360 595,345 610,320 C620,300 615,280 595,245 C575,210 540,170 520,148 Z"
+                fill="rgba(5,0,12,0.94)"
+              />
+              {/* Left wing — swept curve */}
+              <path
+                d="M400,250 C340,218 195,145 85,105 C35,88 15,108 35,145 C60,190 185,260 345,310 C390,325 405,305 405,280 Z"
+                fill="rgba(5,0,12,0.94)"
+              />
+              {/* Right wing — swept curve */}
+              <path
+                d="M600,250 C660,218 805,145 915,105 C965,88 985,108 965,145 C940,190 815,260 655,310 C610,325 595,305 595,280 Z"
+                fill="rgba(5,0,12,0.94)"
+              />
+              {/* Hair spiral strokes — flowing from head */}
+              <path d="M512,58 C555,28 630,5 700,5 C758,5 782,28 765,55 C745,85 678,108 608,115" stroke="rgba(5,0,12,0.88)" strokeWidth="10" strokeLinecap="round" fill="none" />
+              <path d="M485,58 C442,28 368,5 298,5 C240,5 215,28 232,55 C252,85 318,108 388,115" stroke="rgba(5,0,12,0.85)" strokeWidth="9" strokeLinecap="round" fill="none" />
+              <path d="M520,65 C568,40 648,18 722,12 C788,8 815,30 798,58 C778,88 715,115 645,122" stroke="rgba(5,0,12,0.78)" strokeWidth="7" strokeLinecap="round" fill="none" />
+            </svg>
+          </div>
           {/* Subsonic shockwave ring expanding outward beneath the flash */}
           <div
             style={{

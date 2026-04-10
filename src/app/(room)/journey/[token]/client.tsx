@@ -9,9 +9,10 @@ import { ShareSheet } from "@/components/ui/share-sheet";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
+import { createClient } from "@/lib/supabase/client";
 import { MODES_3D, MODES_AI } from "@/lib/shaders";
 import type { Journey, JourneyFrame, JourneyPhaseId } from "@/lib/journeys/types";
-import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, SkipBack, SkipForward } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, SkipBack, SkipForward, RotateCcw } from "lucide-react";
 
 function formatTime(s: number): string {
   if (!s || isNaN(s)) return "0:00";
@@ -61,9 +62,17 @@ export function SharedJourneyClient({
   const [controlsVisible, setControlsVisible] = useState(true);
   const [shareSheet, setShareSheet] = useState(false);
   const [ended, setEnded] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // assume auth until checked
   const animRef = useRef<number>(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endedRef = useRef(false);
+
+  // Check auth state — show signup CTA for unauthenticated viewers
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      setIsAuthenticated(!!user);
+    });
+  }, []);
 
   // Time display — direct DOM updates, no re-renders
   const timeDisplayRef = useRef<HTMLSpanElement>(null);
@@ -848,6 +857,127 @@ export function SharedJourneyClient({
         title={`${journey.name} — Resonance`}
         text={`Check out ${journey.name} on Resonance`}
       />
+
+      {/* Journey complete overlay — signup CTA for unauthenticated viewers */}
+      {ended && !isAuthenticated && (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            zIndex: 30,
+            animation: "fadeIn 0.8s ease-out both",
+          }}
+        >
+          <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "28px",
+              padding: "48px 40px",
+              borderRadius: "16px",
+              background: "rgba(0, 0, 0, 0.45)",
+              backdropFilter: "blur(24px) saturate(1.1)",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              maxWidth: "380px",
+              textAlign: "center",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: "0.6rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  color: "rgba(255, 255, 255, 0.35)",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  marginBottom: "10px",
+                }}
+              >
+                Journey Complete
+              </div>
+              <div
+                style={{
+                  fontSize: "1.35rem",
+                  fontWeight: 300,
+                  color: "rgba(255, 255, 255, 0.85)",
+                  lineHeight: 1.3,
+                }}
+              >
+                {journey.name}
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: "0.85rem",
+                color: "rgba(255, 255, 255, 0.5)",
+                lineHeight: 1.6,
+              }}
+            >
+              Create your own journeys with your music on Resonance.
+            </div>
+
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/signup"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "10px 28px",
+                borderRadius: "8px",
+                background: "rgba(255, 255, 255, 0.9)",
+                color: "#000",
+                fontSize: "0.8rem",
+                fontWeight: 500,
+                textDecoration: "none",
+                transition: "background 0.15s ease",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 1)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)")}
+            >
+              Sign Up Free
+            </a>
+
+            <button
+              onClick={() => {
+                if (audioRef.current) {
+                  audioRef.current.currentTime = 0;
+                  endedRef.current = false;
+                  setEnded(false);
+                  audioRef.current.play();
+                }
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "6px",
+                background: "transparent",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                color: "rgba(255, 255, 255, 0.4)",
+                fontSize: "0.7rem",
+                fontFamily: "var(--font-geist-mono)",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              }}
+            >
+              <RotateCcw style={{ width: 12, height: 12 }} />
+              Replay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

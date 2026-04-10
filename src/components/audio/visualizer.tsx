@@ -861,9 +861,11 @@ export function VisualizerCore({
           position: "absolute",
           inset: 0,
           opacity: shaderDimmed ? 0.35 : 1,
-          // Smooth when dimming (entering browser), snap when undimming (starting journey)
-          // so the first shader has identical brightness to all subsequent shaders.
-          transition: shaderDimmed ? "opacity 0.5s ease" : "none",
+          // Smooth in both directions. Dimming (entering browser): 0.5s ease.
+          // Undimming (starting journey): 1.5s ease-out so the wrapper ramp UP
+          // and --shader-opacity ramp DOWN combine into a single smooth fade-in,
+          // preventing a brightness flash from additive layers arriving async.
+          transition: shaderDimmed ? "opacity 0.5s ease" : "opacity 1.5s ease-out",
           pointerEvents: "none",
         }}
       >

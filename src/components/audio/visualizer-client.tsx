@@ -197,9 +197,11 @@ export function VisualizerClient({
     if (journeyCompleted) return; // Already completed
     if (completedJourneyRef.current === activeJourney.id) return; // Already detected for this journey
 
-    // Detect completion: currentTime within 0.5s of end,
-    // OR audio stopped while past 95% of the track (handles RAF sync gaps)
-    const nearEnd = duration > 0 && currentTime > 0 && currentTime >= duration - 0.5;
+    // Detect completion: currentTime within completionOffset of end,
+    // OR audio stopped while past 95% of the track (handles RAF sync gaps).
+    // completionOffset lets journeys with silent endings trigger earlier.
+    const offset = activeJourney.completionOffset ?? 0.5;
+    const nearEnd = duration > 0 && currentTime > 0 && currentTime >= duration - offset;
     const stoppedLate = duration > 0 && currentTime > 0 && !isPlaying && currentTime >= duration * 0.95;
 
     if (nearEnd || stoppedLate) {
@@ -217,11 +219,10 @@ export function VisualizerClient({
       endEntry.aiPromptSnippet = `journey-end: ${activeJourney.name}`;
       appendEntry(endEntry);
 
-      // Update shader usage stats from the journey's shader pool
-      const phaseData = activeJourney.phases.flatMap((p) =>
-        p.shaderModes.map((s) => ({ shader: s, dualShader: null as string | null }))
-      );
-      updateShaderUsageFromJourney(phaseData);
+      // Update shader usage stats from actual display history
+      const engine = getJourneyEngine();
+      const shaderHistory = engine.getShaderHistory();
+      updateShaderUsageFromJourney(shaderHistory);
 
       // Flush any buffered glitch/feedback entries before analysis
       flushFeedbackEntries();
@@ -871,7 +872,7 @@ export function VisualizerClient({
           handleFullscreenToggle();
           break;
         case "a":
-          if (canAdmin) setAdminOpen((v) => !v);
+          if (canAdmin && !useAudioStore.getState().activeJourney) setAdminOpen((v) => !v);
           break;
         case "r":
           if (canRate) setRatingOpen((v) => !v);
@@ -1015,7 +1016,7 @@ export function VisualizerClient({
       )}
 
       {/* Admin panel — toggle with 'A' key (any logged-in user) */}
-      {canAdmin && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={journeyFrame?.shaderMode ?? storeVizMode} dualShader={journeyFrame?.dualShaderMode ?? undefined} tertiaryShader={journeyFrame?.tertiaryShaderMode ?? undefined} isAdmin={isAdmin} onSwitchShader={(mode) => useAudioStore.getState().setVizMode(mode)} onPrevShader={() => useAudioStore.getState().cycleVizModePrev()} onNextShader={() => useAudioStore.getState().cycleVizMode()} />}
+      {canAdmin && !journeyActive && <AdminPanel visible={adminOpen} onClose={() => setAdminOpen(false)} currentShader={storeVizMode} dualShader={undefined} tertiaryShader={undefined} isAdmin={isAdmin} onSwitchShader={(mode) => useAudioStore.getState().setVizMode(mode)} onPrevShader={() => useAudioStore.getState().cycleVizModePrev()} onNextShader={() => useAudioStore.getState().cycleVizMode()} />}
 
       {/* Rating panel — toggle with 'R' key, own custom journeys or admin */}
       {canRate && (

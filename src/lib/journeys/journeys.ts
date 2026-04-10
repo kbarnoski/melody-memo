@@ -1099,6 +1099,7 @@ export const JOURNEYS: Journey[] = [
       "The world grows quiet as the first flakes fall. Sound becomes muffled. Everything slows into crystalline stillness.",
     realmId: "winter",
     aiEnabled: true,
+    completionOffset: 3,
     phaseLabels: { threshold: "Chill", expansion: "Falling", transcendence: "Whiteout", illumination: "Silence", return: "Warmth", integration: "Stillness" },
     phases: defaultPhases("winter", {
       threshold: {
@@ -1126,12 +1127,15 @@ export const JOURNEYS: Journey[] = [
         voice: "shimmer",
       },
       return: {
+        start: 0.68,
+        end: 0.86,
         aiPrompt: "connected fractal ice lattice arcing from lower left across a deep indigo field, prismatic light threading through the structure — blue to violet to rose to gold, dispersed powder particles catching warm spectrum as they spiral outward into generous dark negative space above and right, channels of amber and copper light glowing through the geometry, the interwoven form is dynamic and flowing not static, composition weighted to the lower half with cosmic darkness opening above, the tension between frozen precision and warm dissolution, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["warmth returns...", "home is near...", "the cold made this warmth possible..."],
         poetryMood: "flowing",
         voice: "shimmer",
       },
       integration: {
+        start: 0.86,
         aiPrompt: "sparse dispersed powder particles and fading fractal ice traces drifting across vast blue-black silence, the last connected forms clustered small in the lower left corner dissolving into scattered particles that trail diagonally toward infinite upper darkness, faint violet light tracing the final geometric connections, enormous open cosmos everywhere, the particles carry the structure's memory as they scatter, asymmetric and quiet — almost nothing against everything, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["the snow remembers...", "carry this stillness..."],
         poetryMood: "melancholic",
@@ -1341,6 +1345,7 @@ export const JOURNEYS: Journey[] = [
     realmId: "cosmos",
     aiEnabled: true,
     enableBassFlash: true,
+    completionOffset: 4,
     recordingId: "549fc519-f7fc-4c38-a771-adaad2edbc81",
     phaseLabels: { threshold: "Apparition", expansion: "Haunting", transcendence: "Possession", illumination: "Recognition", return: "Release", integration: "Grace" },
     phases: defaultPhases("cosmos", {
@@ -1351,11 +1356,11 @@ export const JOURNEYS: Journey[] = [
       // EARTHLY MICRO → COSMIC PORTAL: haunted room whose window opens onto infinite void.
       threshold: {
         start: 0.0,
-        end: 0.12,
-        aiPrompt: "a dimly lit empty room in an ancient house at night — bare wooden floorboards worn smooth by centuries, a single tall window on the right but through the window instead of a garden there is infinite deep black cosmic void with faint distant stars, pale starlight casting a diagonal shaft across the floor, in the far left corner where the light doesn't reach a barely-perceptible translucent angelic figure facing away toward the cosmic window — seen only from behind, very long dark hair drifting slowly upward in da Vinci spiraling curls as if weightless, the hair impossibly long trailing along the ceiling and dissolving into fine threads of pale light that spread across the room like spectral cobweb, more shadow than substance with a faint sacred aura, fine luminous particles dispersing from the hair threads drifting slowly toward the void beyond, caught in the corner of your eye — the moment before you turn to look, photorealistic room textures with age and patina, generous dark negative space filling three-quarters of the frame, asymmetric composition with visual weight in the left corner and the cosmic window right, no text no signatures no watermarks no letters no writing",
+        end: 0.14,
+        aiPrompt: "photorealistic ancient stone chamber bathed in pale silvery moonlight — tall arched window on the right but through the window instead of a courtyard there is infinite deep cosmic void with scattered distant stars and faint nebula glow, bright moonlight flooding through the window casting a luminous diagonal shaft across worn stone floors illuminating dust motes like tiny stars, in the left portion a translucent dark feminine figure facing away toward the cosmic window — seen only from behind, beside her a second translucent duplicate slowly pulling away from the body — a ghost leaving its host, the spirit drifting apart — three transparent overlapping layers of her arms in different positions from held close to fully outstretched, each layer more transparent than the last as if seeing every moment of the gesture at once, the body itself with similar subtle transparent overlaps suggesting constant slight ethereal movement, the duplicate more transparent and shifted a foot to the left — the soul visibly separating with grace and sorrow, both figures with impossibly long dark hair in divine fibonacci spiraling curls drifting upward weightlessly interweaving between body and departing spirit trailing along the vaulted ceiling dissolving into fine luminous threads of pale light, dense spectral particles catching the moonlight throughout the chamber like dust motes in a cathedral, in the tall window glass a ghostly reflection of a figure that doesn't match anyone in the chamber, on the stone floor a dark shadow shaped like a crouching form where no one stands, in the darkest corner above the suggestion of another translucent ghost watching — things you might catch from the side of your eye, the mood deeply haunting and morbid but the chamber itself luminous with ancient beauty — silvery moonlight on worn stone patina, no faces visible — only silhouettes from behind, no halos, generous cosmic void visible through the window filling the right third, asymmetric composition with visual weight in the left corner and the window right, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
-          highBass: "deep subsonic pressure ripple passing through the room, the windowpanes vibrating, the starlight shaft shuddering, the ghost's hair rippling with the invisible force, particles scattering outward",
-          lowAmplitude: "near-total darkness, only the faintest pale shimmer in the corner barely distinguishable from shadow, the cosmos beyond the window black and still",
+          highBass: "deep subsonic pressure ripple passing through the chamber, the windowpanes vibrating, the moonlight shaft shuddering, the ghost's fibonacci hair rippling with the invisible force, particles scattering outward in the luminous air",
+          lowAmplitude: "the moonlight dimmed to the faintest silver glow, the chamber barely visible, the ghost figures almost merged with the shadows, the cosmos beyond the window deep and still, only the luminous hair threads faintly visible",
         },
         guidancePhrases: ["something moves in the dark...", "do you feel it...", "it has always been here..."],
         poetryMood: "mystical",
@@ -1365,16 +1370,16 @@ export const JOURNEYS: Journey[] = [
       // ── Haunting (0:27–1:28) ──
       // Development 1 + Theme A Return + Theme B.
       // Chromaticism grows, harmonic rhythm accelerates.
-      // SURREAL BLEND: ancient stone staircase descending INTO starfield.
-      // Architecture dissolving into cosmos. Overhead perspective.
-      // Hair threading between stone and stars. Particles dispersing.
+      // STONE WELL TO INFINITY: looking down into ancient well, dark angels look back up.
+      // Photorealistic stone, feminine figures only, fibonacci hair spiraling into void.
       expansion: {
-        start: 0.12,
-        end: 0.40,
-        aiPrompt: "overhead bird's-eye view looking straight down into a dark stone spiral staircase — the worn steps descend from photorealistic ancient stone at the top into deep cosmic void below, the staircase physically dissolving where stone meets stars, the bottom steps becoming translucent then vanishing into infinite black space with distant nebula light, on the staircase a dark translucent angelic figure descends slowly toward the cosmos seen from above — face hidden in shadow, impossibly long dark hair in da Vinci spiraling curls trailing behind up the stairs with Mucha-style decorative flowing arcs, the hair threading along the stone walls like living vines of pale light then continuing beyond where the stone ends — spiraling outward into the cosmic void below becoming luminous filaments connecting to distant star clusters, a faint otherworldly aura surrounding the descending form, fine spectral particles dispersing from the hair strands trailing downward into the void, the figure is barely there — a dark angel between worlds — but the hair fills both, cool silver and deep indigo palette, generous dark void filling the lower two-thirds of the frame, no text no signatures no watermarks no letters no writing",
+        start: 0.14,
+        end: 0.44,
+        shaderOpacity: 0.70,
+        aiPrompt: "photorealistic bird's-eye view looking straight down into a deep ancient stone well — rough irregular moss-covered stone walls descending into infinite blackness below, the well rim worn smooth by centuries of hands with crumbling edges and lichen and moss, looking down into the endless dark depth dark feminine angelic forms hover at different depths — the nearest just below the rim seen from above with dark wings partially folded, the top of her head visible with impossibly long grey wispy hair in divine fibonacci spiraling curls streaming downward through the hole into infinity like smoke and pale luminous threads interweaving, beside her a translucent spirit duplicate separating from the body and drifting deeper — the soul departing, a second dark feminine angel deeper down with grey wispy spiral hair interweaving with the first creating fibonacci patterns descending into the void, a third barely visible far below — just wisps of grey luminous flowing hair in the bottomless dark, no faces visible — only dark mysterious forms seen from above with wings and flowing grey spiral hair, the stone texture rough and photorealistic with moss and moisture and age, the void below absolute and bottomless, fine spectral particles drifting upward from the depths through the spiraling grey hair like dust motes in a shaft of pale light, the well rim at the top edge of the frame, no halos, the mood deeply haunting and mysterious — dark presences sensed in the deep, cool silver and deep indigo palette, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
-          highBass: "subsonic shockwave reverberating through both stone and cosmos, the steps vibrating, the void rippling, luminous hair threads pulsing with the deep frequency, particles scattering outward in a pressure wave",
-          highTreble: "luminous threads of hair glowing brighter at their cosmic tips, fine particles of starlight scattering from each strand into the void",
+          highBass: "subsonic shockwave reverberating through the stone well walls, the moss trembling, the void below rippling, every luminous hair spiral pulsing with the deep frequency, the dark angels' forms brightening simultaneously, particles exploding upward from the depths",
+          highTreble: "luminous threads of fibonacci hair glowing brighter at their tips, fine particles of starlight scattering from each strand upward toward the viewer",
         },
         guidancePhrases: ["it's closer now...", "the dark has shape...", "listen between the notes..."],
         poetryMood: "hypnotic",
@@ -1388,9 +1393,9 @@ export const JOURNEYS: Journey[] = [
       // women receding into infinite depth. Hair networks spanning the cosmos.
       // Wispy, dreamy, alive. Particles everywhere.
       transcendence: {
-        start: 0.40,
-        end: 0.57,
-        aiPrompt: "infinite deep black cosmic void — at different depths and scales multiple translucent dark angelic figures float weightless, the nearest in the lower-right third seen from behind with a faint sacred aura of cold light around the shoulders, impossibly long hair in da Vinci spiraling curls with Mucha-style flowing decorative arcs, a second smaller and further away in the upper-left turned away in distant profile, a third barely visible in the far distance trailing luminous hair, a fourth just a wisp of hair and starlight, each progressively more transparent receding into infinite depth, each figure's hair streams outward connecting to each other across the void creating a vast luminous web of spiraling interweaving strands inspired by Leonardo's water studies, the hair network alive with soft pulses of cold silver-blue light traveling along the strands, no close faces — only distant dark angelic forms and da Vinci flowing hair dissolving into luminous mist and trailing particles, dark angels gathering at the crossing between worlds, generous dark void between them, deep indigo and spectral silver palette against pure black, no text no signatures no watermarks no letters no writing",
+        start: 0.44,
+        end: 0.63,
+        aiPrompt: "infinite deep black cosmic void — at different depths and scales multiple translucent dark feminine figures float weightless, the nearest in the lower-right third seen from behind, impossibly long hair in divine da Vinci spiraling curls with Mucha-style flowing decorative arcs, beside her a translucent spirit duplicate drifting away from her body — the soul separating and pulling outward into the void as if her ghost is exhaling free, a second smaller and further away in the upper-left turned away in distant profile, a third barely visible in the far distance trailing luminous hair, a fourth just a wisp of hair and starlight, each progressively more transparent receding into infinite depth, each figure's hair streams outward connecting to each other across the void creating a vast luminous web of spiraling interweaving strands inspired by Leonardo's water studies, the hair network alive with soft pulses of cold silver-blue light traveling along the strands, no close faces — only distant dark forms and divine flowing hair dissolving into luminous mist and trailing particles, the mood deeply haunting — dark spirits gathering between worlds, no halos, generous dark void between them, deep indigo and spectral silver palette against pure black, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
           highBass: "massive subsonic pulse rippling through the entire hair network, every strand vibrating visibly in a wave expanding outward from the center, the spirits brightening simultaneously as the bass passes through them, particles exploding outward from every intersection point, the void itself shuddering with the deep frequency",
           highAmplitude: "every thread of hair blazing with sudden cold light, all the layered spirits illuminated at once revealing the full infinite depth of their network spanning the cosmos",
@@ -1407,9 +1412,9 @@ export const JOURNEYS: Journey[] = [
       // starfield below. Ghost woman's hair weaving through branches into cosmos.
       // Out-of-body overhead perspective. Layered figures at cosmic scale.
       illumination: {
-        start: 0.57,
-        end: 0.76,
-        aiPrompt: "surreal impossible landscape — a single massive ancient gnarled tree rooted in a floating island of dark earth in the upper-left third, its roots extending downward through open air into deep cosmic void below where they become luminous filaments connecting to distant star clusters, the tree's branches reaching upward into starfield above, woven through the branches and roots a ghostly dark angelic figure — turned away and partially hidden among the upper branches with a faint sacred aura, very long hair in da Vinci spiraling curls streaming downward along the trunk and through every root becoming the luminous connections to the cosmos below, a second translucent dark angel floats distant in the void to the right — only Mucha-style flowing hair and faint shoulders visible interweaving with the root-threads creating a shimmering network between earth and stars, a third barely-visible wisp far below among the star clusters only trailing hair visible as luminous threads, fine particles dispersing from the hair intersections into the generous void, photorealistic bark texture on the tree against infinite cosmic depth, overhead perspective looking slightly down, deep earth tones and spectral blue with amber light glowing at the root-star intersections, no text no signatures no watermarks no letters no writing",
+        start: 0.63,
+        end: 0.78,
+        aiPrompt: "surreal impossible landscape — a single massive ancient gnarled tree rooted in a floating island of dark earth in the upper-left third, its roots extending downward through open air into deep cosmic void below where they become luminous filaments connecting to distant star clusters, the tree's branches reaching upward into starfield above, woven through the branches and roots a ghostly dark feminine figure — turned away and partially hidden among the upper branches, beside her a translucent spirit duplicate slowly separating and pulling away from the trunk outward into the cosmos — the soul departing the body, very long hair in divine da Vinci spiraling curls streaming downward along the trunk and through every root becoming the luminous connections to the cosmos below, a second translucent dark figure floats distant in the void to the right — only Mucha-style flowing hair and faint shoulders visible interweaving with the root-threads creating a shimmering network between earth and stars, a third barely-visible wisp far below among the star clusters, the mood deeply haunting and morbid, no halos, fine particles dispersing from the hair intersections into the generous void, photorealistic bark texture on the tree against infinite cosmic depth, overhead perspective looking slightly down, deep earth tones and spectral blue, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
           highBass: "deep bass reverberation shaking the ancient tree, every root-thread pulsing simultaneously, the hair network flaring bright, particles exploding outward from the intersections, the floating earth trembling, the cosmos rippling with the subsonic force",
           lowAmplitude: "the spirits barely visible, only the faintest luminous traces of their hair threading between tree and stars, profound stillness suspended between worlds",
@@ -1425,13 +1430,13 @@ export const JOURNEYS: Journey[] = [
       // Hair spiraling upward becoming golden threads. Particles warm→gold.
       // Multiple layered figures dissolving upward into light.
       return: {
-        start: 0.76,
-        end: 0.93,
+        start: 0.78,
+        end: 0.871,
         bloomIntensity: 0.35,
         halation: 0.08,
         vignette: 0.25,
         palette: { primary: "#0a0808", secondary: "#1a1410", accent: "#c09060", glow: "#e0b080" },
-        aiPrompt: "vast dark cosmic space warming from deep indigo-black at the lower edges to the subtlest amber glow in the upper-right — multiple translucent dark angelic figures ascending at different heights, the nearest in the lower-left third seen from behind with very long dark hair in da Vinci spiraling curls interwoven with threads of golden light streaming upward, a faint otherworldly luminous aura surrounding the figure — sacred and haunting, the body dissolving into warmth and trailing particles from the waist down, above two more distant translucent figures already higher and more transparent, their Mucha-style flowing hair streaming downward becoming ribbons of warm light, at the greatest distance a fourth figure barely a wisp of golden hair dissolving into the warming upper void, all their hair interweaving as they rise creating a spiraling column inspired by Leonardo's water studies, hair transitioning from cool silver at the lowest tendrils to warm gold at the highest, fine luminous particles trailing like embers rising from sacred fire, generous dark void in the lower half, dark angels of crossing ascending through cosmos toward something holy, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "vast dark cosmic space warming from deep indigo-black at the lower edges to the subtlest amber glow in the upper-right — multiple dark silhouetted feminine figures ascending at different heights, the nearest in the lower-left third seen from behind with very long dark hair in divine da Vinci spiraling curls interwoven with threads of golden light streaming upward, no halo — only the warmth of the light itself catching the dark silhouette, the body dissolving into warmth and trailing particles from the waist down, above two more distant dark figures already higher and more transparent, their Mucha-style flowing hair streaming downward becoming ribbons of warm light, at the greatest distance a fourth figure barely a wisp of golden hair dissolving into the warming upper void, all their hair interweaving as they rise creating a spiraling column, hair transitioning from cool silver at the lowest tendrils to warm gold at the highest, fine luminous particles trailing like embers rising, generous dark void in the lower half, the darkness of earlier phases finally breaking as warmth enters, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
           highBass: "subsonic vibration passing through the ascending column, every hair thread pulsing outward, the golden particles scattering in a warm shockwave, the spirits brightening with each bass reverberation",
         },
@@ -1445,14 +1450,14 @@ export const JOURNEYS: Journey[] = [
       // HEAVENLY: golden light, angelic woman, pure transcendence.
       // Her hair has become pure light — the ghost is free.
       integration: {
-        start: 0.93,
+        start: 0.871,
         end: 1.0,
         bloomIntensity: 0.7,
         halation: 0.15,
         chromaticAberration: 0.0,
         vignette: 0.10,
         palette: { primary: "#1a1408", secondary: "#2a2010", accent: "#f0c060", glow: "#ffe0a0" },
-        aiPrompt: "warm golden radiance flooding vast cosmic space from the upper-right — deep indigo-black receding to the far edges as amber-gold light fills the upper two-thirds like sunrise through the cosmos itself, volumetric golden rays streaming diagonally, within the warmest region a luminous angelic figure seen in distant profile with very long flowing hair in Mucha-style decorative arcs interlaced with threads of pure gold light, the figure glowing with sacred warmth — more light than body, a dark angel finally illuminated, from the waist down dissolving into thousands of warm golden particles ascending gently like sacred embers, hair spreading outward in da Vinci spirals becoming the golden rays themselves — each strand unraveling into a beam of light reaching across the cosmos, behind the figure at infinite depth more wispy dark angelic forms barely visible in the golden haze — the spirits of every phase now gathered and luminous, fine golden particles dispersing in all directions like pollen in cathedral sunlight, the feeling of crossing complete — pure hope, the ghost becoming light itself, no text no signatures no watermarks no letters no writing",
+        aiPrompt: "warm golden radiance flooding vast cosmic space from the upper-right — deep indigo-black receding to the far edges as amber-gold light fills the upper two-thirds like sunrise through the cosmos itself, volumetric golden rays streaming diagonally, in the upper portion a luminous feminine figure in distant profile flying above and looking DOWN — her gaze directed toward a smaller darker feminine figure far below in the lower-left, as if watching over her from the heavens, face not visible in detail — only the silhouette of the profile against golden light, very long flowing hair in divine da Vinci spiraling curls and Mucha-style decorative arcs interlaced with threads of pure gold light trailing behind and downward, the figure more light than body — no halo just radiance, from the waist down dissolving into thousands of warm golden particles descending gently toward the figure below, the smaller figure below still dark and translucent — the ghost of earlier phases — looking up with hair streaming upward connecting to the figure above, behind both at infinite depth more wispy dark forms barely visible in the golden haze — the spirits of every phase now gathered, fine golden particles dispersing in all directions like pollen in cathedral sunlight, the contrast from the oppressive darkness of earlier phases to this warmth should feel overwhelming and earned, no detailed faces on any figure, no text no signatures no watermarks no letters no writing",
         aiPromptModifiers: {
           highBass: "the golden light pulsing with deep resonant warmth, each bass note sending a visible wave of gold radiance outward, the angelic figure and all the distant spirits glowing brighter with each pulse, particles scattering in golden shockwaves",
           lowAmplitude: "profound sacred silence, the gold light soft and steady, the angelic figure at perfect peace, weightless in golden cosmic stillness",

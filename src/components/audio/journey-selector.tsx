@@ -19,7 +19,8 @@ import { JOURNEY_PATHS, getPathForJourney, isPathCulminationUnlocked, GRAND_CULM
 import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { getCulminationJourney } from "@/lib/journeys/culmination-journeys";
 
-const FEATURED_JOURNEY_ID = "first-snow";
+/** Journeys pinned to the top of the grid (in order) */
+const PINNED_JOURNEY_IDS = ["ghost", "first-snow"];
 
 interface JourneySelectorProps {
   open: boolean;
@@ -229,28 +230,37 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     }
   }, [play]);
 
-  // Build flat journey list: featured first, then grouped by realm
-  const { featured, groupedByRealm } = useMemo(() => {
-    const feat = JOURNEYS.find((j) => j.id === FEATURED_JOURNEY_ID) ?? null;
-    const rest = JOURNEYS.filter((j) => j.id !== FEATURED_JOURNEY_ID);
-
-    // Group remaining by realm, preserving realm order
+  // Build grouped + flat journey lists — pinned journeys go first
+  const { groupedByRealm } = useMemo(() => {
+    // Group all journeys by realm, preserving realm order
     const groups: { realm: typeof REALMS[number]; journeys: Journey[] }[] = [];
     for (const realm of REALMS) {
-      const rj = rest.filter((j) => j.realmId === realm.id);
+      const rj = JOURNEYS.filter((j) => j.realmId === realm.id);
       if (rj.length > 0) {
         groups.push({ realm, journeys: rj });
       }
     }
-
-    return { featured: feat, groupedByRealm: groups };
+    return { groupedByRealm: groups };
   }, []);
 
-  // Flat list for desktop grid — realm embedded on each card
+  // Flat list for desktop grid — pinned journeys first, then realm-grouped
   const flatJourneys = useMemo(() => {
-    return groupedByRealm.flatMap(({ realm, journeys }) =>
-      journeys.map((journey) => ({ journey, realm }))
+    const pinnedSet = new Set(PINNED_JOURNEY_IDS);
+    const realmMap = new Map(REALMS.map(r => [r.id, r]));
+    const pinned: { journey: Journey; realm: typeof REALMS[number] }[] = [];
+    for (const id of PINNED_JOURNEY_IDS) {
+      const j = JOURNEYS.find(jj => jj.id === id);
+      if (j) {
+        const r = realmMap.get(j.realmId);
+        if (r) pinned.push({ journey: j, realm: r });
+      }
+    }
+    const rest = groupedByRealm.flatMap(({ realm, journeys }) =>
+      journeys
+        .filter(j => !pinnedSet.has(j.id))
+        .map(journey => ({ journey, realm }))
     );
+    return [...pinned, ...rest];
   }, [groupedByRealm]);
 
   if (!open) return null;
@@ -414,8 +424,6 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     selectJourney(random, random.aiEnabled);
   };
 
-  const winterRealm = REALMS.find((r) => r.id === "winter");
-  const featuredAccent = winterRealm?.palette.accent ?? "#90b8e0";
 
   // Phase arc renderer
   const renderPhaseArc = (journey: Journey, accent: string, maxWidth = "200px") => (
@@ -781,224 +789,6 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
           </div>
 
-          {/* ── Featured Journey (Mobile) ── */}
-          {featured && (
-            <div className="md:hidden mb-12">
-              <span
-                className="text-white/30 mb-4 block"
-                style={{
-                  fontSize: "0.65rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Featured
-              </span>
-              <div
-                className="cursor-pointer group"
-                onClick={() => handleJourneyClick(featured)}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2
-                      className="text-white/90 mb-1"
-                      style={{
-                        fontFamily: "var(--font-geist-sans)",
-                        fontWeight: 200,
-                        fontSize: "1.5rem",
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      {featured.name}
-                    </h2>
-                    <p
-                      className="text-white/45 mb-2"
-                      style={{
-                        fontSize: "0.75rem",
-                        fontFamily: "var(--font-geist-mono)",
-                      }}
-                    >
-                      {featured.subtitle}
-                    </p>
-                    <p
-                      className="text-white/50 mb-4"
-                      style={{
-                        fontSize: "0.75rem",
-                        fontFamily: "var(--font-geist-mono)",
-                        lineHeight: 1.6,
-                        maxWidth: "32rem",
-                      }}
-                    >
-                      {featured.description}
-                    </p>
-                  </div>
-                  {featured.aiEnabled && aiAvailable && (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0 ml-4"
-                      style={{
-                        fontSize: "0.6rem",
-                        fontFamily: "var(--font-geist-mono)",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        color: "rgba(255, 255, 255, 0.3)",
-                      }}
-                    >
-                      <Sparkles className="h-2.5 w-2.5" />
-                      AI
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-4">
-                  {renderPhaseArc(featured, featuredAccent, "220px")}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleJourneyClick(featured);
-                    }}
-                    className="px-4 py-1.5 rounded-md text-white/50 hover:text-white/90 transition-all"
-                    style={{
-                      fontSize: "0.7rem",
-                      fontFamily: "var(--font-geist-mono)",
-                      border: `1px solid ${featuredAccent}30`,
-                      backgroundColor: `${featuredAccent}08`,
-                    }}
-                  >
-                    {activeJourney?.id === featured.id ? "Restart" : "Begin"}
-                  </button>
-                  <button
-                    onClick={(e) => handleShareBuiltIn(featured.id, featured.name, e)}
-                    className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Share"
-                    disabled={sharingId === featured.id}
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── Featured Journey (Desktop Hero Card) ── */}
-          {featured && (
-            <div
-              className={`hidden md:block mb-12 cursor-pointer group rounded-xl p-6 jcard${activeJourney?.id === featured.id ? " jcard-active" : ""}`}
-              style={{
-                backgroundColor: activeJourney?.id === featured.id
-                  ? `${featuredAccent}06`
-                  : "rgba(255,255,255,0.01)",
-                border: `1px solid ${activeJourney?.id === featured.id ? `${featuredAccent}20` : "rgba(255,255,255,0.06)"}`,
-                borderLeft: activeJourney?.id === featured.id ? `2px solid ${featuredAccent}` : undefined,
-              }}
-              onClick={() => handleJourneyClick(featured)}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-2 h-2 rounded-full"
-                    style={{
-                      backgroundColor: featuredAccent,
-                      boxShadow: `0 0 6px ${featuredAccent}30`,
-                    }}
-                  />
-                  <span
-                    className="text-white/35"
-                    style={{
-                      fontSize: "0.65rem",
-                      fontFamily: "var(--font-geist-mono)",
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {winterRealm?.name?.toUpperCase() ?? "WINTER"}
-                  </span>
-                  <span
-                    className="text-white/20"
-                    style={{
-                      fontSize: "0.6rem",
-                      fontFamily: "var(--font-geist-mono)",
-                      letterSpacing: "0.08em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Featured
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {featured.aiEnabled && aiAvailable && (
-                    <div
-                      className="flex items-center gap-1 px-2 py-0.5 rounded-full"
-                      style={{
-                        fontSize: "0.6rem",
-                        fontFamily: "var(--font-geist-mono)",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        color: "rgba(255, 255, 255, 0.3)",
-                      }}
-                    >
-                      <Sparkles className="h-2.5 w-2.5" />
-                      AI
-                    </div>
-                  )}
-                  <button
-                    onClick={(e) => handleShareBuiltIn(featured.id, featured.name, e)}
-                    className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Share"
-                    disabled={sharingId === featured.id}
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-              <h2
-                className="text-white/90 mb-1.5"
-                style={{
-                  fontFamily: "var(--font-geist-sans)",
-                  fontWeight: 200,
-                  fontSize: "1.4rem",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                {featured.name}
-              </h2>
-              <p
-                className="text-white/35 mb-3"
-                style={{
-                  fontSize: "0.72rem",
-                  fontFamily: "var(--font-geist-mono)",
-                }}
-              >
-                {featured.subtitle}
-              </p>
-              <p
-                className="text-white/40 mb-5"
-                style={{
-                  fontSize: "0.68rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  lineHeight: 1.6,
-                  maxWidth: "48rem",
-                }}
-              >
-                {featured.description}
-              </p>
-              <div className="mb-5">
-                {renderPhaseArc(featured, featuredAccent, "100%")}
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleJourneyClick(featured);
-                }}
-                className="px-5 py-2 rounded-md text-white/50 hover:text-white/90 transition-all"
-                style={{
-                  fontSize: "0.72rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  border: `1px solid ${featuredAccent}30`,
-                  backgroundColor: `${featuredAccent}08`,
-                }}
-              >
-                {activeJourney?.id === featured.id ? "Restart" : "Begin"}
-              </button>
-            </div>
-          )}
 
           {/* ── Mobile List — md:hidden ── */}
           <div className="md:hidden">

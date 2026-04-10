@@ -54,15 +54,21 @@ export function undeleteShader(mode: string): void {
   useShaderPreferences.getState().undeleteShader(mode);
 }
 
+/** Shader usage stats entry */
+export interface ShaderStatEntry {
+  usageCount: number;       // primary appearances
+  dualCount: number;        // dual/blend appearances
+  lovedCount: number;
+  blockedCount: number;
+  lastUsed: string;         // ISO date
+  tertiaryCount: number;
+  totalJourneys: number;    // distinct journeys where this appeared
+  totalDisplaySecs: number; // cumulative screen time
+}
+
 /** Shader usage stats shape */
 export interface ShaderStats {
-  [mode: string]: {
-    usageCount: number;
-    dualCount: number;
-    lovedCount: number;
-    blockedCount: number;
-    lastUsed: string;
-  };
+  [mode: string]: ShaderStatEntry;
 }
 
 /** Read shader stats from localStorage */
@@ -73,10 +79,21 @@ export function getShaderStats(): ShaderStats {
   } catch { return {}; }
 }
 
+/** Create a default stat entry */
+function defaultStatEntry(): ShaderStatEntry {
+  return { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "", tertiaryCount: 0, totalJourneys: 0, totalDisplaySecs: 0 };
+}
+
+/** Ensure an entry has all fields (backward compat with old data) */
+function ensureFullEntry(entry: Partial<ShaderStatEntry>): ShaderStatEntry {
+  return { ...defaultStatEntry(), ...entry };
+}
+
 /** Increment a stat field for a shader */
 function incrementShaderStat(mode: string, field: "usageCount" | "dualCount" | "lovedCount" | "blockedCount"): void {
   const stats = getShaderStats();
-  if (!stats[mode]) stats[mode] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
+  if (!stats[mode]) stats[mode] = defaultStatEntry();
+  else stats[mode] = ensureFullEntry(stats[mode]);
   stats[mode][field]++;
   stats[mode].lastUsed = new Date().toISOString();
   try {
@@ -84,22 +101,32 @@ function incrementShaderStat(mode: string, field: "usageCount" | "dualCount" | "
   } catch { /* full */ }
 }
 
-/** Batch-update usage stats from journey phase data */
-export function updateShaderUsageFromJourney(phases: { shader: string; dualShader?: string | null }[]): void {
+/** Batch-update usage stats from the engine's actual shader display history */
+export function updateShaderUsageFromJourney(history: { mode: string; role: "primary" | "dual" | "tertiary"; startMs: number; endMs: number }[]): void {
   const stats = getShaderStats();
   const now = new Date().toISOString();
-  for (const phase of phases) {
-    if (phase.shader) {
-      if (!stats[phase.shader]) stats[phase.shader] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
-      stats[phase.shader].usageCount++;
-      stats[phase.shader].lastUsed = now;
-    }
-    if (phase.dualShader) {
-      if (!stats[phase.dualShader]) stats[phase.dualShader] = { usageCount: 0, dualCount: 0, lovedCount: 0, blockedCount: 0, lastUsed: "" };
-      stats[phase.dualShader].dualCount++;
-      stats[phase.dualShader].lastUsed = now;
-    }
+  const seenInJourney = new Set<string>();
+
+  for (const entry of history) {
+    if (!stats[entry.mode]) stats[entry.mode] = defaultStatEntry();
+    else stats[entry.mode] = ensureFullEntry(stats[entry.mode]);
+
+    const displaySecs = entry.endMs > entry.startMs ? (entry.endMs - entry.startMs) / 1000 : 0;
+    stats[entry.mode].totalDisplaySecs += displaySecs;
+    stats[entry.mode].lastUsed = now;
+
+    if (entry.role === "primary") stats[entry.mode].usageCount++;
+    else if (entry.role === "dual") stats[entry.mode].dualCount++;
+    else if (entry.role === "tertiary") stats[entry.mode].tertiaryCount++;
+
+    seenInJourney.add(entry.mode);
   }
+
+  // Increment totalJourneys for each distinct shader that appeared
+  for (const mode of seenInJourney) {
+    stats[mode].totalJourneys++;
+  }
+
   try {
     localStorage.setItem(SHADER_STATS_KEY, JSON.stringify(stats));
   } catch { /* full */ }
@@ -498,6 +525,8 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
   const [flashes, setFlashes] = useState<Record<string, "down" | "up" | null>>({});
   const [blockedToast, setBlockedToast] = useState<string | null>(null);
 
+  const prefs = useShaderPreferences();
+
   const { count: issueCount, log: eventLog } = useSyncExternalStore(
     subscribeIssues, getIssueSnapshot, getIssueSnapshot,
   );
@@ -531,17 +560,6 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
     flash("moment", type === "love" ? "up" : "down");
   }, [flash]);
 
-  const rateShader = useCallback((mode: string, action: "dislike" | "love") => {
-    const entry = buildSnapshot(action, _sharedFps);
-    entry.aiPromptSnippet = `shader-${action}: ${mode}`;
-    appendEntry(entry);
-
-    if (action === "love") {
-      loveShader(mode);
-    }
-    flash(`shader-${mode}`, action === "love" ? "up" : "down");
-  }, [flash]);
-
   const handleBlockShader = useCallback((mode: string) => {
     blockShader(mode);
     const entry = buildSnapshot("dislike", _sharedFps);
@@ -554,6 +572,12 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
   const handleDeleteShader = useCallback((mode: string) => {
     deleteShader(mode);
     setBlockedToast(`${getShaderLabel(mode)} deleted`);
+    setTimeout(() => setBlockedToast(null), 2000);
+  }, []);
+
+  const handleUnblockShader = useCallback((mode: string) => {
+    unblockShader(mode);
+    setBlockedToast(`${getShaderLabel(mode)} unblocked`);
     setTimeout(() => setBlockedToast(null), 2000);
   }, []);
 
@@ -624,19 +648,20 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
                 </span>
               )}
             </div>
-            {activeShaders.map(({ mode, role }) => (
-              <div key={mode} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <RatingRow
-                  label={`${role}: ${getShaderLabel(mode)}`}
-                  onDown={() => rateShader(mode, "dislike")}
-                  onUp={() => rateShader(mode, "love")}
-                  flashState={flashes[`shader-${mode}`] ?? null}
+            {activeShaders.map(({ mode, role }) => {
+              const isBlocked = prefs.blocked.has(mode);
+              return (
+                <ActiveShaderRow
+                  key={mode}
+                  role={role}
+                  label={getShaderLabel(mode)}
+                  isBlocked={isBlocked}
+                  onBlock={() => handleBlockShader(mode)}
+                  onUnblock={() => handleUnblockShader(mode)}
+                  onDelete={() => handleDeleteShader(mode)}
                 />
-                <div style={{ display: "flex", gap: 4, paddingLeft: 36 }}>
-                  <MiniAction label="block" color="rgba(239, 68, 68, 0.7)" onClick={() => handleBlockShader(mode)} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
@@ -668,20 +693,20 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
           </>
         )}
 
-        {/* Blocked toast */}
+        {/* Action toast */}
         {blockedToast && (
           <div
             style={{
               fontFamily: "var(--font-geist-mono)",
               fontSize: "0.65rem",
               fontWeight: 500,
-              color: "rgba(239, 68, 68, 0.85)",
+              color: "rgba(255, 255, 255, 0.6)",
               letterSpacing: "0.03em",
               textAlign: "center",
               paddingTop: 2,
             }}
           >
-            {blockedToast} blocked
+            {blockedToast}
           </div>
         )}
       </div>
@@ -726,6 +751,66 @@ export function JourneyFeedback({ visible, shaderMode, dualShaderMode, tertiaryS
 }
 
 // ── Small sub-components ──
+
+function ActiveShaderRow({
+  role,
+  label,
+  isBlocked,
+  onBlock,
+  onUnblock,
+  onDelete,
+}: {
+  role: string;
+  label: string;
+  isBlocked: boolean;
+  onBlock: () => void;
+  onUnblock: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, minHeight: 28 }}>
+      <span
+        style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.5rem",
+          fontWeight: 600,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          color: "rgba(255, 255, 255, 0.25)",
+          width: 50,
+          flexShrink: 0,
+        }}
+      >
+        {role}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-geist-mono)",
+          fontSize: "0.7rem",
+          fontWeight: 500,
+          color: isBlocked ? "rgba(239, 68, 68, 0.6)" : "rgba(255, 255, 255, 0.65)",
+          letterSpacing: "0.02em",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          flex: 1,
+          minWidth: 0,
+          textDecoration: isBlocked ? "line-through" : "none",
+        }}
+      >
+        {label}
+      </span>
+      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+        {isBlocked ? (
+          <MiniAction label="unblock" color="rgba(74, 222, 128, 0.7)" onClick={onUnblock} />
+        ) : (
+          <MiniAction label="block" color="rgba(239, 68, 68, 0.7)" onClick={onBlock} />
+        )}
+        <MiniAction label="del" color="rgba(239, 68, 68, 0.5)" onClick={onDelete} />
+      </div>
+    </div>
+  );
+}
 
 function SectionLabel({ text, issueCount }: { text: string; issueCount?: number }) {
   return (

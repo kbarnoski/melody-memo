@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef, forwardRef } from "react";
 import { MODE_META, type ModeMeta } from "@/lib/shaders";
-import { getProfile } from "@/lib/journeys/adaptive-engine";
 import { useShaderPreferences } from "@/lib/shader-preferences";
 import { getShaderStats } from "./journey-feedback";
+import { ShaderStatsPanel } from "./shader-stats-panel";
 
 function isNewShader(meta: ModeMeta): boolean {
   if (!meta.addedDate) return false;
@@ -86,7 +86,6 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
   const blocked = Array.from(prefs.blocked);
   const deleted = Array.from(prefs.deleted);
   const loved = Array.from(prefs.loved);
-  const profile = getProfile();
   const stats = getShaderStats();
 
   const allShaders = MODE_META.filter((m) => m.category !== "AI Imagery");
@@ -98,7 +97,6 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
   const lovedSet = new Set(loved.filter((m) => validModes.has(m)));
   const activeShaders = allShaders.filter((m) => !blockedSet.has(m.mode) && !deletedSet.has(m.mode));
   const activeCount = activeShaders.length;
-  const activeRules = profile.rules.filter((r) => r.confidence >= 0.3).length;
   const newShaders = allShaders.filter(isNewShader);
   const newCount = newShaders.length;
 
@@ -394,14 +392,7 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
 
         {/* Stats */}
         {activeTab === "stats" && (
-          <Section title="stats">
-            <StatLine label="Active shaders" value={`${activeCount} / ${totalShaders}`} />
-            <StatLine label="Blocked" value={String(blockedSet.size)} />
-            <StatLine label="Deleted" value={String(deletedSet.size)} />
-            <StatLine label="Loved" value={String(lovedSet.size)} />
-            <StatLine label="Adaptive rules" value={String(activeRules)} />
-            <StatLine label="Snapshots processed" value={String(profile.totalProcessed)} />
-          </Section>
+          <ShaderStatsPanel stats={stats} blocked={blockedSet} deleted={deletedSet} />
         )}
       </div>
     </div>
@@ -409,18 +400,6 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
 }
 
 // ── Sub-components ──
-
-function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span style={sectionLabelStyle}>
-        {title}
-        {count != null && <span style={{ color: "rgba(255,255,255,0.45)", marginLeft: 6 }}>({count})</span>}
-      </span>
-      {children}
-    </div>
-  );
-}
 
 function CategoryGroup({ category, children }: { category: string; children: React.ReactNode }) {
   return (
@@ -598,15 +577,6 @@ function SmallButton({ onClick, color, children }: {
   );
 }
 
-function StatLine({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 22 }}>
-      <span style={statLabelStyle}>{label}</span>
-      <span style={statValueStyle}>{value}</span>
-    </div>
-  );
-}
-
 function EmptyText({ children }: { children: React.ReactNode }) {
   return (
     <span style={{
@@ -649,15 +619,6 @@ const closeBtnStyle: React.CSSProperties = {
   padding: 0,
 };
 
-const sectionLabelStyle: React.CSSProperties = {
-  fontFamily: "var(--font-geist-mono)",
-  fontSize: "0.6rem",
-  fontWeight: 600,
-  color: "rgba(255, 255, 255, 0.30)",
-  letterSpacing: "0.12em",
-  textTransform: "uppercase",
-};
-
 const categoryTagStyle: React.CSSProperties = {
   fontFamily: "var(--font-geist-mono)",
   fontSize: "0.55rem",
@@ -688,18 +649,3 @@ const usageStyle: React.CSSProperties = {
   flexShrink: 0,
 };
 
-const statLabelStyle: React.CSSProperties = {
-  fontFamily: "var(--font-geist-mono)",
-  fontSize: "0.65rem",
-  fontWeight: 500,
-  color: "rgba(255,255,255,0.40)",
-  letterSpacing: "0.02em",
-};
-
-const statValueStyle: React.CSSProperties = {
-  fontFamily: "var(--font-geist-mono)",
-  fontSize: "0.65rem",
-  fontWeight: 600,
-  color: "rgba(255,255,255,0.65)",
-  letterSpacing: "0.02em",
-};

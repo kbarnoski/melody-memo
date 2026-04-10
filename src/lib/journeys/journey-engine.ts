@@ -31,6 +31,15 @@ interface TertiaryMoment {
   endProgress: number;    // 0-1 progress when this moment ends
 }
 
+/** A record of a shader that was actually displayed during the journey */
+export interface ShaderHistoryEntry {
+  mode: string;
+  role: "primary" | "dual" | "tertiary";
+  phaseId: string;
+  startMs: number;
+  endMs: number;
+}
+
 /** Set of Geometry shader modes for priority dual-layer picks */
 let _geometryModes: Set<string> | null = null;
 function getGeometryModes(): Set<string> {
@@ -65,6 +74,9 @@ class JourneyEngine {
   private dualShaderDurationMs = 0;
   /** Whether the dual shader has been initialized for this journey */
   private dualShaderInitialized = false;
+
+  // ─── Shader history (actual display records for stats) ───
+  private shaderHistory: ShaderHistoryEntry[] = [];
 
   // ─── Tertiary shader (occasional third layer — sprinkled in) ───
   private tertiaryShaderMode: string | null = null;
@@ -166,8 +178,30 @@ class JourneyEngine {
       this.currentShaderMode = firstPhase.shaderModes[0] ?? "cosmos";
     }
 
+    // Initialize shader history
+    this.shaderHistory = [];
+
     // Initialize dual shader — pick from first phase, different from primary
     this.initDualShader(now, random);
+
+    // Record initial shaders in history
+    const firstPhaseId = this.journey.phases[0]?.id ?? "unknown";
+    this.shaderHistory.push({
+      mode: this.currentShaderMode,
+      role: "primary",
+      phaseId: firstPhaseId,
+      startMs: now,
+      endMs: 0,
+    });
+    if (this.dualShaderMode) {
+      this.shaderHistory.push({
+        mode: this.dualShaderMode,
+        role: "dual",
+        phaseId: firstPhaseId,
+        startMs: now,
+        endMs: 0,
+      });
+    }
 
     // Schedule tertiary shader moments (~every 60s)
     this.scheduleTertiaryMoments(random);
@@ -193,6 +227,11 @@ class JourneyEngine {
 
   /** Stop the current journey */
   stop(): void {
+    // Close all open shader history entries
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    for (const entry of this.shaderHistory) {
+      if (entry.endMs === 0) entry.endMs = now;
+    }
     this.journey = null;
     this.running = false;
     this.currentPhaseId = null;
@@ -394,6 +433,15 @@ class JourneyEngine {
       if (!picked) {
         this.currentShaderMode = currentPhase.shaderModes[this.currentShaderIndex] ?? "cosmos";
       }
+      // Close previous primary history entry and start a new one
+      this.closeHistoryEntry("primary", now);
+      this.shaderHistory.push({
+        mode: this.currentShaderMode,
+        role: "primary",
+        phaseId: currentPhase.id,
+        startMs: now,
+        endMs: 0,
+      });
       this.shaderStartMs = now;
       this.shaderDurationMs = this.randomDuration(this.random, JourneyEngine.SHADER_SWITCH_MIN_SECS, JourneyEngine.SHADER_SWITCH_MAX_SECS);
     }
@@ -402,7 +450,15 @@ class JourneyEngine {
     // The visualizer's existing fade-in/out handles the visual transition.
     if (this.dualShaderInitialized && shaderLen >= 2) {
       if (now - this.dualShaderStartMs > this.dualShaderDurationMs) {
+        this.closeHistoryEntry("dual", now);
         this.dualShaderMode = this.pickDualShader(currentPhase);
+        this.shaderHistory.push({
+          mode: this.dualShaderMode,
+          role: "dual",
+          phaseId: currentPhase.id,
+          startMs: now,
+          endMs: 0,
+        });
         this.dualShaderStartMs = now;
         this.dualShaderDurationMs = this.randomDuration(this.random, JourneyEngine.DUAL_SWITCH_MIN_SECS, JourneyEngine.DUAL_SWITCH_MAX_SECS);
       }
@@ -423,11 +479,21 @@ class JourneyEngine {
             ? tertiaryCandidate
             : null;
           this.tertiaryActive = true;
+          if (this.tertiaryShaderMode) {
+            this.shaderHistory.push({
+              mode: this.tertiaryShaderMode,
+              role: "tertiary",
+              phaseId: currentPhase.id,
+              startMs: now,
+              endMs: 0,
+            });
+          }
         }
         break;
       }
     }
     if (!inTertiaryMoment && this.tertiaryActive) {
+      this.closeHistoryEntry("tertiary", now);
       this.tertiaryShaderMode = null;
       this.tertiaryActive = false;
     }
@@ -537,6 +603,21 @@ class JourneyEngine {
   /** Get the current shader mode */
   getCurrentShaderMode(): string {
     return this.currentShaderMode || "cosmos";
+  }
+
+  /** Get the shader history for the current/last journey (for stats tracking) */
+  getShaderHistory(): ShaderHistoryEntry[] {
+    return this.shaderHistory;
+  }
+
+  /** Close the most recent open history entry for a given role */
+  private closeHistoryEntry(role: "primary" | "dual" | "tertiary", endMs: number): void {
+    for (let i = this.shaderHistory.length - 1; i >= 0; i--) {
+      if (this.shaderHistory[i].role === role && this.shaderHistory[i].endMs === 0) {
+        this.shaderHistory[i].endMs = endMs;
+        return;
+      }
+    }
   }
 
   /** Build a stable AI prompt for a phase (called once per phase change) */

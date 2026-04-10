@@ -225,7 +225,7 @@ export function JourneyCompositor({
       ref={rootRef}
       className="absolute inset-0"
     >
-      {/* AI imagery — z-2, above shader but below controls */}
+      {/* AI imagery — z-2 normally, z-5 during bass hit flash (multiply blend shows dark content against white) */}
       {showAi && (
         <AiImageLayer
           prompt={effectivePrompt}
@@ -239,6 +239,14 @@ export function JourneyCompositor({
           shaderOpacity={effectiveShaderOpacity}
           promptSeed={promptSeed}
           journeyId={journeyId}
+          flashOverride={enableBassFlash && impulse > 0.05 && evtType === "bass_hit" ? {
+            position: "absolute" as const,
+            inset: 0,
+            zIndex: 5,
+            mixBlendMode: "multiply" as const,
+            opacity: Math.min(1, impulse * impulse * 0.9),
+            filter: `contrast(${1 + impulse * 2}) brightness(${0.25 + (1 - impulse) * 0.5})`,
+          } : undefined}
         />
       )}
 
@@ -269,61 +277,7 @@ export function JourneyCompositor({
               backgroundColor: `rgba(255, 255, 255, ${Math.min(1, impulse * impulse * impulse * impulse * 0.95)})`,
             }}
           />
-          {/* Dark feminine angel silhouette — dynamic flying pose with spiral hair */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 5,
-              pointerEvents: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: Math.min(1, impulse * impulse * 0.92),
-              filter: `blur(${(1 - impulse) * 3}px)`,
-            }}
-          >
-            <svg
-              viewBox="0 0 1000 1100"
-              style={{ width: "75vmin", height: "95vmin", maxWidth: "100%", maxHeight: "100%" }}
-            >
-              {/* Body — S-curved feminine form in mid-flight */}
-              <path
-                d="M460,145 C490,140 512,160 512,190 C512,215 497,232 478,236 C490,265 505,300 508,335 C510,360 505,385 495,405 C488,418 490,440 498,470 C512,525 535,620 558,730 C575,810 595,890 618,970 C625,998 612,1020 588,1020 L418,1020 C394,1020 383,998 390,970 C407,890 420,810 430,730 C440,620 443,525 435,470 C428,440 426,418 420,405 C412,385 408,360 410,335 C413,300 425,265 435,236 C416,232 402,215 402,190 C402,160 424,140 460,145 Z"
-                fill="rgba(5,0,12,0.94)"
-              />
-              {/* Left wing — dramatic upward sweep */}
-              <path
-                d="M420,275 C360,238 210,155 85,112 C35,96 12,118 38,158 C68,204 195,278 348,328 C388,340 415,320 420,302 Z"
-                fill="rgba(5,0,12,0.94)"
-              />
-              {/* Right wing — sweeps right and slightly down */}
-              <path
-                d="M505,298 C578,262 730,195 862,178 C918,170 940,192 920,228 C895,272 778,325 638,365 C578,382 518,358 508,335 Z"
-                fill="rgba(5,0,12,0.94)"
-              />
-              {/* Reaching arm — extends from right shoulder */}
-              <path
-                d="M508,320 C542,338 590,365 638,385 C658,393 665,385 658,368 C645,345 602,322 562,308 C535,298 512,302 508,312 Z"
-                fill="rgba(5,0,12,0.94)"
-              />
-              {/* Hair spiral 1 — large Leonardo curl flowing right */}
-              <path
-                d="M478,152 C515,118 578,78 642,58 C705,38 742,48 730,78 C715,108 655,138 585,152 C528,163 488,155 478,148"
-                fill="rgba(5,0,12,0.90)"
-              />
-              {/* Hair spiral 2 — flowing left and upward */}
-              <path
-                d="M442,142 C412,108 365,62 315,38 C270,18 248,28 258,58 C272,88 322,125 388,152 C422,162 445,152 448,145"
-                fill="rgba(5,0,12,0.85)"
-              />
-              {/* Hair spiral 3 — long tendril flowing far right */}
-              <path
-                d="M485,155 C538,132 622,98 712,82 C795,68 838,78 828,105 C812,132 748,158 668,168 C598,176 525,165 490,155"
-                fill="rgba(5,0,12,0.78)"
-              />
-            </svg>
-          </div>
+          {/* AI imagery promoted to z-5 with multiply blend during flash — see flashOverride above */}
           {/* Subsonic shockwave ring expanding outward beneath the flash */}
           <div
             style={{

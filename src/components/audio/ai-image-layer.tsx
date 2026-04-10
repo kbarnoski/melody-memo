@@ -29,6 +29,8 @@ interface AiImageLayerProps {
   /** Stable journey identifier — only purge layers when this changes (new journey).
    *  Phase transitions within the same journey use graceful crossfade instead. */
   journeyId?: string;
+  /** Style override during bass hit flash — AI imagery shows as dark shapes against white */
+  flashOverride?: React.CSSProperties;
 }
 
 interface ImageLayer {
@@ -187,6 +189,7 @@ export function AiImageLayer({
   onFirstImage,
   promptSeed,
   journeyId,
+  flashOverride,
 }: AiImageLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layersRef = useRef<ImageLayer[]>([]);
@@ -640,9 +643,11 @@ export function AiImageLayer({
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
       style={
-        aiOnly
-          ? { zIndex: 2, pointerEvents: "none" }
-          : { zIndex: 2, mixBlendMode: "screen", opacity: aiLayerOpacity, pointerEvents: "none" }
+        flashOverride
+          ? { ...flashOverride, pointerEvents: "none" as const }
+          : aiOnly
+            ? { zIndex: 2, pointerEvents: "none" as const }
+            : { zIndex: 2, mixBlendMode: "screen" as const, opacity: aiLayerOpacity, pointerEvents: "none" as const }
       }
     />
   );

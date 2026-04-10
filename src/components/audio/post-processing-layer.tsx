@@ -244,7 +244,8 @@ export function PostProcessingLayer({
     return () => {
       cancelAnimationFrame(animRef.current);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — props read from propsRef
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <canvas

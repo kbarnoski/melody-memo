@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import { SharedJourneyClient } from "./client";
+import { getJourney } from "@/lib/journeys/journeys";
 
 function createAnonClient() {
   return createClient(
@@ -16,17 +17,23 @@ export async function generateMetadata({
 }) {
   const { token } = await params;
   const supabase = createAnonClient();
-  const { data: journey } = await supabase
+  const { data: metaRow } = await supabase
     .from("journeys")
-    .select("name, subtitle")
+    .select("name, subtitle, theme")
     .eq("share_token", token)
     .single();
 
-  if (!journey) return { title: "Journey Not Found" };
+  if (!metaRow) return { title: "Journey Not Found" };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const metaTheme = metaRow.theme as Record<string, any> | null;
+  const metaBuiltin = metaTheme?.builtinJourneyId ? getJourney(metaTheme.builtinJourneyId) : null;
+  const name = metaBuiltin?.name ?? metaRow.name;
+  const subtitle = metaBuiltin?.subtitle ?? metaRow.subtitle;
 
   return {
-    title: `${journey.name} — Resonance`,
-    description: journey.subtitle || "A shared journey on Resonance",
+    title: `${name} — Resonance`,
+    description: subtitle || "A shared journey on Resonance",
   };
 }
 
@@ -51,26 +58,42 @@ export default async function SharedJourneyPage({
     ? `/api/audio/${journeyRow.recording_id}`
     : null;
 
-  // Extract journey-level config from the theme JSONB (stored by share-builtin)
+  // For built-in journeys, use the live definition so design changes propagate immediately.
+  // Falls back to DB snapshot for custom journeys or if the built-in was removed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const themeData = journeyRow.theme as Record<string, any> | null;
+  const builtinId = themeData?.builtinJourneyId as string | undefined;
+  const liveJourney = builtinId ? getJourney(builtinId) : null;
 
-  return (
-    <SharedJourneyClient
-      journey={{
+  const journey = liveJourney
+    ? {
+        id: journeyRow.id,
+        name: liveJourney.name,
+        subtitle: liveJourney.subtitle,
+        description: liveJourney.description,
+        realmId: liveJourney.realmId,
+        phases: liveJourney.phases,
+        aiEnabled: liveJourney.aiEnabled,
+        enableBassFlash: liveJourney.enableBassFlash ?? false,
+        audioReactive: liveJourney.audioReactive ?? false,
+        completionOffset: liveJourney.completionOffset ?? 0,
+        ...(liveJourney.phaseLabels ? { phaseLabels: liveJourney.phaseLabels } : {}),
+        ...(liveJourney.theme ? { theme: liveJourney.theme } : {}),
+      }
+    : {
         id: journeyRow.id,
         name: journeyRow.name,
         subtitle: journeyRow.subtitle || "",
         description: journeyRow.description || "",
         realmId: journeyRow.realm_id,
         phases: journeyRow.phases,
-        aiEnabled: themeData?.aiEnabled ?? true,
-        enableBassFlash: themeData?.enableBassFlash ?? false,
-        audioReactive: themeData?.audioReactive ?? false,
-        completionOffset: themeData?.completionOffset ?? 0,
-        ...(themeData?.phaseLabels ? { phaseLabels: themeData.phaseLabels } : {}),
+        aiEnabled: true,
         ...(journeyRow.theme ? { theme: journeyRow.theme } : {}),
-      }}
+      };
+
+  return (
+    <SharedJourneyClient
+      journey={journey}
       audioUrl={audioUrl}
       shareToken={token}
       playbackSeed={journeyRow.playback_seed ?? null}

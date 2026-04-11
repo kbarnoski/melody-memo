@@ -184,7 +184,8 @@ const REALM_SHADER_BLOCKLIST: Record<string, string[]> = {
     "orb", // wrong vibe
   ],
   cosmos: [
-    "deluge", // heavy rain/flood — wrong vibe for cosmic journeys
+    "deluge", // heavy rain/flood — wrong vibe
+    "rapture", // too bright/intense — clashes with dark aesthetic
   ],
   ocean: [
     "flame", "inferno", // fire

@@ -951,7 +951,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 {customJourneys.map((journey) => {
                   const isActive = activeJourney?.id === journey.id;
                   const realm = journey.realmId !== "custom" ? REALMS.find((r) => r.id === journey.realmId) : null;
-                  const accent = journey.theme?.palette.accent ?? realm?.palette.accent ?? "#8b5cf6";
+                  const accent = journey.theme?.palette?.accent ?? realm?.palette.accent ?? "#8b5cf6";
                   return (
                     <div
                       key={journey.id}
@@ -1194,7 +1194,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   {customJourneys.map((journey) => {
                     const isActive = activeJourney?.id === journey.id;
                     const cRealm = journey.realmId !== "custom" ? REALMS.find((r) => r.id === journey.realmId) : null;
-                    const accent = journey.theme?.palette.accent ?? cRealm?.palette.accent ?? "#8b5cf6";
+                    const accent = journey.theme?.palette?.accent ?? cRealm?.palette.accent ?? "#8b5cf6";
                     return (
                       <div
                         key={journey.id}
@@ -1221,7 +1221,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                               className="w-1.5 h-1.5 rounded-full shrink-0"
                               style={{
                                 backgroundColor: accent,
-                                boxShadow: `0 0 4px ${journey.theme?.palette.glow ?? cRealm?.palette.glow ?? accent}30`,
+                                boxShadow: `0 0 4px ${journey.theme?.palette?.glow ?? cRealm?.palette.glow ?? accent}30`,
                               }}
                             />
                             <span

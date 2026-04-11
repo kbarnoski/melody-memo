@@ -78,6 +78,7 @@ export default async function RecordingPage({
           share_token: recording.share_token ?? null,
           waveform_peaks: recording.waveform_peaks ?? null,
           audio_codec: recording.audio_codec ?? null,
+          artist: recording.artist ?? null,
         }}
         analysis={analysis}
         initialMessages={messages ?? []}

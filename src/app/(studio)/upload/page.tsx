@@ -15,6 +15,7 @@ import { detectAudioCodec } from "@/lib/audio/detect-codec";
 interface UploadingFile {
   file: File;
   description: string;
+  artist: string;
   progress: number;
   status: "pending" | "uploading" | "done" | "error";
   error?: string;
@@ -46,7 +47,7 @@ export default function UploadPage() {
       }
       return [
         ...prev,
-        ...toAdd.map((file) => ({ file, description: "", progress: 0, status: "pending" as const })),
+        ...toAdd.map((file) => ({ file, description: "", artist: "", progress: 0, status: "pending" as const })),
       ];
     });
   }, []);
@@ -62,6 +63,12 @@ export default function UploadPage() {
   }
 
   async function uploadAll() {
+    const missingArtist = files.some((f) => f.status !== "done" && !f.artist.trim());
+    if (missingArtist) {
+      toast.error("Artist name is required for all recordings");
+      return;
+    }
+
     const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (!user) {
@@ -153,6 +160,7 @@ export default function UploadPage() {
         recorded_at: recordedAt,
         description: files[i].description || null,
         audio_codec: audioCodec,
+        artist: files[i].artist.trim(),
       }).select("id").single();
 
       if (dbError) {
@@ -244,20 +252,37 @@ export default function UploadPage() {
                     {(f.file.size / 1024 / 1024).toFixed(1)} MB
                   </p>
                   {f.status !== "done" && (
-                    <Input
-                      placeholder="Add a description (optional)"
-                      value={f.description}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setFiles((prev) =>
-                          prev.map((file, idx) =>
-                            idx === i ? { ...file, description: value } : file
-                          )
-                        );
-                      }}
-                      className="mt-1 h-7 text-xs"
-                      onClick={(e) => e.stopPropagation()}
-                    />
+                    <>
+                      <Input
+                        placeholder="Artist name (required)"
+                        value={f.artist}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFiles((prev) =>
+                            prev.map((file, idx) =>
+                              idx === i ? { ...file, artist: value } : file
+                            )
+                          );
+                        }}
+                        className="mt-1 h-7 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                        required
+                      />
+                      <Input
+                        placeholder="Add a description (optional)"
+                        value={f.description}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setFiles((prev) =>
+                            prev.map((file, idx) =>
+                              idx === i ? { ...file, description: value } : file
+                            )
+                          );
+                        }}
+                        className="mt-1 h-7 text-xs"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </>
                   )}
                   {f.status === "uploading" && (
                     <div className="mt-1 h-1.5 w-full rounded-full bg-muted">

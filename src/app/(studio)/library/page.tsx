@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { LibraryClient } from "@/components/recordings/library-client";
-import { resolvePairedTrackIds } from "@/lib/journeys/paired-tracks";
 
 export default async function LibraryPage() {
   const supabase = await createClient();
@@ -8,25 +7,14 @@ export default async function LibraryPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const userId = user?.id;
 
-  // Resolve journey-paired track IDs so non-admin users can see them
-  const pairedIds = await resolvePairedTrackIds(supabase);
-
-  // Build query: user's own recordings + journey-paired tracks
-  let recordingsQuery = supabase
-    .from("recordings")
-    .select(
-      "id, user_id, title, duration, created_at, recorded_at, file_name, description, analyses(id, status, key_signature, tempo), recording_tags(tag_id, tags(id, name))"
-    )
-    .order("created_at", { ascending: false });
-
-  if (pairedIds.length > 0) {
-    recordingsQuery = recordingsQuery.or(`user_id.eq.${userId},id.in.(${pairedIds.join(",")})`);
-  } else {
-    recordingsQuery = recordingsQuery.eq("user_id", userId!);
-  }
-
   const [{ data: recordings }, { data: tags }] = await Promise.all([
-    recordingsQuery,
+    supabase
+      .from("recordings")
+      .select(
+        "id, user_id, title, duration, created_at, recorded_at, file_name, description, artist, analyses(id, status, key_signature, tempo), recording_tags(tag_id, tags(id, name))"
+      )
+      .eq("user_id", userId!)
+      .order("created_at", { ascending: false }),
     supabase
       .from("tags")
       .select("id, name")
@@ -52,6 +40,7 @@ export default async function LibraryPage() {
       recordedAt: rec.recorded_at,
       fileName: rec.file_name,
       description: rec.description,
+      artist: rec.artist ?? null,
       hasAnalysis: !!completed,
       keySignature: completed?.key_signature ?? null,
       tempo: completed?.tempo ?? null,
@@ -60,7 +49,6 @@ export default async function LibraryPage() {
             .map((rt: Record<string, unknown>) => rt.tags as { id: string; name: string } | null)
             .filter(Boolean) as { id: string; name: string }[]
         : [],
-      readOnly: rec.user_id !== userId,
     };
   });
 

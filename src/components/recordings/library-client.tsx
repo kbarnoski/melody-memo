@@ -15,11 +15,11 @@ interface Recording {
   recordedAt?: string | null;
   fileName: string;
   description?: string | null;
+  artist?: string | null;
   hasAnalysis: boolean;
   keySignature?: string | null;
   tempo?: number | null;
   tags: { id: string; name: string }[];
-  readOnly?: boolean;
 }
 
 interface Tag {
@@ -160,6 +160,14 @@ export function LibraryClient({ recordings, allTags }: LibraryClientProps) {
         </div>
       )}
 
+      {/* Missing artist banner */}
+      {recordings.some((r) => !r.artist) && (
+        <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/70">
+          Some recordings are missing artist names.{" "}
+          <span className="text-amber-200/90">Tap a recording to add one.</span>
+        </div>
+      )}
+
       {/* Results */}
       {filtered.length > 0 ? (
         <div className="grid gap-3">
@@ -182,7 +190,6 @@ export function LibraryClient({ recordings, allTags }: LibraryClientProps) {
               keySignature={rec.keySignature}
               tempo={rec.tempo}
               tags={rec.tags}
-              readOnly={rec.readOnly}
             />
           ))}
         </div>

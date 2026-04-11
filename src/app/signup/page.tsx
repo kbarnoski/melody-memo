@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function SignupForm() {
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +24,7 @@ function SignupForm() {
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
@@ -32,6 +33,13 @@ function SignupForm() {
       setError(error.message);
       setLoading(false);
     } else {
+      // Create profile with display name
+      if (data.user) {
+        await supabase.from("profiles").insert({
+          id: data.user.id,
+          display_name: displayName.trim(),
+        });
+      }
       router.push(redirectTo);
       router.refresh();
     }
@@ -63,6 +71,17 @@ function SignupForm() {
         </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="displayName">Your name</Label>
+            <Input
+              id="displayName"
+              type="text"
+              placeholder="How you'll appear on journeys"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

@@ -46,6 +46,8 @@ interface SharedJourneyClientProps {
   audioUrl: string | null;
   shareToken: string;
   playbackSeed: string | null;
+  creatorName: string | null;
+  musicArtist: string | null;
 }
 
 export function SharedJourneyClient({
@@ -53,6 +55,8 @@ export function SharedJourneyClient({
   audioUrl,
   shareToken,
   playbackSeed,
+  creatorName,
+  musicArtist,
 }: SharedJourneyClientProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -69,6 +73,8 @@ export function SharedJourneyClient({
   const [shareSheet, setShareSheet] = useState(false);
   const [ended, setEnded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(true); // assume auth until checked
+  const [journeyIntroVisible, setJourneyIntroVisible] = useState(false);
+  const [phaseIndicatorReady, setPhaseIndicatorReady] = useState(false);
   const animRef = useRef<number>(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endedRef = useRef(false);
@@ -523,8 +529,16 @@ export function SharedJourneyClient({
       trackDuration: duration > 0 ? duration : undefined,
     });
 
+    // Show "Journey Started" intro overlay
+    setJourneyIntroVisible(true);
+    setPhaseIndicatorReady(false);
+    const introTimer = setTimeout(() => setJourneyIntroVisible(false), 5000);
+    const phaseTimer = setTimeout(() => setPhaseIndicatorReady(true), 7000);
+
     return () => {
       engine.stop();
+      clearTimeout(introTimer);
+      clearTimeout(phaseTimer);
     };
   }, [started, journey, playbackSeed]);
 
@@ -686,6 +700,23 @@ export function SharedJourneyClient({
       <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion onReady={onShaderReady} />
     ) : null;
   };
+
+  const creditsBlock = (
+    <div
+      style={{
+        fontSize: "0.6rem",
+        fontFamily: "var(--font-geist-mono)",
+        color: "rgba(255, 255, 255, 0.25)",
+        letterSpacing: "0.04em",
+        lineHeight: 1.6,
+        marginTop: "6px",
+      }}
+    >
+      {creatorName && <div>Journey by {creatorName}</div>}
+      {musicArtist && <div>Music by {musicArtist}</div>}
+      {!creatorName && !musicArtist && <div>Created on Resonance</div>}
+    </div>
+  );
 
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/journey/${shareToken}`;
 
@@ -874,11 +905,66 @@ export function SharedJourneyClient({
         </JourneyCompositor>
       )}
 
-      {/* Phase indicator — same component as main app */}
-      <JourneyPhaseIndicator
-        journey={journey}
-        currentPhase={journeyFrame?.phase as JourneyPhaseId ?? null}
-      />
+      {/* "Journey Started" intro overlay — matching main app */}
+      {journeyIntroVisible && (
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{
+            zIndex: 50,
+            pointerEvents: "none",
+            animation: "journeyIntroAnim 5s ease-in-out forwards",
+          }}
+        >
+          <div className="flex flex-col items-center gap-5" style={{ position: "relative", padding: "4rem 6rem", maxWidth: "90vw" }}>
+            <div
+              style={{
+                position: "absolute",
+                inset: "-40%",
+                background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+                filter: "blur(40px)",
+                pointerEvents: "none",
+              }}
+            />
+            <span
+              style={{
+                position: "relative",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontWeight: 300,
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.85)",
+                textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+              }}
+            >
+              Journey Started
+            </span>
+            <span
+              style={{
+                position: "relative",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 300,
+                fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+                letterSpacing: "0.04em",
+                color: "rgba(255, 255, 255, 0.55)",
+                textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                marginTop: "-0.5rem",
+              }}
+            >
+              {journey.name}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Phase indicator — same component as main app, gated by intro timing */}
+      {phaseIndicatorReady && (
+        <JourneyPhaseIndicator
+          journey={journey}
+          currentPhase={journeyFrame?.phase as JourneyPhaseId ?? null}
+        />
+      )}
 
       {/* Bottom bar — solid black, matching main app journey mode */}
       <div
@@ -1132,6 +1218,7 @@ export function SharedJourneyClient({
               >
                 {journey.name}
               </div>
+              {creditsBlock}
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button
@@ -1236,6 +1323,7 @@ export function SharedJourneyClient({
               >
                 {journey.name}
               </div>
+              {creditsBlock}
             </div>
 
             <div

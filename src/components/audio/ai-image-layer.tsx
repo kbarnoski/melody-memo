@@ -41,6 +41,8 @@ interface ImageLayer {
   fadeStartOpacity: number;
   /** Time when layer was created — used for Ken Burns, never modified */
   createdTime: number;
+  /** Time when layer reached peak opacity — used for MIN_PEAK_DURATION hold */
+  peakStartTime: number;
   // Ken Burns: each layer gets a unique slow pan/zoom trajectory
   scaleStart: number;
   scaleEnd: number;
@@ -54,7 +56,8 @@ interface ImageLayer {
 const DISSOLVE_DURATION = 4000; // 4s fade-in — smooth cross-dissolve
 const FADEOUT_DURATION = 8000; // 8s fade-out — images linger longer for layered depth
 const PURGE_FADEOUT_DURATION = 500; // 0.5s fast fade — prevents old journey images lingering
-const GEN_INTERVAL_MIN = 6000; // 6s between generations — keep imagery flowing
+const MIN_PEAK_DURATION = 5000; // image must hold at full opacity 5s before eviction
+const GEN_INTERVAL_MIN = 8000; // 8s between generations — gives each image room to breathe
 const GEN_INTERVAL_MAX = 10000; // 10s max — ensures constant visual movement
 const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
 const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
@@ -290,15 +293,22 @@ export function AiImageLayer({
       }
     }
 
-    // Only fade out the OLDEST visible layer when at capacity
-    // This keeps 2-3 images stacked and visible at the same time
+    // Only fade out the OLDEST visible layer when at capacity —
+    // but skip layers that haven't held at peak for MIN_PEAK_DURATION yet.
+    // If nothing can be evicted, drop the incoming image (next gen will try again).
     if (layers.length >= MAX_LAYERS) {
-      const oldestVisible = layers.find((l) => l.state === "fading-in" || l.state === "peak");
+      const oldestVisible = layers.find((l) =>
+        (l.state === "fading-in") ||
+        (l.state === "peak" && now - l.peakStartTime >= MIN_PEAK_DURATION)
+      );
       if (oldestVisible) {
         oldestVisible.fadeStartOpacity = oldestVisible.opacity;
         oldestVisible.state = "fading-out";
         oldestVisible.fadeStartTime = now;
         // NOTE: createdTime is NOT touched — Ken Burns continues smoothly
+      } else {
+        // All visible layers are still within their minimum peak hold — drop incoming image
+        return;
       }
     }
 
@@ -326,6 +336,7 @@ export function AiImageLayer({
       fadeStartTime: now,
       fadeStartOpacity: 0,
       createdTime: now, // stable timestamp for Ken Burns — never modified
+      peakStartTime: 0, // set when layer reaches peak in render loop
       scaleStart,
       scaleEnd,
       panX,
@@ -565,6 +576,7 @@ export function AiImageLayer({
           layer.opacity = easedProgress;
           if (rawProgress >= 1) {
             layer.state = "peak";
+            layer.peakStartTime = now;
             layer.opacity = 1;
           }
         } else if (layer.state === "fading-out") {

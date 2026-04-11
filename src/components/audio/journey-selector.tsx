@@ -45,6 +45,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [shareSheet, setShareSheet] = useState<{ url: string; title: string } | null>(null);
   const [expandedPath, setExpandedPath] = useState<string | null>(null);
+  const [view, setView] = useState<"journeys" | "paths">("journeys");
   const completedJourneyIds = usePathProgressStore((s) => s.completedJourneyIds);
   const completedCulminationIds = usePathProgressStore((s) => s.completedCulminationIds);
   const grandCulminationUnlocked = usePathProgressStore((s) => s.grandCulminationUnlocked);
@@ -72,8 +73,13 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (!error && data) {
-          // Transform DB rows to Journey objects
-          const journeys: Journey[] = data.map((row: Record<string, unknown>) => ({
+          // Transform DB rows to Journey objects, filtering out built-in share stubs
+          const journeys: Journey[] = data
+            .filter((row: Record<string, unknown>) => {
+              const theme = row.theme as Record<string, unknown> | null;
+              return !theme?.builtinJourneyId;
+            })
+            .map((row: Record<string, unknown>) => ({
             id: row.id as string,
             name: (row.name as string) ?? "Untitled Journey",
             subtitle: (row.subtitle as string) ?? "",
@@ -243,10 +249,11 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
     return { groupedByRealm: groups };
   }, []);
 
-  // Flat list for desktop grid — pinned journeys first, then realm-grouped
-  const flatJourneys = useMemo(() => {
-    const pinnedSet = new Set(PINNED_JOURNEY_IDS);
-    const realmMap = new Map(REALMS.map(r => [r.id, r]));
+  // Pinned journeys (New Releases) and rest (Featured)
+  const pinnedSet = useMemo(() => new Set(PINNED_JOURNEY_IDS), []);
+  const realmMap = useMemo(() => new Map(REALMS.map(r => [r.id, r])), []);
+
+  const pinnedJourneys = useMemo(() => {
     const pinned: { journey: Journey; realm: typeof REALMS[number] }[] = [];
     for (const id of PINNED_JOURNEY_IDS) {
       const j = JOURNEYS.find(jj => jj.id === id);
@@ -255,13 +262,16 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         if (r) pinned.push({ journey: j, realm: r });
       }
     }
-    const rest = groupedByRealm.flatMap(({ realm, journeys }) =>
+    return pinned;
+  }, [realmMap]);
+
+  const restJourneys = useMemo(() => {
+    return groupedByRealm.flatMap(({ realm, journeys }) =>
       journeys
         .filter(j => !pinnedSet.has(j.id))
         .map(journey => ({ journey, realm }))
     );
-    return [...pinned, ...rest];
-  }, [groupedByRealm]);
+  }, [groupedByRealm, pinnedSet]);
 
   if (!open) return null;
 
@@ -474,23 +484,43 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
       >
         <div className="mx-auto px-5 md:px-8 pt-10" style={{ maxWidth: "72rem", paddingBottom: "calc(6rem + env(safe-area-inset-bottom, 0px))" }}>
 
-          {/* ── Header ── */}
+          {/* ── Header with Journeys/Paths toggle ── */}
           <div className="flex items-center justify-between mb-10">
-            <h1
-              className="text-white/90"
-              style={{
-                fontFamily: "var(--font-geist-sans)",
-                fontWeight: 200,
-                fontSize: "1.8rem",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Journeys
-            </h1>
+            <div className="flex items-center gap-3">
+              {(["journeys", "paths"] as const).map((tab, i) => (
+                <div key={tab} className="flex items-center gap-3">
+                  {i > 0 && (
+                    <span className="text-white/15" style={{ fontSize: "0.5rem" }}>
+                      &bull;
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setView(tab)}
+                    className="relative pb-1.5 transition-colors duration-150"
+                    style={{
+                      fontFamily: "var(--font-geist-mono)",
+                      fontSize: "0.72rem",
+                      letterSpacing: "0.1em",
+                      textTransform: "uppercase",
+                      color: view === tab ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    {tab === "journeys" ? "Journeys" : "Paths"}
+                    {view === tab && (
+                      <span
+                        className="absolute bottom-0 left-0 right-0"
+                        style={{
+                          height: "2px",
+                          backgroundColor: "rgba(255,255,255,0.4)",
+                          borderRadius: "1px",
+                        }}
+                      />
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
             <div className="flex items-center gap-2">
-              {/* Random and Generate hidden for now */}
-              {/* <button onClick={selectRandom} ...>Random</button> */}
-              {/* <button onClick={handleAutoGenerate} ...>Generate</button> */}
               <button
                 onClick={() => setCreateDialogOpen(true)}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
@@ -506,7 +536,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             </div>
           </div>
 
-          {/* ── Paths Section ── */}
+          {/* ── Paths View ── */}
+          {view === "paths" && (
           <div className="mb-12">
             <div className="flex items-center gap-4 mb-6">
               <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
@@ -771,8 +802,276 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               </div>
             )}
           </div>
+          )}
 
-          {/* ── All Journeys divider ── */}
+          {/* ── Journeys View ── */}
+          {view === "journeys" && (<>
+
+          {/* ── New Releases (desktop) ── */}
+          <div className="hidden md:block mb-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+              <span
+                className="text-white/30"
+                style={{
+                  fontSize: "0.65rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                }}
+              >
+                New Releases
+              </span>
+              <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {pinnedJourneys.map(({ journey, realm }) => {
+                const isActive = activeJourney?.id === journey.id;
+                const accent = realm.palette.accent;
+                return (
+                  <div
+                    key={journey.id}
+                    className={`jcard cursor-pointer group rounded-xl${isActive ? " jcard-active" : ""}`}
+                    style={{
+                      backgroundColor: isActive
+                        ? `${accent}05`
+                        : "rgba(255,255,255,0.01)",
+                      border: `1px solid ${isActive ? `${accent}20` : "rgba(255,255,255,0.06)"}`,
+                      borderLeft: isActive ? `2px solid ${accent}` : undefined,
+                      padding: "24px",
+                    }}
+                    onClick={() => handleJourneyClick(journey)}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-1.5 h-1.5 rounded-full shrink-0"
+                          style={{
+                            backgroundColor: accent,
+                            boxShadow: `0 0 4px ${realm.palette.glow}30`,
+                          }}
+                        />
+                        <span
+                          className="text-white/35"
+                          style={{
+                            fontSize: "0.6rem",
+                            fontFamily: "var(--font-geist-mono)",
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {realm.name.toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {journey.aiEnabled && aiAvailable && (
+                          <div
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+                            style={{
+                              fontSize: "0.55rem",
+                              fontFamily: "var(--font-geist-mono)",
+                              color: "rgba(255, 255, 255, 0.25)",
+                            }}
+                          >
+                            <Sparkles className="h-2 w-2" />
+                            AI
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
+                          className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
+                          title="Share"
+                          disabled={sharingId === journey.id}
+                        >
+                          <Share2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-1">
+                      {completedJourneyIds.includes(journey.id) && (() => {
+                        const jp = getPathForJourney(journey.id);
+                        return jp ? (
+                          <div
+                            className="shrink-0"
+                            style={{
+                              width: "4px",
+                              height: "4px",
+                              borderRadius: "50%",
+                              backgroundColor: jp.palette.accent,
+                            }}
+                          />
+                        ) : null;
+                      })()}
+                      <h3
+                        className="text-white/85"
+                        style={{
+                          fontFamily: "var(--font-geist-sans)",
+                          fontWeight: 300,
+                          fontSize: "1.2rem",
+                        }}
+                      >
+                        {journey.name}
+                      </h3>
+                    </div>
+
+                    <p
+                      className="text-white/35 mb-2"
+                      style={{
+                        fontSize: "0.72rem",
+                        fontFamily: "var(--font-geist-mono)",
+                      }}
+                    >
+                      {journey.subtitle}
+                    </p>
+
+                    {journey.description && (
+                      <p
+                        className="text-white/40 mb-3"
+                        style={{
+                          fontSize: "0.68rem",
+                          fontFamily: "var(--font-geist-mono)",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {journey.description}
+                      </p>
+                    )}
+
+                    {renderPhaseArc(journey, accent, "100%")}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── New Releases (mobile) ── */}
+          <div className="md:hidden mb-8">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+              <span
+                className="text-white/30"
+                style={{
+                  fontSize: "0.65rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                }}
+              >
+                New Releases
+              </span>
+              <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
+            </div>
+
+            <div className="divide-y divide-white/[0.04]">
+              {pinnedJourneys.map(({ journey, realm }) => {
+                const isActive = activeJourney?.id === journey.id;
+                const accent = realm.palette.accent;
+                return (
+                  <div
+                    key={journey.id}
+                    className="py-4 cursor-pointer group transition-colors"
+                    style={{
+                      backgroundColor: isActive ? "rgba(255,255,255,0.03)" : "transparent",
+                      borderLeft: isActive ? `2px solid ${accent}` : "2px solid transparent",
+                      paddingLeft: "12px",
+                    }}
+                    onClick={() => handleJourneyClick(journey)}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {completedJourneyIds.includes(journey.id) && (() => {
+                          const jp = getPathForJourney(journey.id);
+                          return jp ? (
+                            <div
+                              className="shrink-0"
+                              style={{
+                                width: "4px",
+                                height: "4px",
+                                borderRadius: "50%",
+                                backgroundColor: jp.palette.accent,
+                              }}
+                            />
+                          ) : null;
+                        })()}
+                        <span
+                          className="text-white/85 shrink-0"
+                          style={{
+                            fontFamily: "var(--font-geist-sans)",
+                            fontWeight: 300,
+                            fontSize: "1rem",
+                          }}
+                        >
+                          {journey.name}
+                        </span>
+                        <span
+                          className="text-white/35 truncate"
+                          style={{
+                            fontSize: "0.75rem",
+                            fontFamily: "var(--font-geist-mono)",
+                          }}
+                        >
+                          {journey.subtitle}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        {isActive && (
+                          <span
+                            className="text-white/40"
+                            style={{
+                              fontSize: "0.6rem",
+                              fontFamily: "var(--font-geist-mono)",
+                              letterSpacing: "0.08em",
+                              textTransform: "uppercase",
+                            }}
+                          >
+                            Playing
+                          </span>
+                        )}
+                        {journey.aiEnabled && aiAvailable && (
+                          <div
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full"
+                            style={{
+                              fontSize: "0.55rem",
+                              fontFamily: "var(--font-geist-mono)",
+                              color: "rgba(255, 255, 255, 0.25)",
+                            }}
+                          >
+                            <Sparkles className="h-2 w-2" />
+                            AI
+                          </div>
+                        )}
+                        <button
+                          onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
+                          className={`p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                          title="Share"
+                          disabled={sharingId === journey.id}
+                        >
+                          <Share2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                    {journey.description && (
+                      <p
+                        className="text-white/45 mb-2"
+                        style={{
+                          fontSize: "0.7rem",
+                          fontFamily: "var(--font-geist-mono)",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {journey.description}
+                      </p>
+                    )}
+                    {renderPhaseArc(journey, accent)}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Featured divider ── */}
           <div className="flex items-center gap-4 mb-8">
             <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
             <span
@@ -784,7 +1083,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 textTransform: "uppercase",
               }}
             >
-              All Journeys
+              Featured
             </span>
             <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
           </div>
@@ -793,8 +1092,11 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           {/* ── Mobile List — md:hidden ── */}
           <div className="md:hidden">
 
-          {/* ── Realm Sections ── */}
-          {groupedByRealm.map(({ realm, journeys }) => (
+          {/* ── Realm Sections (excluding pinned) ── */}
+          {groupedByRealm.map(({ realm, journeys: allJourneys }) => {
+            const journeys = allJourneys.filter(j => !pinnedSet.has(j.id));
+            if (journeys.length === 0) return null;
+            return (
             <div key={realm.id} className="mb-10">
               {/* Realm header */}
               <div className="flex items-center gap-2.5 mb-4">
@@ -924,7 +1226,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 })}
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* ── Custom Journeys ── */}
           {customJourneys.length > 0 && (
@@ -1048,7 +1351,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           {/* ── Desktop Card Grid — hidden md:block ── */}
           <div className="hidden md:block">
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {flatJourneys.map(({ journey, realm }) => {
+              {restJourneys.map(({ journey, realm }) => {
                 const isActive = activeJourney?.id === journey.id;
                 const accent = realm.palette.accent;
                 return (
@@ -1302,6 +1605,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               </>
             )}
           </div>{/* end desktop grid */}
+
+          </>)}
+          {/* end journeys view */}
 
         </div>
       </div>

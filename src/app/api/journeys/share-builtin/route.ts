@@ -12,6 +12,14 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Fetch display name for credits
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    const creatorName = profile?.display_name ?? null;
+
     const { journeyId, recordingId } = await request.json();
     if (!journeyId) {
       return Response.json({ error: "Missing journeyId" }, { status: 400 });
@@ -54,6 +62,7 @@ export async function POST(request: Request) {
       share_token: token,
       playback_seed: seed,
       theme: { builtinJourneyId: journeyId },
+      creator_name: creatorName,
       ...(resolvedRecordingId ? { recording_id: resolvedRecordingId } : {}),
     });
 

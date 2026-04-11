@@ -143,6 +143,14 @@ const REALM_SHADER_AFFINITY: Record<string, string[]> = {
 const GLOBAL_SHADER_BLOCKLIST: string[] = [
   "snow", // only appropriate for winter/snowflake or user-created journeys
   "rain", // only appropriate for water-related realms (ocean, storm)
+  // Too subtle / invisible over journey imagery
+  "abyss-light", // output 0.0–0.15, tiny particles on near-black base
+  "terminus",    // void-colored base, faint dying light
+  "onyx",        // dark polished stone, specular at 0.12
+  "estuary",     // water transparency simulation, vanishes over non-water imagery
+  "hollow",      // shell edges at 0.3, interior darkness
+  "dark-bloom",  // flower on near-black base, disappears on any light
+  "fog",         // atmosphere-based, 0.05–0.3 density, too subtle over imagery
   // Safety net — these shaders were REMOVED from the codebase entirely.
   // They can't be picked (not in MODE_META/SHADERS), but listed here
   // to guard against accidental re-addition.
@@ -213,11 +221,9 @@ function pickJourneyShaders(
   // Determine affinity categories: from theme or realm
   const affinityCategories = shaderCategories ?? (realmId ? REALM_SHADER_AFFINITY[realmId] ?? [] : []);
 
-  // Realm-specific blocklists only apply when realmId is provided
+  // Global blocklist always applies — realm-specific exceptions can re-allow
   const allowedGlobals = new Set(realmId ? REALM_SHADER_ALLOW[realmId] ?? [] : []);
-  const globalBlocked = realmId
-    ? GLOBAL_SHADER_BLOCKLIST.filter(s => !allowedGlobals.has(s))
-    : []; // theme-based journeys have no global blocklist — full creative freedom
+  const globalBlocked = GLOBAL_SHADER_BLOCKLIST.filter(s => !allowedGlobals.has(s));
   // User block/delete prefs apply to ALL journeys — never show shaders the user rejected
   const userBlocked = getUserBlockedShaders();
   const userDeleted = getUserDeletedShaders();

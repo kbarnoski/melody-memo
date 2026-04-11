@@ -11,6 +11,14 @@ export async function POST(request: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Fetch display name for credits
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    const creatorName = profile?.display_name ?? null;
+
     const { recordingId, realmId } = await request.json();
 
     if (!recordingId) {
@@ -56,6 +64,7 @@ export async function POST(request: Request) {
       realm_id: journey.realmId,
       phases: JSON.parse(JSON.stringify(journey.phases)),
       theme: journey.theme ? JSON.parse(JSON.stringify(journey.theme)) : null,
+      creator_name: creatorName,
     }).select().single();
 
     if (error) {

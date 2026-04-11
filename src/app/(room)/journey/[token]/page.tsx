@@ -58,6 +58,17 @@ export default async function SharedJourneyPage({
     ? `/api/audio/${journeyRow.recording_id}`
     : null;
 
+  // Fetch recording artist for credits
+  let musicArtist: string | null = null;
+  if (journeyRow.recording_id) {
+    const { data: rec } = await supabase
+      .from("recordings")
+      .select("artist")
+      .eq("id", journeyRow.recording_id)
+      .single();
+    musicArtist = rec?.artist ?? null;
+  }
+
   // For built-in journeys, use the live definition so design changes propagate immediately.
   // Falls back to DB snapshot for custom journeys or if the built-in was removed.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -97,6 +108,8 @@ export default async function SharedJourneyPage({
       audioUrl={audioUrl}
       shareToken={token}
       playbackSeed={journeyRow.playback_seed ?? null}
+      creatorName={journeyRow.creator_name ?? null}
+      musicArtist={musicArtist}
     />
   );
 }

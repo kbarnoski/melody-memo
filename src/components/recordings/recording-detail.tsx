@@ -50,6 +50,7 @@ interface RecordingDetailProps {
     share_token: string | null;
     waveform_peaks: number[][] | null;
     audio_codec: string | null;
+    artist: string | null;
   };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis: any | null;
@@ -74,6 +75,7 @@ export function RecordingDetail({
   const [deleting, setDeleting] = useState(false);
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [description, setDescription] = useState(recording.description ?? "");
+  const [artist, setArtist] = useState(recording.artist ?? "");
   const [shareToken, setShareToken] = useState(recording.share_token);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -113,6 +115,16 @@ export function RecordingDetail({
     await supabase
       .from("recordings")
       .update({ description: trimmed || null })
+      .eq("id", recording.id);
+  }
+
+  async function saveArtist() {
+    const trimmed = artist.trim();
+    if (trimmed === (recording.artist ?? "")) return;
+    const supabase = createClient();
+    await supabase
+      .from("recordings")
+      .update({ artist: trimmed || null })
       .eq("id", recording.id);
   }
 
@@ -186,6 +198,13 @@ export function RecordingDetail({
     <>
       {!readOnly && (
         <div className="flex items-center gap-2">
+          <Input
+            placeholder="Add artist name..."
+            value={artist}
+            onChange={(e) => setArtist(e.target.value)}
+            onBlur={saveArtist}
+            className="text-sm text-muted-foreground w-48 shrink-0"
+          />
           <Input
             placeholder="Add a description..."
             value={description}

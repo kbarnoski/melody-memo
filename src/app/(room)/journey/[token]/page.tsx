@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { SharedJourneyClient } from "./client";
 import { getJourney, JOURNEYS } from "@/lib/journeys/journeys";
 
+export const dynamic = "force-dynamic";
+
 function createAnonClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

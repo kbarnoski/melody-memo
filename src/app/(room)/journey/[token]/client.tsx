@@ -807,6 +807,38 @@ export function SharedJourneyClient({
       endedRef.current = false;
       setEnded(false);
       audioRef.current.play();
+
+      // Restart journey engine and show intro overlay
+      getRealtimeImageService().resetSession();
+      const engine = getJourneyEngine();
+      const seed = playbackSeed ? parseInt(playbackSeed, 10) : undefined;
+      const dur = audioRef.current.duration > 0 ? audioRef.current.duration : recordingDuration;
+      engine.start(journey, {
+        ...(seed != null && !isNaN(seed) ? { seed } : {}),
+        trackDuration: dur > 0 ? dur : undefined,
+      });
+
+      // Re-wire events for bass flash
+      if (dur > 0) {
+        const autoEvents = analysisEvents.map((e) => ({
+          time: e.time,
+          type: e.type as "bass_hit" | "texture_change" | "climax" | "drop" | "silence" | "new_idea",
+          intensity: e.intensity,
+        }));
+        let allEvents = autoEvents;
+        if (journey.enableBassFlash && cueMarkers.length > 0) {
+          const manualAsEvents = cueMarkers.map((c) => ({
+            time: c.time, type: "bass_hit" as const, intensity: 1.0,
+          }));
+          allEvents = [...autoEvents, ...manualAsEvents];
+        }
+        if (allEvents.length > 0) engine.setEvents(allEvents, dur);
+      }
+
+      setJourneyIntroVisible(true);
+      setPhaseIndicatorReady(false);
+      setTimeout(() => setJourneyIntroVisible(false), 5000);
+      setTimeout(() => setPhaseIndicatorReady(true), 7000);
     }
   };
 
@@ -867,6 +899,19 @@ export function SharedJourneyClient({
                 }}
               >
                 {journey.subtitle}
+              </div>
+            )}
+            {musicArtist && (
+              <div
+                style={{
+                  fontSize: "0.9rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  marginTop: "12px",
+                }}
+              >
+                Music by {musicArtist}
               </div>
             )}
           </div>
@@ -1014,7 +1059,7 @@ export function SharedJourneyClient({
                 fontSize: "clamp(2rem, 5vw, 3.5rem)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.85)",
+                color: "#fff",
                 textShadow: "0 2px 12px rgba(0,0,0,0.9)",
               }}
             >
@@ -1035,6 +1080,21 @@ export function SharedJourneyClient({
             >
               {journey.name}
             </span>
+            {musicArtist && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.9rem",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                  marginTop: "0.25rem",
+                }}
+              >
+                Music by {musicArtist}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -1283,7 +1343,7 @@ export function SharedJourneyClient({
                 fontSize: "clamp(2rem, 5vw, 3.5rem)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.85)",
+                color: "#fff",
               }}
             >
               Journey Complete

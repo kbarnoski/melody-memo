@@ -57,7 +57,7 @@ function getSpeechRecognition(): SpeechRecognitionType | null {
 // ─── Component ───
 
 interface VisualizerClientProps {
-  recording?: { id: string; title?: string; audio_url: string } | null;
+  recording?: { id: string; title?: string; audio_url: string; artist?: string } | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   analysis?: any | null;
   initialLive?: boolean;
@@ -1059,7 +1059,7 @@ export function VisualizerClient({
                 fontSize: "clamp(2rem, 5vw, 3.5rem)",
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
-                color: "rgba(255, 255, 255, 0.85)",
+                color: "#fff",
                 textShadow: "0 2px 12px rgba(0,0,0,0.9)",
               }}
             >
@@ -1071,15 +1071,30 @@ export function VisualizerClient({
                 fontFamily: "'Cormorant Garamond', Georgia, serif",
                 fontStyle: "italic",
                 fontWeight: 300,
-                fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+                fontSize: "clamp(1.4rem, 3.5vw, 2.2rem)",
                 letterSpacing: "0.04em",
-                color: "rgba(255, 255, 255, 0.55)",
+                color: "#fff",
                 textShadow: "0 1px 8px rgba(0,0,0,0.8)",
                 marginTop: "-0.5rem",
               }}
             >
               {activeJourney.name}
             </span>
+            {recording?.artist && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.9rem",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                  marginTop: "0.25rem",
+                }}
+              >
+                Music by {recording.artist}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -1134,7 +1149,7 @@ export function VisualizerClient({
                   fontSize: "clamp(2rem, 5vw, 3.5rem)",
                   letterSpacing: "0.06em",
                   textTransform: "uppercase",
-                  color: "rgba(255, 255, 255, 0.85)",
+                  color: "#fff",
                   textShadow: "0 2px 12px rgba(0,0,0,0.9)",
                 }}
               >
@@ -1148,9 +1163,9 @@ export function VisualizerClient({
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontStyle: "italic",
                   fontWeight: 300,
-                  fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+                  fontSize: "clamp(1.4rem, 3.5vw, 2.2rem)",
                   letterSpacing: "0.04em",
-                  color: "rgba(255, 255, 255, 0.55)",
+                  color: "#fff",
                   textShadow: "0 1px 8px rgba(0,0,0,0.8)",
                   marginTop: "-0.5rem",
                   textAlign: "center",
@@ -1158,6 +1173,20 @@ export function VisualizerClient({
               >
                 {isCulmination || isGrandCulm ? activeJourney.subtitle : activeJourney.name}
               </span>
+              {recording?.artist && (
+                <span
+                  style={{
+                    position: "relative",
+                    fontFamily: "var(--font-geist-mono)",
+                    fontSize: "0.9rem",
+                    color: "rgba(255, 255, 255, 0.85)",
+                    letterSpacing: "0.04em",
+                    textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                  }}
+                >
+                  Music by {recording.artist}
+                </span>
+              )}
 
               {/* Path progress section — for regular journeys in a path */}
               {path && !isCulmination && !isGrandCulm && pathProgress && (

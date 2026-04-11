@@ -16,14 +16,14 @@ export default async function VisualizerPage({
   const { data: { user } } = await supabase.auth.getUser();
   const isAdmin = !!user && !!user.email && user.email.toLowerCase().trim() === (process.env.ADMIN_EMAIL ?? "").toLowerCase().trim();
 
-  let recording: { id: string; title?: string; audio_url: string } | null = null;
+  let recording: { id: string; title?: string; audio_url: string; artist?: string } | null = null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let analysis: any | null = null;
   let cueMarkers: { time: number; label: string }[] = [];
 
   if (recordingId) {
     const [recResult, analysisResult, cueResult] = await Promise.all([
-      supabase.from("recordings").select("id, title, audio_url").eq("id", recordingId).single(),
+      supabase.from("recordings").select("id, title, audio_url, artist").eq("id", recordingId).single(),
       supabase.from("analyses").select("*").eq("recording_id", recordingId).single(),
       supabase.from("markers").select("time, label").eq("recording_id", recordingId).eq("type", "cue").order("time"),
     ]);
@@ -33,6 +33,7 @@ export default async function VisualizerPage({
         id: recResult.data.id,
         title: recResult.data.title,
         audio_url: `/api/audio/${recResult.data.id}`,
+        artist: recResult.data.artist ?? undefined,
       };
     }
     analysis = analysisResult.data;

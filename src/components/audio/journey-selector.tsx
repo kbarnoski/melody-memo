@@ -73,11 +73,14 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         if (!error && data) {
-          // Transform DB rows to Journey objects, filtering out built-in share stubs
+          // Filter out built-in share stubs — by theme flag or by matching built-in name
+          const builtinNames = new Set(JOURNEYS.map((j) => j.name));
           const journeys: Journey[] = data
             .filter((row: Record<string, unknown>) => {
               const theme = row.theme as Record<string, unknown> | null;
-              return !theme?.builtinJourneyId;
+              if (theme?.builtinJourneyId) return false;
+              if (builtinNames.has(row.name as string)) return false;
+              return true;
             })
             .map((row: Record<string, unknown>) => ({
             id: row.id as string,

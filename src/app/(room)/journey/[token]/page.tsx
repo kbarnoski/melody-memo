@@ -51,6 +51,10 @@ export default async function SharedJourneyPage({
     ? `/api/audio/${journeyRow.recording_id}`
     : null;
 
+  // Extract journey-level config from the theme JSONB (stored by share-builtin)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const themeData = journeyRow.theme as Record<string, any> | null;
+
   return (
     <SharedJourneyClient
       journey={{
@@ -60,7 +64,11 @@ export default async function SharedJourneyPage({
         description: journeyRow.description || "",
         realmId: journeyRow.realm_id,
         phases: journeyRow.phases,
-        aiEnabled: true,
+        aiEnabled: themeData?.aiEnabled ?? true,
+        enableBassFlash: themeData?.enableBassFlash ?? false,
+        audioReactive: themeData?.audioReactive ?? false,
+        completionOffset: themeData?.completionOffset ?? 0,
+        ...(themeData?.phaseLabels ? { phaseLabels: themeData.phaseLabels } : {}),
         ...(journeyRow.theme ? { theme: journeyRow.theme } : {}),
       }}
       audioUrl={audioUrl}

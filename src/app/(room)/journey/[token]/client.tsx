@@ -686,6 +686,7 @@ export function SharedJourneyClient({
           audioBass={audioFeatures.bass}
           aiEnabled={journey.aiEnabled}
           aiGenerating={!ended}
+          enableBassFlash={journey.enableBassFlash}
           promptSeed={playbackSeed ? parseInt(playbackSeed, 10) : undefined}
           journeyId={journey.id}
         >

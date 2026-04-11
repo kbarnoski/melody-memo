@@ -43,6 +43,7 @@ export async function POST(request: Request) {
     const seed = String(randomInt(0, 4294967296));
 
     // Insert a snapshot of the built-in journey into the journeys table
+    // Store journey-level config in the theme JSONB so the shared view can restore it
     const { error } = await supabase.from("journeys").insert({
       user_id: user.id,
       name: journey.name,
@@ -52,6 +53,14 @@ export async function POST(request: Request) {
       phases: journey.phases,
       share_token: token,
       playback_seed: seed,
+      theme: {
+        ...(journey.theme ?? {}),
+        aiEnabled: journey.aiEnabled,
+        enableBassFlash: journey.enableBassFlash ?? false,
+        audioReactive: journey.audioReactive ?? false,
+        completionOffset: journey.completionOffset ?? 0,
+        ...(journey.phaseLabels ? { phaseLabels: journey.phaseLabels } : {}),
+      },
       ...(resolvedRecordingId ? { recording_id: resolvedRecordingId } : {}),
     });
 

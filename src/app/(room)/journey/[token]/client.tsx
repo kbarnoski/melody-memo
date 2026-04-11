@@ -12,7 +12,7 @@ import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { createClient } from "@/lib/supabase/client";
 import { MODES_3D, MODES_AI } from "@/lib/shaders";
 import type { Journey, JourneyFrame, JourneyPhaseId } from "@/lib/journeys/types";
-import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, SkipBack, SkipForward, RotateCcw } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, RotateCcw } from "lucide-react";
 
 function formatTime(s: number): string {
   if (!s || isNaN(s)) return "0:00";
@@ -50,12 +50,13 @@ export function SharedJourneyClient({
   playbackSeed,
 }: SharedJourneyClientProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [dataArray, setDataArray] = useState<Uint8Array<ArrayBuffer> | null>(null);
-  // Start with isPlaying=true when we have audio (auto-play). Events correct if blocked.
-  const [isPlaying, setIsPlaying] = useState(!!audioUrl);
+  const [started, setStarted] = useState(false); // user must tap to start (browser auto-play policy)
+  const [isPlaying, setIsPlaying] = useState(false);
   const [muted, setMuted] = useState(false);
   const [journeyFrame, setJourneyFrame] = useState<JourneyFrame | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -66,12 +67,24 @@ export function SharedJourneyClient({
   const animRef = useRef<number>(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endedRef = useRef(false);
+  const resolvedAudioUrlRef = useRef<string | null>(null);
 
   // Check auth state — show signup CTA for unauthenticated viewers
   useEffect(() => {
     createClient().auth.getUser().then(({ data: { user } }) => {
       setIsAuthenticated(!!user);
     });
+  }, []);
+
+  // Load Cormorant Garamond for start screen + phase indicator
+  useEffect(() => {
+    const id = "journey-shared-font";
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id = id;
+    link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400&display=swap";
+    document.head.appendChild(link);
   }, []);
 
   // Time display — direct DOM updates, no re-renders
@@ -264,22 +277,36 @@ export function SharedJourneyClient({
     };
   }, [resetHideTimer]);
 
-  // Setup audio + analyser, auto-play
+  // Pre-resolve audio URL so it's ready when user taps start
   useEffect(() => {
+    if (!audioUrl) return;
+    let cancelled = false;
+    fetch(audioUrl)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) resolvedAudioUrlRef.current = data.url ?? audioUrl;
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [audioUrl]);
+
+  // Initialize audio + analyser when user taps start
+  useEffect(() => {
+    if (!started) return;
     let cancelled = false;
     const ctx = new AudioContext();
+    ctxRef.current = ctx;
     const node = ctx.createAnalyser();
     node.fftSize = 256;
 
     async function init() {
-      if (audioUrl) {
-        try {
-          const res = await fetch(audioUrl);
-          const data = await res.json();
-          if (cancelled) return;
-          const resolvedUrl = data.url ?? audioUrl;
+      // Resume context (required after user gesture on some browsers)
+      if (ctx.state === "suspended") await ctx.resume();
 
-          const audio = new Audio(resolvedUrl);
+      const url = resolvedAudioUrlRef.current;
+      if (url) {
+        try {
+          const audio = new Audio(url);
           audio.crossOrigin = "anonymous";
           audioRef.current = audio;
 
@@ -287,7 +314,6 @@ export function SharedJourneyClient({
           source.connect(node);
           node.connect(ctx.destination);
 
-          // Sync play state from audio element — source of truth
           audio.addEventListener("playing", () => {
             endedRef.current = false;
             setEnded(false);
@@ -301,17 +327,13 @@ export function SharedJourneyClient({
             setIsPlaying(false);
           });
 
-          // Auto-play
+          // Play once ready
           audio.addEventListener("canplay", () => {
             if (cancelled) return;
-            audio.play().catch(() => {
-              // Auto-play blocked by browser
-              setIsPlaying(false);
-            });
+            audio.play().catch(() => setIsPlaying(false));
           }, { once: true });
         } catch {
           node.connect(ctx.destination);
-          setIsPlaying(false);
         }
       } else {
         node.connect(ctx.destination);
@@ -331,11 +353,11 @@ export function SharedJourneyClient({
       audioRef.current?.pause();
       ctx.close();
     };
-  }, [audioUrl]);
+  }, [started]);
 
-  // Start journey engine + subscribe to phase changes
+  // Start journey engine only after user taps start
   useEffect(() => {
-    // Fresh image budget for each shared journey
+    if (!started) return;
     getRealtimeImageService().resetSession();
     const engine = getJourneyEngine();
     const seed = playbackSeed ? parseInt(playbackSeed, 10) : undefined;
@@ -348,13 +370,14 @@ export function SharedJourneyClient({
     return () => {
       engine.stop();
     };
-  }, [journey, playbackSeed]);
+  }, [started, journey, playbackSeed]);
 
   // Animation loop — throttled frame updates matching main app
   const startTimeRef = useRef(Date.now());
   const JOURNEY_DURATION_MS = 5 * 60 * 1000;
 
   useEffect(() => {
+    if (!started) return;
     startTimeRef.current = Date.now();
     const engine = getJourneyEngine();
 
@@ -420,7 +443,7 @@ export function SharedJourneyClient({
 
     animRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animRef.current);
-  }, []);
+  }, [started]);
 
   const togglePlay = async () => {
     const audio = audioRef.current;
@@ -431,12 +454,6 @@ export function SharedJourneyClient({
       audio.pause();
     }
   };
-
-  const seekBy = useCallback((offset: number) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + offset));
-  }, []);
 
   const toggleMute = () => {
     if (audioRef.current) {
@@ -549,6 +566,117 @@ export function SharedJourneyClient({
 
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/journey/${shareToken}`;
 
+  const handleReplay = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      endedRef.current = false;
+      setEnded(false);
+      audioRef.current.play();
+    }
+  };
+
+  // ─── Start screen ───
+  if (!started) {
+    return (
+      <div
+        className="h-dvh w-screen overflow-hidden bg-black relative flex items-center justify-center"
+        style={{ cursor: "pointer" }}
+        onClick={() => setStarted(true)}
+      >
+        <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "32px",
+            animation: "fadeIn 1s ease-out both",
+            textAlign: "center",
+            padding: "0 24px",
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontSize: "0.6rem",
+                fontFamily: "var(--font-geist-mono)",
+                color: "rgba(255, 255, 255, 0.3)",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                marginBottom: "14px",
+              }}
+            >
+              Shared Journey
+            </div>
+            <div
+              style={{
+                fontSize: "clamp(1.8rem, 5vw, 2.8rem)",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontWeight: 300,
+                letterSpacing: "0.04em",
+                color: "rgba(255, 255, 255, 0.9)",
+                lineHeight: 1.2,
+              }}
+            >
+              {journey.name}
+            </div>
+            {journey.subtitle && (
+              <div
+                style={{
+                  fontSize: "clamp(0.9rem, 2vw, 1.1rem)",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontWeight: 300,
+                  fontStyle: "italic",
+                  color: "rgba(255, 255, 255, 0.45)",
+                  marginTop: "8px",
+                }}
+              >
+                {journey.subtitle}
+              </div>
+            )}
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); setStarted(true); }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "64px",
+              height: "64px",
+              borderRadius: "50%",
+              background: "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              color: "rgba(255, 255, 255, 0.9)",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+            }}
+          >
+            <Play style={{ width: 24, height: 24, marginLeft: 3 }} fill="currentColor" />
+          </button>
+
+          <div
+            style={{
+              fontSize: "0.65rem",
+              fontFamily: "var(--font-geist-mono)",
+              color: "rgba(255, 255, 255, 0.2)",
+            }}
+          >
+            Tap anywhere to begin
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-dvh w-screen overflow-hidden bg-black relative">
       {analyser && dataArray && (
@@ -565,7 +693,6 @@ export function SharedJourneyClient({
           {prevRenderMode && renderShaderLayer(prevRenderMode, 0, prevLayerRef)}
 
           {/* Current shader (fading in, or full opacity when no crossfade) */}
-          {/* During crossfade: start at opacity 0 to prevent one-frame flash */}
           {renderShaderLayer(renderMode, 1, prevRenderMode ? nextLayerRef : undefined, prevRenderMode ? 0 : undefined)}
 
           {/* Dual shader — second layer during peak journey moments */}
@@ -600,21 +727,6 @@ export function SharedJourneyClient({
         currentPhase={journeyFrame?.phase as JourneyPhaseId ?? null}
       />
 
-      {/* Fullscreen toggle — top-right (matching main app) */}
-      <button
-        onClick={toggleFullscreen}
-        className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
-        style={{
-          zIndex: 10,
-          opacity: controlsVisible ? 1 : 0,
-          pointerEvents: controlsVisible ? "auto" : "none",
-          border: "1px solid rgba(255,255,255,0.1)",
-        }}
-        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-      >
-        {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-      </button>
-
       {/* Bottom bar — solid black, matching main app journey mode */}
       <div
         className="absolute inset-x-0 bottom-0 transition-opacity duration-500 ease-out"
@@ -635,62 +747,56 @@ export function SharedJourneyClient({
           className="room-bar-desktop items-center px-4"
           style={{ background: "#000", height: "56px" }}
         >
-          {/* LEFT: Journey name pill */}
+          {/* LEFT: Listen on Resonance */}
           <div className="flex items-center gap-1.5">
-            <div
-              className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.08)",
-              }}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/"
+              className="text-white/25 hover:text-white/50 transition-colors"
+              style={{ fontSize: "0.68rem", fontFamily: "var(--font-geist-mono)" }}
             >
-              <span
-                className="text-white/70 truncate"
-                style={{
-                  fontSize: "0.72rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  maxWidth: "200px",
-                }}
-              >
-                {journey.name}
-              </span>
-            </div>
+              Listen on Resonance
+            </a>
           </div>
 
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* CENTER: Transport + time */}
-          <div className="flex items-center gap-1">
+          {/* CENTER: Play/pause + journey name + mute + time */}
+          <div className="flex items-center gap-2">
             {audioUrl && (
-              <>
-                <button
-                  onClick={() => seekBy(-10)}
-                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
-                >
-                  <SkipBack className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  onClick={togglePlay}
-                  className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-75"
-                >
-                  {isPlaying ? (
-                    <Pause className="h-4 w-4" fill="currentColor" />
-                  ) : (
-                    <Play className="h-4 w-4" fill="currentColor" />
-                  )}
-                </button>
-                <button
-                  onClick={() => seekBy(10)}
-                  className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
-                >
-                  <SkipForward className="h-3.5 w-3.5" />
-                </button>
-              </>
+              <button
+                onClick={togglePlay}
+                className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-75"
+              >
+                {isPlaying ? (
+                  <Pause className="h-4 w-4" fill="currentColor" />
+                ) : (
+                  <Play className="h-4 w-4" fill="currentColor" />
+                )}
+              </button>
+            )}
+            <span
+              className="text-white/50 truncate"
+              style={{
+                fontSize: "0.8rem",
+                fontFamily: "var(--font-geist-sans)",
+                maxWidth: "200px",
+              }}
+            >
+              {journey.name}
+            </span>
+            {audioUrl && (
+              <button
+                onClick={toggleMute}
+                className="flex items-center justify-center p-1.5 text-white/35 hover:text-white/70 transition-colors duration-75"
+              >
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
             )}
             <span
               ref={timeDisplayRef}
-              className="text-white/30"
+              className="text-white/25"
               style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", fontVariantNumeric: "tabular-nums" }}
             >
               0:00 / 0:00
@@ -700,7 +806,7 @@ export function SharedJourneyClient({
           {/* Spacer */}
           <div className="flex-[2]" />
 
-          {/* RIGHT: Share + mute */}
+          {/* RIGHT: Share + Fullscreen */}
           <div className="flex items-center gap-1.5">
             <button
               onClick={handleShare}
@@ -711,15 +817,14 @@ export function SharedJourneyClient({
               <Share2 className="h-3.5 w-3.5" />
               Share
             </button>
-            {audioUrl && (
-              <button
-                onClick={toggleMute}
-                className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
-                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-              >
-                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
-              </button>
-            )}
+            <button
+              onClick={toggleFullscreen}
+              className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            </button>
           </div>
         </div>
 
@@ -728,63 +833,66 @@ export function SharedJourneyClient({
           className="room-bar-mobile flex-col"
           style={{ background: "#000", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
-          {/* Row 1: Journey name */}
+          {/* Row 1: Listen on Resonance + actions */}
           <div className="flex items-center justify-between px-3" style={{ height: "32px" }}>
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div
-                className="flex items-center gap-2 px-2.5 py-1 rounded-lg min-w-0"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a
+              href="/"
+              className="text-white/20 hover:text-white/40 transition-colors"
+              style={{ fontSize: "0.62rem", fontFamily: "var(--font-geist-mono)" }}
+            >
+              Listen on Resonance
+            </a>
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={handleShare}
+                className="min-w-[36px] min-h-[32px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                title="Share"
               >
-                <span
-                  className="text-white/70 truncate"
-                  style={{
-                    fontSize: "0.68rem",
-                    fontFamily: "var(--font-geist-mono)",
-                    maxWidth: "180px",
-                  }}
-                >
-                  {journey.name}
-                </span>
-              </div>
+                <Share2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={toggleFullscreen}
+                className="min-w-[36px] min-h-[32px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                title="Fullscreen"
+              >
+                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
             </div>
           </div>
 
-          {/* Row 2: Transport + actions */}
-          <div className="flex items-center justify-between px-2" style={{ height: "44px" }}>
-            {/* Left: transport */}
-            <div className="flex items-center">
-              {audioUrl && (
-                <>
-                  <button
-                    onClick={() => seekBy(-10)}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/40 hover:text-white/80 transition-colors duration-75"
-                  >
-                    <SkipBack className="h-3.5 w-3.5" />
-                  </button>
-                  <button
-                    onClick={togglePlay}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors duration-75"
-                  >
-                    {isPlaying ? (
-                      <Pause className="h-4.5 w-4.5" fill="currentColor" />
-                    ) : (
-                      <Play className="h-4.5 w-4.5" fill="currentColor" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => seekBy(10)}
-                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/40 hover:text-white/80 transition-colors duration-75"
-                  >
-                    <SkipForward className="h-3.5 w-3.5" />
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Center: time */}
+          {/* Row 2: Transport — play + name + mute + time */}
+          <div className="flex items-center justify-center gap-2 px-3" style={{ height: "44px" }}>
+            {audioUrl && (
+              <button
+                onClick={togglePlay}
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors duration-75"
+              >
+                {isPlaying ? (
+                  <Pause className="h-4.5 w-4.5" fill="currentColor" />
+                ) : (
+                  <Play className="h-4.5 w-4.5" fill="currentColor" />
+                )}
+              </button>
+            )}
+            <span
+              className="text-white/50 truncate"
+              style={{
+                fontSize: "0.75rem",
+                fontFamily: "var(--font-geist-sans)",
+                maxWidth: "140px",
+              }}
+            >
+              {journey.name}
+            </span>
+            {audioUrl && (
+              <button
+                onClick={toggleMute}
+                className="min-w-[36px] min-h-[36px] flex items-center justify-center text-white/35 hover:text-white/65 transition-colors duration-75"
+              >
+                {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+              </button>
+            )}
             <span
               ref={timeDisplayMobileRef}
               className="text-white/25 flex-shrink-0"
@@ -792,25 +900,6 @@ export function SharedJourneyClient({
             >
               0:00 / 0:00
             </span>
-
-            {/* Right: share + mute */}
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={handleShare}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors duration-75"
-                title="Share"
-              >
-                <Share2 className="h-4 w-4" />
-              </button>
-              {audioUrl && (
-                <button
-                  onClick={toggleMute}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/50 hover:text-white/80 transition-colors duration-75"
-                >
-                  {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                </button>
-              )}
-            </div>
           </div>
         </div>
       </div>
@@ -833,23 +922,7 @@ export function SharedJourneyClient({
         </div>
       </div>
 
-      {/* CTA — top left */}
-      <div
-        className="absolute top-6 left-6 z-20"
-        style={{
-          opacity: controlsVisible ? 1 : 0,
-          transition: "opacity 0.4s ease",
-          fontSize: "0.65rem",
-          fontFamily: "var(--font-geist-mono)",
-        }}
-      >
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a href="/" className="text-white/20 hover:text-white/40 transition-colors">
-          Listen on Resonance
-        </a>
-      </div>
-
-      {/* Share sheet — same component as main app */}
+      {/* Share sheet */}
       <ShareSheet
         open={shareSheet}
         onClose={() => setShareSheet(false)}
@@ -867,6 +940,7 @@ export function SharedJourneyClient({
             animation: "fadeIn 0.8s ease-out both",
           }}
         >
+          <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
           <div
             style={{
               display: "flex",
@@ -908,14 +982,7 @@ export function SharedJourneyClient({
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button
-                onClick={() => {
-                  if (audioRef.current) {
-                    audioRef.current.currentTime = 0;
-                    endedRef.current = false;
-                    setEnded(false);
-                    audioRef.current.play();
-                  }
-                }}
+                onClick={handleReplay}
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
@@ -978,13 +1045,12 @@ export function SharedJourneyClient({
             animation: "fadeIn 0.8s ease-out both",
           }}
         >
-          <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "28px",
+              gap: "24px",
               padding: "48px 40px",
               borderRadius: "16px",
               background: "rgba(0, 0, 0, 0.45)",
@@ -1029,63 +1095,85 @@ export function SharedJourneyClient({
               Create your own journeys with your music on Resonance.
             </div>
 
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-            <a
-              href="/signup"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "10px 28px",
-                borderRadius: "8px",
-                background: "rgba(255, 255, 255, 0.9)",
-                color: "#000",
-                fontSize: "0.8rem",
-                fontWeight: 500,
-                textDecoration: "none",
-                transition: "background 0.15s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)")}
-            >
-              Sign Up Free
-            </a>
-
-            <button
-              onClick={() => {
-                if (audioRef.current) {
-                  audioRef.current.currentTime = 0;
-                  endedRef.current = false;
-                  setEnded(false);
-                  audioRef.current.play();
-                }
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 14px",
-                borderRadius: "6px",
-                background: "transparent",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                color: "rgba(255, 255, 255, 0.4)",
-                fontSize: "0.7rem",
-                fontFamily: "var(--font-geist-mono)",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.7)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "rgba(255, 255, 255, 0.4)";
-                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
-              }}
-            >
-              <RotateCcw style={{ width: 12, height: 12 }} />
-              Replay
-            </button>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+              <a
+                href="/signup"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: "10px 28px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.9)",
+                  color: "#000",
+                  fontSize: "0.8rem",
+                  fontWeight: 500,
+                  textDecoration: "none",
+                  transition: "background 0.15s ease",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 1)")}
+                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)")}
+              >
+                Sign Up Free
+              </a>
+              <button
+                onClick={handleReplay}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                }}
+              >
+                <RotateCcw style={{ width: 13, height: 13 }} />
+                Replay
+              </button>
+              <button
+                onClick={handleShare}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "10px 18px",
+                  borderRadius: "8px",
+                  background: "transparent",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "0.78rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                }}
+              >
+                <Share2 style={{ width: 13, height: 13 }} />
+                Share
+              </button>
+            </div>
           </div>
         </div>
       )}

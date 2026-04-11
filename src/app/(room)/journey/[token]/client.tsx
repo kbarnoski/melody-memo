@@ -710,12 +710,12 @@ export function SharedJourneyClient({
   const creditsBlock = (
     <div
       style={{
-        fontSize: "0.6rem",
+        fontSize: "0.75rem",
         fontFamily: "var(--font-geist-mono)",
-        color: "rgba(255, 255, 255, 0.25)",
+        color: "rgba(255, 255, 255, 0.5)",
         letterSpacing: "0.04em",
-        lineHeight: 1.6,
-        marginTop: "6px",
+        lineHeight: 1.7,
+        textAlign: "center",
       }}
     >
       {creatorName && <div>Journey by {creatorName}</div>}
@@ -1233,38 +1233,68 @@ export function SharedJourneyClient({
             {/* Credits */}
             {creditsBlock}
 
-            {/* Signup CTA for unauthenticated viewers */}
-            {!isAuthenticated && (
-              <span
-                style={{
-                  fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontStyle: "italic",
-                  fontWeight: 300,
-                  fontSize: "clamp(0.85rem, 1.8vw, 1rem)",
-                  color: "rgba(255,255,255,0.5)",
-                }}
-              >
-                Create your own journeys on Resonance.
-              </span>
-            )}
+            {/* Divider */}
+            <div style={{ width: "3rem", height: "1px", background: "rgba(255,255,255,0.12)" }} />
+
+            {/* CTA */}
+            <span
+              style={{
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 300,
+                fontSize: "clamp(0.9rem, 2vw, 1.1rem)",
+                color: "rgba(255,255,255,0.55)",
+                textAlign: "center",
+              }}
+            >
+              Create your own journeys with your music.
+            </span>
 
             {/* Action buttons */}
             <div className="flex items-center gap-3 flex-wrap justify-center" style={{ marginTop: "0.25rem" }}>
-              {!isAuthenticated && (
+              {!isAuthenticated ? (
                 // eslint-disable-next-line @next/next/no-html-link-for-pages
                 <a
                   href="/signup"
-                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
                   style={{
-                    border: "1px solid rgba(255,255,255,0.3)",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "10px 28px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.9)",
+                    color: "#000",
                     fontSize: "0.8rem",
+                    fontWeight: 500,
                     fontFamily: "var(--font-geist-mono)",
                     letterSpacing: "0.02em",
-                    textShadow: "0 1px 4px rgba(0,0,0,0.8)",
                     textDecoration: "none",
+                    cursor: "pointer",
                   }}
                 >
                   Sign Up Free
+                </a>
+              ) : (
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a
+                  href="/"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "10px 28px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.9)",
+                    color: "#000",
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    fontFamily: "var(--font-geist-mono)",
+                    letterSpacing: "0.02em",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  Create a Journey
                 </a>
               )}
               <button
@@ -1275,7 +1305,6 @@ export function SharedJourneyClient({
                   fontSize: "0.8rem",
                   fontFamily: "var(--font-geist-mono)",
                   letterSpacing: "0.02em",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
                 }}
               >
                 Replay
@@ -1288,7 +1317,6 @@ export function SharedJourneyClient({
                   fontSize: "0.8rem",
                   fontFamily: "var(--font-geist-mono)",
                   letterSpacing: "0.02em",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
                 }}
               >
                 Share

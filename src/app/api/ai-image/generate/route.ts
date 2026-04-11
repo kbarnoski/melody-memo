@@ -3,7 +3,7 @@ import { fal } from "@fal-ai/client";
 const MODEL_ID = "fal-ai/flux/schnell";
 
 const STYLE_SUFFIX =
-  "mystical art, luminous, sacred, transcendent, visionary, otherworldly, ethereal";
+  "photorealistic, cinematic lighting, surreal, luminous, sacred, transcendent, ethereal";
 
 export async function POST(request: Request) {
   if (!process.env.FAL_KEY) {

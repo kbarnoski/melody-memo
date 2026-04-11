@@ -1176,248 +1176,126 @@ export function SharedJourneyClient({
         text={`Check out ${journey.name} on Resonance`}
       />
 
-      {/* Journey complete overlay — replay for authenticated viewers */}
-      {ended && isAuthenticated && (
+      {/* Journey complete overlay — same treatment as main app */}
+      {ended && (
         <div
           className="absolute inset-0 flex items-center justify-center"
           style={{
-            zIndex: 30,
-            animation: "fadeIn 0.8s ease-out both",
+            zIndex: 50,
+            pointerEvents: "none",
+            animation: "journeyEndFadeIn 2s ease-out forwards",
           }}
         >
-          <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "20px",
-              padding: "40px 36px",
-              borderRadius: "16px",
-              background: "rgba(0, 0, 0, 0.45)",
-              backdropFilter: "blur(24px) saturate(1.1)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
-              maxWidth: "340px",
-              textAlign: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: "0.6rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  color: "rgba(255, 255, 255, 0.35)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  marginBottom: "10px",
-                }}
-              >
-                Journey Complete
-              </div>
-              <div
-                style={{
-                  fontSize: "1.35rem",
-                  fontWeight: 300,
-                  color: "rgba(255, 255, 255, 0.85)",
-                  lineHeight: 1.3,
-                }}
-              >
-                {journey.name}
-              </div>
-              {creditsBlock}
-            </div>
-            <div style={{ display: "flex", gap: "10px" }}>
-              <button
-                onClick={handleReplay}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 18px",
-                  borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  border: "none",
-                  color: "#000",
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "background 0.15s ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 1)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)")}
-              >
-                <RotateCcw style={{ width: 13, height: 13 }} />
-                Replay
-              </button>
-              <button
-                onClick={handleShare}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 18px",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  color: "rgba(255, 255, 255, 0.6)",
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.9)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.6)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
-                }}
-              >
-                <Share2 style={{ width: 13, height: 13 }} />
-                Share
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Journey complete overlay — signup CTA for unauthenticated viewers */}
-      {ended && !isAuthenticated && (
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{
-            zIndex: 30,
-            animation: "fadeIn 0.8s ease-out both",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "24px",
-              padding: "48px 40px",
-              borderRadius: "16px",
-              background: "rgba(0, 0, 0, 0.45)",
-              backdropFilter: "blur(24px) saturate(1.1)",
-              border: "1px solid rgba(255, 255, 255, 0.06)",
-              maxWidth: "380px",
-              textAlign: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: "0.6rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  color: "rgba(255, 255, 255, 0.35)",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  marginBottom: "10px",
-                }}
-              >
-                Journey Complete
-              </div>
-              <div
-                style={{
-                  fontSize: "1.35rem",
-                  fontWeight: 300,
-                  color: "rgba(255, 255, 255, 0.85)",
-                  lineHeight: 1.3,
-                }}
-              >
-                {journey.name}
-              </div>
-              {creditsBlock}
-            </div>
-
+          <div className="flex flex-col items-center gap-5" style={{ position: "relative", padding: "4rem 6rem", pointerEvents: "auto", maxWidth: "90vw" }}>
+            {/* Soft blurred background */}
             <div
               style={{
-                fontSize: "0.85rem",
-                color: "rgba(255, 255, 255, 0.5)",
-                lineHeight: 1.6,
+                position: "absolute",
+                inset: "-40%",
+                background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+                filter: "blur(40px)",
+                pointerEvents: "none",
+              }}
+            />
+
+            {/* Title */}
+            <span
+              style={{
+                position: "relative",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontWeight: 300,
+                fontSize: "clamp(2rem, 5vw, 3.5rem)",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "rgba(255, 255, 255, 0.85)",
+                textShadow: "0 2px 12px rgba(0,0,0,0.9)",
               }}
             >
-              Create your own journeys with your music on Resonance.
+              Journey Complete
+            </span>
+
+            {/* Journey name */}
+            <span
+              style={{
+                position: "relative",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontStyle: "italic",
+                fontWeight: 300,
+                fontSize: "clamp(1rem, 2.5vw, 1.4rem)",
+                letterSpacing: "0.04em",
+                color: "rgba(255, 255, 255, 0.55)",
+                textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                marginTop: "-0.5rem",
+                textAlign: "center",
+              }}
+            >
+              {journey.name}
+            </span>
+
+            {/* Credits */}
+            <div style={{ position: "relative" }}>
+              {creditsBlock}
             </div>
 
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-              <a
-                href="/signup"
+            {/* Signup CTA for unauthenticated viewers */}
+            {!isAuthenticated && (
+              <span
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "10px 28px",
-                  borderRadius: "8px",
-                  background: "rgba(255, 255, 255, 0.9)",
-                  color: "#000",
-                  fontSize: "0.8rem",
-                  fontWeight: 500,
-                  textDecoration: "none",
-                  transition: "background 0.15s ease",
+                  position: "relative",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontStyle: "italic",
+                  fontWeight: 300,
+                  fontSize: "clamp(0.85rem, 1.8vw, 1rem)",
+                  color: "rgba(255,255,255,0.5)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 1)")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.9)")}
               >
-                Sign Up Free
-              </a>
+                Create your own journeys on Resonance.
+              </span>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3 flex-wrap justify-center" style={{ position: "relative", marginTop: "0.25rem" }}>
+              {!isAuthenticated && (
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a
+                  href="/signup"
+                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.3)",
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-geist-mono)",
+                    letterSpacing: "0.02em",
+                    textShadow: "0 1px 4px rgba(0,0,0,0.8)",
+                    textDecoration: "none",
+                  }}
+                >
+                  Sign Up Free
+                </a>
+              )}
               <button
                 onClick={handleReplay}
+                className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "10px 18px",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  color: "rgba(255, 255, 255, 0.5)",
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.02em",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
                 }}
               >
-                <RotateCcw style={{ width: 13, height: 13 }} />
                 Replay
               </button>
               <button
                 onClick={handleShare}
+                className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "10px 18px",
-                  borderRadius: "8px",
-                  background: "transparent",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  color: "rgba(255, 255, 255, 0.5)",
-                  fontSize: "0.78rem",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.8)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "rgba(255, 255, 255, 0.5)";
-                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  fontSize: "0.8rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  letterSpacing: "0.02em",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
                 }}
               >
-                <Share2 style={{ width: 13, height: 13 }} />
                 Share
               </button>
             </div>

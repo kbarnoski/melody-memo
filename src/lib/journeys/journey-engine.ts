@@ -332,9 +332,9 @@ class JourneyEngine {
       }
     }
 
-    // Decay impulse — hold at full intensity for 0.4s, then decay
+    // Decay impulse — hold at full intensity, then linear fade
     if (this.eventImpulse > 0) {
-      const holdSeconds = 0.5;
+      const holdSeconds = 1.0;
       const decaySeconds = JourneyEngine.EVENT_DECAY[this.eventType ?? "bass_hit"] ?? 1.5;
       const elapsed = (now - this.eventImpulseStartMs) / 1000;
       if (elapsed <= holdSeconds) {

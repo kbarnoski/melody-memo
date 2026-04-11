@@ -124,16 +124,21 @@ export function JourneyCompositor({
   // Pre-activation ramp — builds ~1.5s before bass hit (0→1)
   const approach = frame?.eventApproach ?? 0;
 
-  // Bass hit counter — alternates angel design between the two flash points
+  // Bass hit counter + start time — alternates angel, tracks flash timing
   const bassHitCountRef = useRef(0);
+  const bassHitStartRef = useRef(0);
   const inBassHitRef = useRef(false);
   if (enableBassFlash && impulse > 0.5 && evtType === "bass_hit" && !inBassHitRef.current) {
     bassHitCountRef.current += 1;
+    bassHitStartRef.current = performance.now();
     inBassHitRef.current = true;
   }
   if (impulse <= 0.1 || evtType !== "bass_hit") {
     inBassHitRef.current = false;
   }
+  // White flash opacity — bright for ~0.15s, gone by ~0.5s (independent of impulse hold)
+  const flashElapsed = (performance.now() - bassHitStartRef.current) / 1000;
+  const flashOpacity = Math.max(0, 1 - flashElapsed / 0.5) ** 4 * 0.95;
 
   const eventReaction = useMemo(() => {
     if (impulse === 0 || !evtType) {
@@ -271,14 +276,14 @@ export function JourneyCompositor({
       {/* Bass hit full-screen flash — Ghost only, gated by enableBassFlash */}
       {enableBassFlash && impulse > 0 && evtType === "bass_hit" && (
         <>
-          {/* Full-screen white flash — impulse⁴ decays FAST (bright→gone in <0.5s) */}
+          {/* Full-screen white flash — time-based, bright for ~0.15s, gone by ~0.5s */}
           <div
             style={{
               position: "absolute",
               inset: 0,
               zIndex: 4,
               pointerEvents: "none",
-              backgroundColor: `rgba(255, 255, 255, ${Math.min(1, impulse * impulse * impulse * impulse * 0.95)})`,
+              backgroundColor: `rgba(255, 255, 255, ${flashOpacity})`,
             }}
           />
           {/* Dark particle angel — full opacity during hold, linear fade over 1s */}
@@ -298,17 +303,22 @@ export function JourneyCompositor({
             <FlashAngel variant={(bassHitCountRef.current % 2) as 0 | 1} />
           </div>
           {/* Subsonic shockwave ring expanding outward beneath the flash */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 3,
-              pointerEvents: "none",
-              background: `radial-gradient(ellipse at center, transparent ${(1 - impulse) * 30}%, rgba(200,220,255,${impulse * impulse * 0.35}) ${(1 - impulse) * 50 + 20}%, transparent ${(1 - impulse) * 70 + 30}%)`,
-              transform: `scale(${1 + (1 - impulse) * 0.5})`,
-              mixBlendMode: "screen",
-            }}
-          />
+          {(() => {
+            const ringT = Math.min(1, flashElapsed / 0.8);
+            return (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 3,
+                  pointerEvents: "none",
+                  background: `radial-gradient(ellipse at center, transparent ${ringT * 30}%, rgba(200,220,255,${(1 - ringT) * (1 - ringT) * 0.35}) ${ringT * 50 + 20}%, transparent ${ringT * 70 + 30}%)`,
+                  transform: `scale(${1 + ringT * 0.5})`,
+                  mixBlendMode: "screen",
+                }}
+              />
+            );
+          })()}
         </>
       )}
 

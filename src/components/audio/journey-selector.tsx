@@ -216,11 +216,11 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
       if (journey.recordingId) {
         const { data: rec } = await supabase
           .from("recordings")
-          .select("id, title, audio_url")
+          .select("id, title, audio_url, artist")
           .eq("id", journey.recordingId)
           .single();
         if (rec) {
-          play({ id: rec.id, title: rec.title, audioUrl: `/api/audio/${rec.id}` }, 0);
+          play({ id: rec.id, title: rec.title, audioUrl: `/api/audio/${rec.id}`, artist: rec.artist ?? undefined }, 0);
 
           return;
         }
@@ -228,11 +228,11 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
       // No specific recording or not found — load a random track
       const { data } = await supabase
         .from("recordings")
-        .select("id, title, audio_url")
+        .select("id, title, audio_url, artist")
         .order("created_at", { ascending: false });
       if (data && data.length > 0) {
         const row = data[Math.floor(Math.random() * data.length)];
-        play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}` }, 0);
+        play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, artist: row.artist ?? undefined }, 0);
       }
     } catch (err) {
       console.warn("[journey] failed to load track for custom journey:", err);
@@ -301,14 +301,14 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("recordings")
-          .select("id, title, audio_url, duration")
+          .select("id, title, audio_url, duration, artist")
           .ilike("title", pairedSearch)
           .limit(1);
 
         if (!error && data?.[0]) {
           const row = data[0];
           console.log("[journey] loading paired track:", row.title);
-          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, duration: row.duration ?? undefined }, 0);
+          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, duration: row.duration ?? undefined, artist: row.artist ?? undefined }, 0);
           trackLoaded = true;
           pendingDuration = row.duration ?? 0;
 
@@ -362,7 +362,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         if (!trackLoaded) {
           const { data: fallback } = await supabase
             .from("recordings")
-            .select("id, title, audio_url")
+            .select("id, title, audio_url, artist")
             .order("created_at", { ascending: false });
           if (fallback && fallback.length > 0) {
             // Exclude Joseph's track from random pool
@@ -373,7 +373,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             const candidates = pool.length > 0 ? pool : fallback;
             const row = candidates[Math.floor(Math.random() * candidates.length)];
             console.log("[journey] paired track not found, random fallback:", row.title);
-            play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}` }, 0);
+            play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, artist: row.artist ?? undefined }, 0);
   
           }
         }
@@ -386,7 +386,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         const supabase = createClient();
         const { data, error } = await supabase
           .from("recordings")
-          .select("id, title, audio_url")
+          .select("id, title, audio_url, artist")
           .order("created_at", { ascending: false });
 
         if (!error && data && data.length > 0) {
@@ -398,7 +398,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
           const candidates = pool.length > 0 ? pool : data;
           const row = candidates[Math.floor(Math.random() * candidates.length)];
           console.log("[journey] random track:", row.title);
-          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}` }, 0);
+          play({ id: row.id, title: row.title, audioUrl: `/api/audio/${row.id}`, artist: row.artist ?? undefined }, 0);
 
         } else {
           console.warn("[journey] no recordings found, starting journey without audio");

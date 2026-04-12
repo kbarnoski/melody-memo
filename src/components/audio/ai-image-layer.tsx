@@ -29,6 +29,8 @@ interface AiImageLayerProps {
   /** Stable journey identifier — only purge layers when this changes (new journey).
    *  Phase transitions within the same journey use graceful crossfade instead. */
   journeyId?: string;
+  /** Fires with the image src whenever a new AI image is composited */
+  onImageReady?: (src: string) => void;
 }
 
 interface ImageLayer {
@@ -53,7 +55,7 @@ interface ImageLayer {
   purge?: boolean;
 }
 
-const DISSOLVE_DURATION = 4000; // 4s fade-in — smooth cross-dissolve
+const DISSOLVE_DURATION = 3800; // 3.8s fade-in — smooth cross-dissolve
 const FADEOUT_DURATION = 8000; // 8s fade-out — images linger longer for layered depth
 const PURGE_FADEOUT_DURATION = 500; // 0.5s fast fade — prevents old journey images lingering
 const MIN_PEAK_DURATION = 5000; // image must hold at full opacity 5s before eviction
@@ -190,6 +192,7 @@ export function AiImageLayer({
   onFirstImage,
   promptSeed,
   journeyId,
+  onImageReady,
 }: AiImageLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const layersRef = useRef<ImageLayer[]>([]);
@@ -207,6 +210,8 @@ export function AiImageLayer({
   const firstImageFiredRef = useRef(false);
   const onFirstImageRef = useRef(onFirstImage);
   onFirstImageRef.current = onFirstImage;
+  const onImageReadyRef = useRef(onImageReady);
+  onImageReadyRef.current = onImageReady;
   const promptSeedRef = useRef(promptSeed);
   promptSeedRef.current = promptSeed;
 
@@ -282,6 +287,9 @@ export function AiImageLayer({
       firstImageFiredRef.current = true;
       onFirstImageRef.current?.();
     }
+
+    // Notify overlay layer of new image
+    onImageReadyRef.current?.(img.src);
 
     const layers = layersRef.current;
     const now = performance.now();

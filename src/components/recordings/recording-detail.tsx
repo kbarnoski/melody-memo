@@ -317,6 +317,7 @@ export function RecordingDetail({
               title: recording.title,
               audioUrl: recording.audio_url,
               duration: recording.duration,
+              artist: recording.artist ?? undefined,
             }, currentTime);
           }
           if (analysis) store.setAnalysis(analysis);

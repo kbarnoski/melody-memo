@@ -20,6 +20,7 @@ export interface Track {
   title: string;
   audioUrl: string;
   duration?: number | null;
+  artist?: string | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

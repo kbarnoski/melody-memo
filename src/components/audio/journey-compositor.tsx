@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import { AiImageLayer } from "./ai-image-layer";
+import { AiOverlayElements } from "./ai-overlay-elements";
 import { PostProcessingLayer } from "./post-processing-layer";
 import { FlashAngel } from "./flash-angel";
 import type { JourneyFrame } from "@/lib/journeys/types";
@@ -63,6 +64,12 @@ export function JourneyCompositor({
   const effectiveDenoising = frame?.denoisingStrength ?? 0.5;
   const effectiveTargetFps = frame?.targetFps ?? 2;
   const showAi = aiEnabled && !!effectivePrompt;
+
+  // Track latest AI image for overlay cloning
+  const [latestAiImage, setLatestAiImage] = useState<string | null>(null);
+  const handleImageReady = useCallback((src: string) => {
+    setLatestAiImage(src);
+  }, []);
 
   // Detect light-background phases from prompt — scale down GPU-expensive effects
   // Binary detection (target), but we smooth the actual multiplier to prevent flash
@@ -256,7 +263,20 @@ export function JourneyCompositor({
           shaderOpacity={effectiveShaderOpacity}
           promptSeed={promptSeed}
           journeyId={journeyId}
+          onImageReady={handleImageReady}
         />
+      )}
+
+      {/* AI overlay clones — regions of the AI image that "lift off" and dissolve (z-3) */}
+      {showAi && frame?.aiOverlayPrompt && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none" }}>
+          <AiOverlayElements
+            imageUrl={latestAiImage}
+            enabled={aiEnabled}
+            phase={frame.phase}
+            journeyId={journeyId}
+          />
+        </div>
       )}
 
       {/* Pre-activation glow — bloom buildup before bass hit (Ghost only) */}

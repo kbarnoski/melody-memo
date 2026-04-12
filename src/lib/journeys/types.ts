@@ -72,6 +72,8 @@ export interface JourneyPhase {
   particleDensity: number;
   /** Post-processing: halation glow 0-1 */
   halation: number;
+  /** Optional prompt for small floating overlay elements (screen blend on black bg) */
+  aiOverlayPrompt?: string;
 }
 
 export type VoiceId = "shimmer" | "nova" | "fable" | "alloy" | "echo" | "onyx" | "ash" | "ballad" | "coral" | "sage" | "verse" | "marin" | "cedar";
@@ -193,4 +195,6 @@ export interface JourneyFrame {
   eventApproach?: number;
   /** @deprecated Use eventImpulse — kept for backward compat */
   cueImpulse?: number;
+  /** Optional prompt for small floating overlay elements (screen blend on black bg) */
+  aiOverlayPrompt?: string;
 }

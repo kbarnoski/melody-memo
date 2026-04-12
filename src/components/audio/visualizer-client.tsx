@@ -479,6 +479,7 @@ export function VisualizerClient({
       id: recording.id,
       title: recording.title ?? "Untitled",
       audioUrl: recording.audio_url,
+      artist: recording.artist ?? undefined,
     };
     if (autoplay) {
       play(trackData);
@@ -1080,7 +1081,7 @@ export function VisualizerClient({
             >
               {activeJourney.name}
             </span>
-            {recording?.artist && (
+            {(currentTrack?.artist || recording?.artist) && (
               <span
                 style={{
                   position: "relative",
@@ -1092,7 +1093,7 @@ export function VisualizerClient({
                   marginTop: "0.25rem",
                 }}
               >
-                Music by {recording.artist}
+                Music by {currentTrack?.artist || recording?.artist}
               </span>
             )}
           </div>
@@ -1173,7 +1174,7 @@ export function VisualizerClient({
               >
                 {isCulmination || isGrandCulm ? activeJourney.subtitle : activeJourney.name}
               </span>
-              {recording?.artist && (
+              {(currentTrack?.artist || recording?.artist) && (
                 <span
                   style={{
                     position: "relative",
@@ -1184,7 +1185,7 @@ export function VisualizerClient({
                     textShadow: "0 1px 8px rgba(0,0,0,0.8)",
                   }}
                 >
-                  Music by {recording.artist}
+                  Music by {currentTrack?.artist || recording?.artist}
                 </span>
               )}
 

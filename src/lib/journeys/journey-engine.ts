@@ -118,7 +118,7 @@ class JourneyEngine {
   private static readonly DUAL_SWITCH_MAX_SECS = 45;
   /** Decay duration per event type (seconds) */
   private static readonly EVENT_DECAY: Record<string, number> = {
-    bass_hit: 0.9,
+    bass_hit: 0.5,
     texture_change: 2.5,
     climax: 3.0,
     drop: 2.0,
@@ -334,7 +334,7 @@ class JourneyEngine {
 
     // Decay impulse — hold at full intensity, then linear fade
     if (this.eventImpulse > 0) {
-      const holdSeconds = 1.0;
+      const holdSeconds = 0.6;
       const decaySeconds = JourneyEngine.EVENT_DECAY[this.eventType ?? "bass_hit"] ?? 1.5;
       const elapsed = (now - this.eventImpulseStartMs) / 1000;
       if (elapsed <= holdSeconds) {

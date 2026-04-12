@@ -81,6 +81,9 @@ export function SharedJourneyClient({
   const [isAuthenticated, setIsAuthenticated] = useState(true); // assume auth until checked
   const [journeyIntroVisible, setJourneyIntroVisible] = useState(false);
   const [phaseIndicatorReady, setPhaseIndicatorReady] = useState(false);
+  const [replayCount, setReplayCount] = useState(0);
+  const introTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const phaseReadyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animRef = useRef<number>(0);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const endedRef = useRef(false);
@@ -835,10 +838,14 @@ export function SharedJourneyClient({
         if (allEvents.length > 0) engine.setEvents(allEvents, dur);
       }
 
+      // Clear old timers to prevent stale state
+      if (introTimerRef.current) clearTimeout(introTimerRef.current);
+      if (phaseReadyTimerRef.current) clearTimeout(phaseReadyTimerRef.current);
+      setReplayCount((c) => c + 1); // force fresh DOM elements for overlays
       setJourneyIntroVisible(true);
       setPhaseIndicatorReady(false);
-      setTimeout(() => setJourneyIntroVisible(false), 5000);
-      setTimeout(() => setPhaseIndicatorReady(true), 7000);
+      introTimerRef.current = setTimeout(() => setJourneyIntroVisible(false), 5000);
+      phaseReadyTimerRef.current = setTimeout(() => setPhaseIndicatorReady(true), 7000);
     }
   };
 
@@ -1034,6 +1041,7 @@ export function SharedJourneyClient({
       {/* "Journey Started" intro overlay — matching main app */}
       {journeyIntroVisible && (
         <div
+          key={`intro-${replayCount}`}
           className="absolute inset-0 flex items-center justify-center"
           style={{
             zIndex: 50,
@@ -1314,6 +1322,7 @@ export function SharedJourneyClient({
       {/* Journey complete overlay — same treatment as main app */}
       {ended && (
         <div
+          key={`complete-${replayCount}`}
           className="absolute inset-0 flex items-center justify-center"
           style={{
             zIndex: 50,

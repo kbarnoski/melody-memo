@@ -2,11 +2,6 @@
 
 import { memo } from "react";
 
-const ANGEL_IMAGES = [
-  "/images/flash-angel-1.png",
-  "/images/flash-angel-2.png",
-];
-
 interface FlashAngelProps {
   variant: 0 | 1;
 }
@@ -15,7 +10,7 @@ export const FlashAngel = memo(function FlashAngel({ variant }: FlashAngelProps)
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={ANGEL_IMAGES[variant]}
+      src="/images/flash-angel-1.png"
       alt=""
       style={{
         width: "75vmin",

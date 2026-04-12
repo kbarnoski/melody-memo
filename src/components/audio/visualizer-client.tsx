@@ -311,7 +311,7 @@ export function VisualizerClient({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [ratingOpen, setRatingOpen] = useState(false);
+  const [ratingOpen, setRatingOpen] = useState(true);
   const [isolatePrimary, setIsolatePrimary] = useState(false);
   const [hideImagery, setHideImagery] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -929,7 +929,7 @@ export function VisualizerClient({
           liveText={liveText}
           liveEnabled={liveEnabled}
           onLiveToggle={hasSpeechApi ? () => setLiveEnabled((v) => !v) : undefined}
-          showLiveButton={false}
+          showLiveButton={true}
           hudVisible={hudVisible}
           onHudToggle={() => setHudVisible((v) => !v)}
           showHudButton={false /* paused — re-enable with: showHud && !journeyActive */}

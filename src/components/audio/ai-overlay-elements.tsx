@@ -11,10 +11,13 @@ interface AiOverlayElementsProps {
 }
 
 /** Max simultaneous active clones on screen */
-const MAX_CLONES = 3;
+const MAX_CLONES = 4;
 
 /** Probability of creating a clone when a new image arrives (0-1) */
-const CLONE_PROBABILITY = 0.65;
+const CLONE_PROBABILITY = 0.85;
+
+/** Interval to spawn clones from the last image even without new images arriving */
+const RESPAWN_INTERVAL = 6000; // 6s — ensures constant motion between image generations
 
 let cloneIdCounter = 0;
 
@@ -35,6 +38,8 @@ export function AiOverlayElements({
   const prevJourneyRef = useRef(journeyId);
   const prevPhaseRef = useRef(phase);
   const imageCountRef = useRef(0);
+  const lastImageUrlRef = useRef<string | null>(null);
+  const respawnTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /** Purge all clones immediately */
   const purgeAll = useCallback(() => {
@@ -69,11 +74,11 @@ export function AiOverlayElements({
       const driftY = Math.sin(driftAngle) * driftDist;
 
       // Timing
-      const totalDuration = 10 + Math.random() * 5; // 10-15s
+      const totalDuration = 12 + Math.random() * 8; // 12-20s — longer for more overlap
 
       // Keyframe percentages
-      const fadeInEnd = 15; // 15% of duration = fade in
-      const dissolveStart = 65; // 65% = start dissolving
+      const fadeInEnd = 12; // 12% of duration = gentle fade in
+      const dissolveStart = 60; // 60% = start dissolving — longer at peak
       // 100% = fully gone
 
       const animName = `clone-drift-${id}`;
@@ -158,6 +163,7 @@ export function AiOverlayElements({
       prevJourneyRef.current = journeyId;
       purgeAll();
       imageCountRef.current = 0;
+      lastImageUrlRef.current = null;
     }
   }, [journeyId, purgeAll]);
 
@@ -174,6 +180,7 @@ export function AiOverlayElements({
     if (!enabled || !imageUrl) return;
 
     imageCountRef.current++;
+    lastImageUrlRef.current = imageUrl;
 
     // Skip the very first image (let the scene establish first)
     if (imageCountRef.current <= 1) return;
@@ -184,10 +191,30 @@ export function AiOverlayElements({
     spawnClone(imageUrl);
   }, [imageUrl, enabled, spawnClone]);
 
+  // Respawn timer — keeps clones alive even when no new images arrive
+  useEffect(() => {
+    if (!enabled) {
+      if (respawnTimerRef.current) clearInterval(respawnTimerRef.current);
+      return;
+    }
+
+    respawnTimerRef.current = setInterval(() => {
+      const url = lastImageUrlRef.current;
+      if (!url) return;
+      if (activeClonesRef.current.length >= MAX_CLONES) return;
+      spawnClone(url);
+    }, RESPAWN_INTERVAL);
+
+    return () => {
+      if (respawnTimerRef.current) clearInterval(respawnTimerRef.current);
+    };
+  }, [enabled, spawnClone]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       purgeAll();
+      if (respawnTimerRef.current) clearInterval(respawnTimerRef.current);
     };
   }, [purgeAll]);
 

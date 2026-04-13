@@ -112,13 +112,13 @@ class JourneyEngine {
   private static readonly SHADER_SWITCH_MIN_SECS = 10;
   private static readonly SHADER_SWITCH_MAX_SECS = 16;
   /** Extra time for the first shader to compensate for compile + fade-in delay */
-  private static readonly FIRST_SHADER_BUFFER_MS = 5000;
-  /** Dual shader switches on a different cadence — slightly longer for visual stability */
-  private static readonly DUAL_SWITCH_MIN_SECS = 25;
-  private static readonly DUAL_SWITCH_MAX_SECS = 45;
+  private static readonly FIRST_SHADER_BUFFER_MS = 3000;
+  /** Dual shader switches on a different cadence — offset from primary for variety */
+  private static readonly DUAL_SWITCH_MIN_SECS = 14;
+  private static readonly DUAL_SWITCH_MAX_SECS = 22;
   /** Decay duration per event type (seconds) */
   private static readonly EVENT_DECAY: Record<string, number> = {
-    bass_hit: 0.5,
+    bass_hit: 0.4,
     texture_change: 2.5,
     climax: 3.0,
     drop: 2.0,
@@ -334,7 +334,7 @@ class JourneyEngine {
 
     // Decay impulse — hold at full intensity, then linear fade
     if (this.eventImpulse > 0) {
-      const holdSeconds = 0.6;
+      const holdSeconds = 0.5;
       const decaySeconds = JourneyEngine.EVENT_DECAY[this.eventType ?? "bass_hit"] ?? 1.5;
       const elapsed = (now - this.eventImpulseStartMs) / 1000;
       if (elapsed <= holdSeconds) {

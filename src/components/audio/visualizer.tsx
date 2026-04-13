@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
-import { X, Type, AudioLines, Share2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward, BookOpen, Library, Globe, Search, Maximize2, Minimize2, LogOut } from "lucide-react";
+import { X, Type, AudioLines, Share2, ChevronUp, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, SkipBack, SkipForward, BookOpen, Library, Globe, Search, Maximize2, Minimize2, LogOut, Mic } from "lucide-react";
 import { getAudioEngine, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
@@ -20,8 +20,8 @@ const AI_BACKDROP_SHADERS: VisualizerMode[] = [
   "tide", "ember",
 ];
 
-/** Consistent ~2s fade duration for all shader transitions (at 60fps) */
-const SHADER_FADE_RATE = 0.008;
+/** Consistent ~2.5s fade duration for all shader transitions (at 60fps) */
+const SHADER_FADE_RATE = 0.0065;
 const DUAL_SHADER_MAX_OPACITY = 0.85;
 const TERTIARY_SHADER_MAX_OPACITY = 0.60;
 
@@ -1226,8 +1226,8 @@ export function VisualizerCore({
               </div>
             )}
 
-            {/* Poetry + Voice + Language — always rendered to avoid layout shift */}
-            {(journeyActive || (!inJourneyMode && currentTrack)) && (
+            {/* Poetry + Voice + Language — viz mode only (hidden during journeys) */}
+            {(!journeyActive && !inJourneyMode && currentTrack) && (
               <>
                 <div className="w-px h-5 bg-white/10 mx-1" />
                 <button
@@ -1264,6 +1264,20 @@ export function VisualizerCore({
                     Voice
                   </span>
                 </button>
+                {showLiveButton && onLiveToggle && !journeyActive && (
+                  <button
+                    onClick={onLiveToggle}
+                    className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-75 ${liveEnabled ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
+                    style={{
+                      opacity: poetryEnabled || storyEnabled ? 1 : 0,
+                      pointerEvents: poetryEnabled || storyEnabled ? "auto" : "none",
+                      transition: "background-color 75ms, color 75ms, opacity 75ms",
+                    }}
+                    title={liveEnabled ? "Live: On" : "Live: Off"}
+                  >
+                    <Mic className={`h-3.5 w-3.5 ${liveEnabled ? "animate-pulse" : ""}`} />
+                  </button>
+                )}
                 <div className="relative" style={{
                   opacity: poetryEnabled || storyEnabled ? 1 : 0,
                   pointerEvents: poetryEnabled || storyEnabled ? "auto" : "none",
@@ -1394,7 +1408,7 @@ export function VisualizerCore({
           {/* Spacer — pushes exit to right edge (wider to shift center content left) */}
           <div className="flex-[2]" />
 
-          {/* RIGHT: Journey actions + Studio / Exit */}
+          {/* RIGHT: Share + Studio / Exit */}
           <div className="flex items-center gap-1.5">
             {(journeyActive ? onShareJourney : onShareRoom) && (
               <button
@@ -1548,8 +1562,8 @@ export function VisualizerCore({
                   )}
                 </div>
               )}
-              {/* Poetry + Voice toggles */}
-              {(journeyActive || (!inJourneyMode && currentTrack)) && (
+              {/* Poetry + Voice toggles — viz mode only (hidden during journeys) */}
+              {(!journeyActive && !inJourneyMode && currentTrack) && (
                 <>
                   <button
                     onClick={() => {
@@ -1578,6 +1592,17 @@ export function VisualizerCore({
                       >
                         <AudioLines className="h-3.5 w-3.5" />
                       </button>
+                      {showLiveButton && onLiveToggle && !journeyActive && (
+                        <button
+                          onClick={onLiveToggle}
+                          className={`flex items-center justify-center rounded-lg p-1.5 transition-colors duration-75 ${
+                            liveEnabled ? "bg-red-500/20 text-red-400" : "text-white/40 hover:text-white/70"
+                          }`}
+                          title={liveEnabled ? "Live: On" : "Live: Off"}
+                        >
+                          <Mic className={`h-3.5 w-3.5 ${liveEnabled ? "animate-pulse" : ""}`} />
+                        </button>
+                      )}
                       <div className="relative">
                         <button
                           onClick={() => setLangPickerOpen((v) => !v)}

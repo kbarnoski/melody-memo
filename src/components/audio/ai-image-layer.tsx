@@ -55,8 +55,8 @@ interface ImageLayer {
   purge?: boolean;
 }
 
-const DISSOLVE_DURATION = 3700; // 3.7s fade-in — smooth cross-dissolve
-const FADEOUT_DURATION = 8000; // 8s fade-out — images linger longer for layered depth
+const DISSOLVE_DURATION = 4200; // 4.2s fade-in — unhurried cross-dissolve
+const FADEOUT_DURATION = 10000; // 10s fade-out — images linger longer for layered depth
 const PURGE_FADEOUT_DURATION = 500; // 0.5s fast fade — prevents old journey images lingering
 const MIN_PEAK_DURATION = 5000; // image must hold at full opacity 5s before eviction
 const GEN_INTERVAL_MIN = 8000; // 8s between generations — gives each image room to breathe

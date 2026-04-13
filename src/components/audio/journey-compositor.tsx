@@ -268,12 +268,12 @@ export function JourneyCompositor({
       )}
 
       {/* AI overlay clones — regions of the AI image that "lift off" and dissolve (z-3) */}
-      {showAi && frame?.aiOverlayPrompt && (
+      {showAi && (
         <div style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none" }}>
           <AiOverlayElements
             imageUrl={latestAiImage}
             enabled={aiEnabled}
-            phase={frame.phase}
+            phase={frame?.phase ?? ""}
             journeyId={journeyId}
           />
         </div>
@@ -294,7 +294,7 @@ export function JourneyCompositor({
       )}
 
       {/* Bass hit full-screen flash — Ghost only, gated by enableBassFlash */}
-      {enableBassFlash && impulse > 0 && evtType === "bass_hit" && (
+      {enableBassFlash && ((impulse > 0 && evtType === "bass_hit") || approach > 0.92) && (
         <>
           {/* Full-screen white flash — time-based, bright for ~0.15s, gone by ~0.5s */}
           <div
@@ -316,8 +316,8 @@ export function JourneyCompositor({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              opacity: impulse,
-              filter: `blur(${(1 - impulse) * 1.5}px)`,
+              opacity: impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08),
+              filter: `blur(${(1 - (impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08))) * 1.5}px)`,
             }}
           >
             <FlashAngel variant={(bassHitCountRef.current % 2) as 0 | 1} />

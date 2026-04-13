@@ -240,7 +240,7 @@ export function VisualizerClient({
   // Built-in journeys (no userId) are frozen — no tuning in production.
   const isOwnCustomJourney = !!userId && !!activeJourney?.userId && activeJourney.userId === userId;
   const canAdmin = isAdmin || isOwnCustomJourney;
-  const canRate = isAdmin || isOwnCustomJourney;
+  const canRate = true; // always available — rating panel is a creator tool
 
   // Mood-based AI prompt for non-journey usage
   const MOOD_AI_PROMPTS: Record<string, string> = useMemo(() => ({
@@ -311,7 +311,7 @@ export function VisualizerClient({
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [tonnetzVisible, setTonnetzVisible] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
-  const [ratingOpen, setRatingOpen] = useState(true);
+  const [ratingOpen, setRatingOpen] = useState(false);
   const [isolatePrimary, setIsolatePrimary] = useState(false);
   const [hideImagery, setHideImagery] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);

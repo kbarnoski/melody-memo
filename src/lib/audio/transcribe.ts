@@ -68,26 +68,52 @@ export async function transcribeAudio(
   // Dynamic import to avoid loading TensorFlow.js on other pages
   const { BasicPitch, addPitchBendsToNoteEvents, noteFramesToTime, outputToNotesPoly } =
     await import("@spotify/basic-pitch");
-
-  const basicPitch = new BasicPitch("/model/model.json");
-
-  onProgress?.("Transcribing notes...", 50);
+  const tf = await import("@tensorflow/tfjs");
 
   let frames: number[][] = [];
   let onsets: number[][] = [];
   let contours: number[][] = [];
 
-  await basicPitch.evaluateModel(
-    audioData,
-    (f: number[][], o: number[][], c: number[][]) => {
-      frames = [...frames, ...f];
-      onsets = [...onsets, ...o];
-      contours = [...contours, ...c];
-    },
-    (progress: number) => {
-      onProgress?.("Transcribing notes...", 50 + progress * 30);
-    }
-  );
+  // Try running on whatever backend tf.js defaults to (usually webgl).
+  // Some audio files trigger "Failed to compile shader" inside basic-pitch's
+  // TF graph — likely a GPU codegen edge case with specific buffer shapes.
+  // Fall back to the CPU backend on those: slower, but deterministic.
+  const runEvaluate = async () => {
+    const basicPitch = new BasicPitch("/model/model.json");
+    frames = [];
+    onsets = [];
+    contours = [];
+    onProgress?.("Transcribing notes...", 50);
+    await basicPitch.evaluateModel(
+      audioData,
+      (f: number[][], o: number[][], c: number[][]) => {
+        frames = [...frames, ...f];
+        onsets = [...onsets, ...o];
+        contours = [...contours, ...c];
+      },
+      (progress: number) => {
+        onProgress?.("Transcribing notes...", 50 + progress * 30);
+      }
+    );
+  };
+
+  try {
+    await runEvaluate();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isShaderErr = /shader|compile/i.test(msg);
+    if (!isShaderErr) throw err;
+    // GPU path failed — retry on CPU backend.
+    console.warn("[transcribe] WebGL shader failed, retrying on CPU backend:", msg);
+    onProgress?.("GPU path failed — retrying on CPU...", 40);
+    try {
+      tf.disposeVariables();
+      tf.engine().reset();
+      await tf.setBackend("cpu");
+      await tf.ready();
+    } catch {}
+    await runEvaluate();
+  }
 
   onProgress?.("Extracting notes (may take a moment)...", 82);
 

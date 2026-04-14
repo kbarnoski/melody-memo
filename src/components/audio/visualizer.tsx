@@ -502,12 +502,10 @@ export function VisualizerCore({
   const inJourneyMode = journeyActive || journeyBrowsing;
 
   // Completely skip the shader layer tree while the journey browser is open.
-  // On older Macs the WebGL render loop was starving the main thread so badly
-  // that even card hover states lagged. Hiding the canvases (not just dimming
-  // them) stops the rAF work dead and restores UI responsiveness.
+  // The old "depths" picker shader and dimmed-fade path are gone — UI-only
+  // screens render against flat black. No WebGL work, no main-thread contention,
+  // no fragment cost on weak hardware.
   const shadersHidden = journeyBrowsing;
-  const shaderDimmed = journeyBrowsing && !journeyActive;
-  const JOURNEY_PICKER_SHADER = "depths" as VisualizerMode;
 
   // Transport state — only read when transport is shown
   const currentTrack = useAudioStore((s) => showTransport ? s.currentTrack : null);
@@ -551,7 +549,7 @@ export function VisualizerCore({
   // renders the current shader at full opacity. When mode changes, the INACTIVE
   // layer silently compiles the new shader (at opacity 0). Once ready, a rAF-based
   // crossfade swaps them. No React key remounting, no WebGL context destruction.
-  const actualPrimaryMode = (shaderDimmed ? JOURNEY_PICKER_SHADER : mode) as VisualizerMode;
+  const actualPrimaryMode = mode as VisualizerMode;
   const [layerAMode, setLayerAMode] = useState<VisualizerMode>(actualPrimaryMode);
   const [layerBMode, setLayerBMode] = useState<VisualizerMode | null>(null);
   const activeLayerRef = useRef<'a' | 'b'>('a');
@@ -899,12 +897,8 @@ export function VisualizerCore({
         style={{
           position: "absolute",
           inset: 0,
-          opacity: shaderDimmed ? 0.35 : 1,
-          // Smooth in both directions. Dimming (entering browser): 0.5s ease.
-          // Undimming (starting journey): 1.5s ease-out so the wrapper ramp UP
-          // and --shader-opacity ramp DOWN combine into a single smooth fade-in,
-          // preventing a brightness flash from additive layers arriving async.
-          transition: shaderDimmed ? "opacity 0.5s ease" : "opacity 1.5s ease-out",
+          opacity: 1,
+          transition: "opacity 1.5s ease-out",
           pointerEvents: "none",
         }}
       >

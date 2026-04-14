@@ -825,6 +825,20 @@ export function SharedJourneyClient({
     >
       <div>by {creatorName || "Karel Barnoski"}</div>
       {musicArtist && <div>Music by {musicArtist}</div>}
+      {journey.photographyCredit && <div>Photography by {journey.photographyCredit}</div>}
+      {journey.dedication && (
+        <div
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontStyle: "italic",
+            fontSize: "1rem",
+            color: "rgba(255, 255, 255, 0.75)",
+            marginTop: "0.5rem",
+          }}
+        >
+          {journey.dedication}
+        </div>
+      )}
     </div>
   );
 
@@ -956,6 +970,33 @@ export function SharedJourneyClient({
                 }}
               >
                 Music by {musicArtist}
+              </div>
+            )}
+            {journey.photographyCredit && (
+              <div
+                style={{
+                  fontSize: "0.9rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  marginTop: "4px",
+                }}
+              >
+                Photography by {journey.photographyCredit}
+              </div>
+            )}
+            {journey.dedication && (
+              <div
+                style={{
+                  fontSize: "1rem",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontStyle: "italic",
+                  color: "rgba(255, 255, 255, 0.75)",
+                  letterSpacing: "0.04em",
+                  marginTop: "10px",
+                }}
+              >
+                {journey.dedication}
               </div>
             )}
           </div>
@@ -1151,6 +1192,36 @@ export function SharedJourneyClient({
                 }}
               >
                 Music by {musicArtist}
+              </span>
+            )}
+            {journey.photographyCredit && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.9rem",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                }}
+              >
+                Photography by {journey.photographyCredit}
+              </span>
+            )}
+            {journey.dedication && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "1.05rem",
+                  color: "rgba(255, 255, 255, 0.75)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                  marginTop: "0.5rem",
+                }}
+              >
+                {journey.dedication}
               </span>
             )}
           </div>

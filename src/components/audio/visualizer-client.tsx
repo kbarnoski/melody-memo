@@ -1152,6 +1152,36 @@ export function VisualizerClient({
                 Music by {currentTrack?.artist || recording?.artist}
               </span>
             )}
+            {activeJourney.photographyCredit && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "var(--font-geist-mono)",
+                  fontSize: "0.9rem",
+                  color: "rgba(255, 255, 255, 0.85)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                }}
+              >
+                Photography by {activeJourney.photographyCredit}
+              </span>
+            )}
+            {activeJourney.dedication && (
+              <span
+                style={{
+                  position: "relative",
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontStyle: "italic",
+                  fontSize: "1rem",
+                  color: "rgba(255, 255, 255, 0.75)",
+                  letterSpacing: "0.04em",
+                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                  marginTop: "0.5rem",
+                }}
+              >
+                {activeJourney.dedication}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -1256,6 +1286,37 @@ export function VisualizerClient({
                   }}
                 >
                   Music by {currentTrack?.artist || recording?.artist}
+                </span>
+              )}
+              {activeJourney.photographyCredit && (
+                <span
+                  style={{
+                    position: "relative",
+                    fontFamily: "var(--font-geist-mono)",
+                    fontSize: "0.9rem",
+                    color: "rgba(255, 255, 255, 0.85)",
+                    letterSpacing: "0.04em",
+                    textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                    marginTop: "-0.75rem",
+                  }}
+                >
+                  Photography by {activeJourney.photographyCredit}
+                </span>
+              )}
+              {activeJourney.dedication && (
+                <span
+                  style={{
+                    position: "relative",
+                    fontFamily: "'Cormorant Garamond', Georgia, serif",
+                    fontStyle: "italic",
+                    fontSize: "1.05rem",
+                    color: "rgba(255, 255, 255, 0.75)",
+                    letterSpacing: "0.04em",
+                    textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                    marginTop: "0.25rem",
+                  }}
+                >
+                  {activeJourney.dedication}
                 </span>
               )}
 

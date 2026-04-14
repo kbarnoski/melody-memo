@@ -117,6 +117,8 @@ export default async function SharedJourneyPage({
         ...(Array.isArray(journeyRow.local_image_urls) && journeyRow.local_image_urls.length > 0
           ? { localImageUrls: journeyRow.local_image_urls as string[] }
           : {}),
+        photographyCredit: journeyRow.photography_credit ?? null,
+        dedication: journeyRow.dedication ?? null,
       };
 
   return (

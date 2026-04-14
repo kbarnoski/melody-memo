@@ -151,6 +151,11 @@ export interface Journey {
   /** Display name of the journey author. Built-in journeys default to "Karel Barnoski"
    *  at the display layer; custom journeys are populated from the DB creator_name column. */
   creatorName?: string | null;
+  /** Optional photographer credit, shown on intro/end overlays. Set for journeys
+   *  built around a photographer's work (e.g. Patrick Neeman on Isolation). */
+  photographyCredit?: string | null;
+  /** Optional dedication line shown on intro/end overlays. */
+  dedication?: string | null;
 }
 
 /** A user-created journey stored in Supabase */

@@ -42,6 +42,16 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
   const [aiAvailable, setAiAvailable] = useState(false);
   const [autoGenerating, setAutoGenerating] = useState(false);
   const [customJourneys, setCustomJourneys] = useState<Journey[]>([]);
+  const [customPaths, setCustomPaths] = useState<Array<{
+    id: string;
+    name: string;
+    subtitle: string | null;
+    description: string | null;
+    journeyIds: string[];
+    shareToken: string | null;
+    accent: string;
+    glow: string;
+  }>>([]);
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [shareSheet, setShareSheet] = useState<{ url: string; title: string } | null>(null);
@@ -72,12 +82,25 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         // should only appear via /path/[token], not in the flat selector list.
         const { data: pathRows } = await supabase
           .from("journey_paths")
-          .select("journey_ids")
-          .eq("user_id", user.id);
+          .select("id, name, subtitle, description, journey_ids, share_token, accent_color, glow_color")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
         const pathJourneyIds = new Set<string>();
         for (const row of pathRows ?? []) {
           for (const jid of (row.journey_ids ?? []) as string[]) pathJourneyIds.add(jid);
         }
+        setCustomPaths(
+          (pathRows ?? []).map((row) => ({
+            id: row.id as string,
+            name: (row.name as string) ?? "Untitled Path",
+            subtitle: (row.subtitle as string) ?? null,
+            description: (row.description as string) ?? null,
+            journeyIds: (row.journey_ids ?? []) as string[],
+            shareToken: (row.share_token as string) ?? null,
+            accent: (row.accent_color as string) ?? "#d0a070",
+            glow: (row.glow_color as string) ?? "#e0b080",
+          }))
+        );
 
         const { data, error } = await supabase
           .from("journeys")
@@ -604,6 +627,89 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               </span>
               <div className="flex-1 h-px" style={{ backgroundColor: "rgba(255,255,255,0.06)" }} />
             </div>
+
+            {/* Custom user paths — Welcome Home and any future albums */}
+            {customPaths.length > 0 && (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3 mb-5">
+                {customPaths.map((path) => (
+                  <button
+                    key={path.id}
+                    type="button"
+                    onClick={() => {
+                      if (path.shareToken) {
+                        onClose();
+                        router.push(`/path/${path.shareToken}`);
+                      }
+                    }}
+                    className="jcard rounded-xl text-left transition-colors"
+                    style={{
+                      backgroundColor: "rgba(255,255,255,0.01)",
+                      border: `1px solid rgba(255,255,255,0.08)`,
+                      padding: "16px 20px",
+                    }}
+                  >
+                    <div className="flex items-start gap-2.5 mb-2">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
+                        style={{
+                          backgroundColor: path.accent,
+                          boxShadow: `0 0 4px ${path.glow}30`,
+                        }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span
+                          className="text-white/80 block"
+                          style={{
+                            fontFamily: "var(--font-geist-sans)",
+                            fontWeight: 300,
+                            fontSize: "0.95rem",
+                          }}
+                        >
+                          {path.name}
+                        </span>
+                        {path.subtitle && (
+                          <span
+                            className="text-white/35 block mt-0.5"
+                            style={{
+                              fontSize: "0.68rem",
+                              fontFamily: "var(--font-geist-mono)",
+                            }}
+                          >
+                            {path.subtitle}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between ml-4 mt-2">
+                      <div className="flex items-center gap-1.5">
+                        {path.journeyIds.map((jid) => (
+                          <div
+                            key={jid}
+                            style={{
+                              width: "5px",
+                              height: "5px",
+                              borderRadius: "50%",
+                              backgroundColor: "rgba(255,255,255,0.25)",
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <span
+                        style={{
+                          fontFamily: "var(--font-geist-mono)",
+                          fontSize: "0.6rem",
+                          letterSpacing: "0.14em",
+                          textTransform: "uppercase",
+                          color: path.accent,
+                        }}
+                      >
+                        Open path →
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
               {JOURNEY_PATHS.map((path) => {

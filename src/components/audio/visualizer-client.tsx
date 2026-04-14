@@ -10,7 +10,7 @@ import { JourneySelector } from "./journey-selector";
 import { JourneyCompositor } from "./journey-compositor";
 import { JourneyPhaseIndicator } from "./journey-phase-indicator";
 import { JourneyFeedback, resetPerfMonitor, flushFeedbackEntries, buildSnapshot, appendEntry, getSharedFpsRef, updateShaderUsageFromJourney } from "./journey-feedback";
-import { getTierProfile } from "@/lib/audio/device-tier";
+import { getTierProfile, getDeviceTier } from "@/lib/audio/device-tier";
 import { AdminPanel } from "./admin-panel";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
@@ -1567,12 +1567,12 @@ export function VisualizerClient({
           color: "rgba(255,255,255,0.18)",
           textTransform: "uppercase",
           pointerEvents: "none",
-          opacity: controlsVisible ? 1 : 0,
+          opacity: controlsVisible ? 1 : 0.4,
           transition: "opacity 0.4s ease",
           textShadow: "0 1px 2px rgba(0,0,0,0.6)",
         }}
       >
-        v0.1.0 · {process.env.NEXT_PUBLIC_BUILD_COMMIT ?? "dev"}
+        v0.1.0 · {process.env.NEXT_PUBLIC_BUILD_COMMIT ?? "dev"} · tier {getDeviceTier()}
       </div>
     </div>
   );

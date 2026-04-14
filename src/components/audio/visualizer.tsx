@@ -19,6 +19,7 @@ const Visualizer3D = dynamic(() => import("./visualizer-3d").then((m) => m.Visua
 });
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { SHADERS, MODE_META, MODE_CATEGORIES, MODES_3D, MODES_AI } from "@/lib/shaders";
+import { getDeviceTier } from "@/lib/audio/device-tier";
 // Performance monitor is now FPS-based, started/stopped by JourneyFeedback component
 export type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
@@ -241,9 +242,13 @@ export function ShaderVisualizer({
     let compilePhase: "compiling" | "linking" | "ready" = "compiling";
     let readyFired = false;
 
-    // Cap at 1x DPR — shaders are abstract/blurry by nature, retina resolution
-    // is wasted GPU work. Cuts pixel count by 4x on retina displays.
-    const dpr = Math.min(devicePixelRatio, 1);
+    // Render-resolution scaling. Already capped at 1x DPR (retina is wasted on
+    // soft fragment shaders). Older GPUs are still fragment-bound at 1x, so we
+    // drop further on medium/low tier — the GPU upscales for free, and post-
+    // bloom the softness is invisible.
+    const tier = getDeviceTier();
+    const tierScale = tier === "low" ? 0.55 : tier === "medium" ? 0.75 : 1.0;
+    const dpr = Math.min(devicePixelRatio, 1) * tierScale;
 
     function render() {
       if (!canvas || !gl || gl.isContextLost()) return;

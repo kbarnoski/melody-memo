@@ -82,12 +82,15 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         // should only appear via /path/[token], not in the flat selector list.
         const { data: pathRows } = await supabase
           .from("journey_paths")
-          .select("id, name, subtitle, description, journey_ids, share_token, accent_color, glow_color")
+          .select("id, name, subtitle, description, journey_ids, share_token, accent_color, glow_color, culmination_journey_id")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
         const pathJourneyIds = new Set<string>();
         for (const row of pathRows ?? []) {
           for (const jid of (row.journey_ids ?? []) as string[]) pathJourneyIds.add(jid);
+          // Also exclude the culmination journey — it lives on the path,
+          // not in the flat list.
+          if (row.culmination_journey_id) pathJourneyIds.add(row.culmination_journey_id as string);
         }
         setCustomPaths(
           (pathRows ?? []).map((row) => ({

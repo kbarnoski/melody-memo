@@ -13,6 +13,7 @@ import { JourneyCompositor } from "@/components/audio/journey-compositor";
 import { JourneyPhaseIndicator } from "@/components/audio/journey-phase-indicator";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { prepareGhostFlashImages, clearGhostFlashImages } from "@/lib/journeys/ghost-flash-images";
@@ -516,6 +517,12 @@ export function SharedJourneyClient({
             setEnded(true);
             audio.currentTime = 0;
             setIsPlaying(false);
+            // Record completion in the path-progress store so custom
+            // paths (Welcome Home album, etc.) can unveil their culmination
+            // after every constituent journey is finished.
+            try {
+              usePathProgressStore.getState().completeJourney(journey.id);
+            } catch {}
           });
 
           // Play once ready

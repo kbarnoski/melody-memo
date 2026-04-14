@@ -3,6 +3,7 @@ import { MODE_META } from "@/lib/shaders";
 import { seededShuffle } from "./seeded-random";
 import { applyShaderPreferences } from "./adaptive-engine";
 import { getUserBlockedShaders, getUserDeletedShaders } from "@/lib/shader-preferences";
+import { getDeviceTier } from "@/lib/audio/device-tier";
 
 // ─── LRU Shader Recency Tracking ───
 // Soft bias: recently-used shaders sort toward the back so consecutive journeys
@@ -161,6 +162,21 @@ const GLOBAL_SHADER_BLOCKLIST: string[] = [
   "magnetar", "perihelion", "wormhole", "zodiac", "alveoli", "dendrite",
   "filament", "mitochondria", "osmosis", "photosynthesis", "phylum",
   "protoplasm", "kaleidoscope", "klein", "pendulum", "abyssal-zone",
+  // Removed from registry — kept here as a safety net so even a stale cache
+  // can't pull them back into rotation.
+  "nebula",
+];
+
+/** Heavy fragment-shader modes excluded on `low` device tier. The mechanism
+ *  is conservative — start small and grow as user reports lag on specific
+ *  shaders. The render-resolution scale already gets us most of the way; this
+ *  list is for anything still too expensive even at 0.55× DPR. */
+const LOW_TIER_BLOCKED_SHADERS: string[] = [
+  "dark-nebula", // dense fbm + raymarched volume
+  "supernova",   // multi-octave fbm explosion
+  "quasar",      // volumetric jets
+  "magma",       // thick fbm + reaction-diffusion
+  "inferno",     // volumetric fire fbm
 ];
 
 /** Realms that ARE allowed to use globally-blocked shaders */
@@ -1354,7 +1370,7 @@ export const JOURNEYS: Journey[] = [
     aiEnabled: true,
     enableBassFlash: true,
     completionOffset: 4,
-    blockedShaders: ["whirlpool"],
+    blockedShaders: ["whirlpool", "nebula", "dark-nebula"],
     strictCameraPrompt: true,
     recordingId: "549fc519-f7fc-4c38-a771-adaad2edbc81",
     phaseLabels: { threshold: "Apparition", expansion: "Haunting", transcendence: "Possession", illumination: "Recognition", return: "Release", integration: "Grace" },
@@ -1518,7 +1534,12 @@ export function regenerateJourneyShaders(
   );
   // Per-journey blocklist — the Journey definition may exclude specific shaders
   // (e.g. Ghost excludes whirlpool because it looks wrong with the haunting imagery).
-  const journeyBlocked = new Set(journey.blockedShaders ?? []);
+  // Low-tier devices additionally drop the heaviest fragment shaders so the
+  // journey stays smooth on older hardware.
+  const journeyBlocked = new Set<string>(journey.blockedShaders ?? []);
+  if (getDeviceTier() === "low") {
+    for (const s of LOW_TIER_BLOCKED_SHADERS) journeyBlocked.add(s);
+  }
   const allShaders = journeyBlocked.size > 0
     ? rawShaders.filter((m) => !journeyBlocked.has(m))
     : rawShaders;

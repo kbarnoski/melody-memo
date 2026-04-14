@@ -185,6 +185,10 @@ export function refreshDeviceTier(): DeviceTier {
 export interface TierProfile {
   /** Multiplier on AI image generation interval (8s base × this). */
   aiImageIntervalMultiplier: number;
+  /** Max number of overlapping AI image layers — fewer = lighter compositor cost. */
+  maxAiLayers: number;
+  /** Max concurrent AI image network requests. */
+  maxConcurrentAiGens: number;
   /** Whether to allow the dual-shader A/B layer at all. */
   enableDualShader: boolean;
   /** Multiplier on bloom intensity (0..1). */
@@ -202,6 +206,8 @@ export interface TierProfile {
 const PROFILES: Record<DeviceTier, TierProfile> = {
   high: {
     aiImageIntervalMultiplier: 1.0,
+    maxAiLayers: 6,
+    maxConcurrentAiGens: 2,
     enableDualShader: true,
     bloomScale: 1.0,
     particleScale: 1.0,
@@ -211,6 +217,8 @@ const PROFILES: Record<DeviceTier, TierProfile> = {
   },
   medium: {
     aiImageIntervalMultiplier: 1.6, // 8s -> ~13s between gens
+    maxAiLayers: 4,
+    maxConcurrentAiGens: 2,
     enableDualShader: true,
     bloomScale: 0.7,
     particleScale: 0.7,
@@ -219,12 +227,14 @@ const PROFILES: Record<DeviceTier, TierProfile> = {
     enableBassFlash: true,
   },
   low: {
-    aiImageIntervalMultiplier: 3.0, // ~24s between gens (or off)
+    aiImageIntervalMultiplier: 4.0, // ~32s between gens
+    maxAiLayers: 2,                  // 2 overlapping images max
+    maxConcurrentAiGens: 1,
     enableDualShader: false,
     bloomScale: 0.4,
     particleScale: 0.4,
     cloneScale: 0.3,
-    enableAiImagery: true, // still on but slow
+    enableAiImagery: true, // still on but slow + thin
     enableBassFlash: false,
   },
 };

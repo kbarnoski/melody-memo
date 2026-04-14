@@ -21,7 +21,8 @@ import { FRAG as PLASMA_FRAG } from "./plasma";
 import { FRAG as PULSAR_FRAG } from "./pulsar";
 import { FRAG as QUASAR_FRAG } from "./quasar";
 import { FRAG as SUPERNOVA_FRAG } from "./supernova";
-import { FRAG as NEBULA_FRAG } from "./nebula";
+// nebula removed from registry — appeared in Ghost despite blocklist + caused
+// load issues. File is kept on disk but never registered/picked.
 import { FRAG as SINGULARITY_FRAG } from "./singularity";
 import { FRAG as DRIFT_FRAG } from "./drift";
 import { FRAG as EXPANSE_FRAG } from "./expanse";
@@ -245,7 +246,6 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   pulsar: PULSAR_FRAG,
   quasar: QUASAR_FRAG,
   supernova: SUPERNOVA_FRAG,
-  nebula: NEBULA_FRAG,
   singularity: SINGULARITY_FRAG,
   drift: DRIFT_FRAG,
   expanse: EXPANSE_FRAG,
@@ -474,7 +474,6 @@ export const MODE_META: ModeMeta[] = [
   { mode: "pulsar", label: "Pulsar", category: "Cosmic" },
   { mode: "quasar", label: "Quasar", category: "Cosmic" },
   { mode: "supernova", label: "Supernova", category: "Cosmic" },
-  { mode: "nebula", label: "Nebula", category: "Cosmic" },
   { mode: "singularity", label: "Singularity", category: "Cosmic" },
   { mode: "drift", label: "Drift", category: "Cosmic" },
   { mode: "expanse", label: "Expanse", category: "Cosmic" },

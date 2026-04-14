@@ -71,8 +71,9 @@ const GEN_INTERVAL_MAX_BASE = 10000;
 const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
 const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
 const KEN_BURNS_DURATION = 50; // seconds — full motion cycle
-const MAX_LAYERS = 6; // 6 overlapping layers — denser visual flow, more layered depth
-const MAX_CONCURRENT_GENS = 2; // 2 parallel REST requests for faster imagery fill
+// Layer count and concurrency are device-tier driven (see getTierProfile).
+// Resolved per-render via the tier profile so values stay in sync with the
+// rest of the perf budget (bloom, particles, gen cadence).
 
 /**
  * Phase-aware cinematic perspectives — POV evolves through the journey arc.
@@ -268,7 +269,7 @@ export function AiImageLayer({
       // DON'T reset lastGenTimeRef — prevents rushed generation burst.
       // Just note the prompt change time for debounce.
       promptChangeTimeRef.current = performance.now();
-      // Old images stay visible and fade naturally via MAX_LAYERS eviction
+      // Old images stay visible and fade naturally via getTierProfile().maxAiLayers eviction
       // when new images arrive — no flash, no rush.
     }
   }, [prompt, journeyId]);
@@ -320,7 +321,7 @@ export function AiImageLayer({
     // Only fade out the OLDEST visible layer when at capacity —
     // but skip layers that haven't held at peak for MIN_PEAK_DURATION yet.
     // If nothing can be evicted, drop the incoming image (next gen will try again).
-    if (layers.length >= MAX_LAYERS) {
+    if (layers.length >= getTierProfile().maxAiLayers) {
       const oldestVisible = layers.find((l) =>
         (l.state === "fading-in") ||
         (l.state === "peak" && now - l.peakStartTime >= MIN_PEAK_DURATION)
@@ -337,7 +338,7 @@ export function AiImageLayer({
     }
 
     // Hard cap: if still over limit after starting a fade, force-remove oldest fading
-    if (layers.length >= MAX_LAYERS + 1) {
+    if (layers.length >= getTierProfile().maxAiLayers + 1) {
       const oldestFadingIdx = layers.findIndex((l) => l.state === "fading-out");
       if (oldestFadingIdx >= 0) {
         layers.splice(oldestFadingIdx, 1);
@@ -387,7 +388,7 @@ export function AiImageLayer({
     const service = getRealtimeImageService();
     if (service.isCapped()) return;
     // Allow up to MAX_CONCURRENT_GENS parallel requests
-    if (loadingCountRef.current >= MAX_CONCURRENT_GENS) return;
+    if (loadingCountRef.current >= getTierProfile().maxConcurrentAiGens) return;
 
     const currentPrompt = promptRef.current;
     if (!currentPrompt) return;

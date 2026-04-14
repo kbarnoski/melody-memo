@@ -541,10 +541,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             </div>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => {
-                  onClose();
-                  router.push("/create");
-                }}
+                onClick={() => router.push("/create")}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
                 style={{
                   fontSize: "0.72rem",

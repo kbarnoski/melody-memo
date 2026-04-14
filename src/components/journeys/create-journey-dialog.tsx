@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Loader2, Music, Image as ImageIcon } from "lucide-react";
+import { X, Loader2, Music, Image as ImageIcon, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { getMp4CreationDate } from "@/lib/audio/mp4-creation-date";
+import { detectAudioCodec } from "@/lib/audio/detect-codec";
 import type { Journey } from "@/lib/journeys/types";
 
 interface CreateJourneyDialogProps {
@@ -30,6 +32,11 @@ export function CreateJourneyDialog({
   // Local-image source: when files are chosen, journey playback cycles these instead of calling fal.ai
   const [localImageFiles, setLocalImageFiles] = useState<File[]>([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(null);
+  // New-track upload: when set, the dialog uploads this audio file before journey creation
+  // and uses the resulting recording as the journey's source.
+  const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [audioArtist, setAudioArtist] = useState("");
+  const [audioTitle, setAudioTitle] = useState("");
 
   // Fetch recordings when dialog opens
   useEffect(() => {
@@ -76,11 +83,82 @@ export function CreateJourneyDialog({
 
   const handleCreate = async () => {
     if (!storyText.trim()) return;
+    if (audioFile && !audioArtist.trim()) {
+      toast.error("Artist name is required for uploaded tracks");
+      return;
+    }
 
     setCreating(true);
     abortRef.current = new AbortController();
 
     try {
+      // If a new audio track was provided, upload + insert it first and use
+      // the resulting recording id as the journey source. Bypasses the picker.
+      let effectiveRecordingId: string | null = selectedRecordingId || recordingId || null;
+      if (audioFile) {
+        setStatusText("Uploading track...");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not signed in");
+        const fileName = `${user.id}/${Date.now()}-${audioFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("recordings")
+          .upload(fileName, audioFile, {
+            contentType: audioFile.type || "audio/mp4",
+            upsert: false,
+          });
+        if (uploadError) {
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+
+        // Detect duration via HTML Audio element
+        let duration: number | null = null;
+        try {
+          duration = await new Promise<number | null>((resolve) => {
+            const audio = new Audio();
+            audio.preload = "metadata";
+            audio.onloadedmetadata = () => {
+              resolve(isFinite(audio.duration) ? audio.duration : null);
+              URL.revokeObjectURL(audio.src);
+            };
+            audio.onerror = () => {
+              resolve(null);
+              URL.revokeObjectURL(audio.src);
+            };
+            audio.src = URL.createObjectURL(audioFile);
+          });
+        } catch {}
+
+        const trackTitle = audioTitle.trim() || audioFile.name.replace(/\.[^/.]+$/, "");
+        const mp4Date = await getMp4CreationDate(audioFile);
+        const recordedAt = mp4Date
+          ? mp4Date.toISOString()
+          : audioFile.lastModified
+            ? new Date(audioFile.lastModified).toISOString()
+            : null;
+        const audioCodec = await detectAudioCodec(audioFile);
+
+        const { data: insertedRow, error: dbError } = await supabase
+          .from("recordings")
+          .insert({
+            user_id: user.id,
+            title: trackTitle,
+            file_name: fileName,
+            audio_url: fileName,
+            duration,
+            file_size: audioFile.size,
+            recorded_at: recordedAt,
+            audio_codec: audioCodec,
+            artist: audioArtist.trim(),
+          })
+          .select("id")
+          .single();
+        if (dbError || !insertedRow) {
+          throw new Error(`Couldn't save recording: ${dbError?.message ?? "unknown error"}`);
+        }
+        effectiveRecordingId = insertedRow.id;
+      }
+
       // If local images were chosen, upload them first and collect public URLs
       let finalImageUrls: string[] | null = uploadedImageUrls;
       if (localImageFiles.length > 0 && !finalImageUrls) {
@@ -115,7 +193,7 @@ export function CreateJourneyDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storyText: storyText.trim(),
-          recordingId: selectedRecordingId || recordingId,
+          recordingId: effectiveRecordingId,
           name: journeyName.trim() || undefined,
           audioReactive,
           localImageUrls: finalImageUrls ?? undefined,
@@ -136,11 +214,14 @@ export function CreateJourneyDialog({
       setAudioReactive(false);
       setLocalImageFiles([]);
       setUploadedImageUrls(null);
+      setAudioFile(null);
+      setAudioArtist("");
+      setAudioTitle("");
       const fullJourney: Journey = {
         ...data.journey,
         id: data.dbRecord.id,
         storyText: storyText.trim(),
-        recordingId: selectedRecordingId || recordingId || null,
+        recordingId: effectiveRecordingId,
         userId: data.dbRecord.user_id,
         audioReactive,
         ...(finalImageUrls && finalImageUrls.length > 0 ? { localImageUrls: finalImageUrls } : {}),
@@ -311,6 +392,68 @@ export function CreateJourneyDialog({
               </div>
             </div>
           )}
+
+          {/* Upload a new track — when set, this audio is uploaded and used as the journey source */}
+          <div className="mb-5">
+            <label
+              className="block text-white/40 mb-2"
+              style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+            >
+              <Upload className="inline h-3 w-3 mr-1 -mt-0.5" />
+              Or upload a new track
+            </label>
+            <input
+              type="file"
+              accept="audio/*,.m4a,.mp3,.wav,.flac"
+              disabled={creating}
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null;
+                setAudioFile(file);
+                if (file) {
+                  // Selecting a new track overrides any picked recording
+                  setSelectedRecordingId(null);
+                  if (!audioTitle) setAudioTitle(file.name.replace(/\.[^/.]+$/, ""));
+                }
+              }}
+              className="w-full text-xs text-white/60 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-white/10 file:text-white/80 hover:file:bg-white/15 file:cursor-pointer disabled:opacity-50"
+              style={{ fontFamily: "var(--font-geist-mono)" }}
+            />
+            {audioFile && (
+              <div className="mt-3 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Track title"
+                  value={audioTitle}
+                  onChange={(e) => setAudioTitle(e.target.value)}
+                  disabled={creating}
+                  className="w-full rounded-lg px-3 py-2 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+                  style={{
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-geist-sans)",
+                    backgroundColor: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Artist (required)"
+                  value={audioArtist}
+                  onChange={(e) => setAudioArtist(e.target.value)}
+                  disabled={creating}
+                  className="w-full rounded-lg px-3 py-2 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+                  style={{
+                    fontSize: "0.8rem",
+                    fontFamily: "var(--font-geist-sans)",
+                    backgroundColor: "rgba(255,255,255,0.04)",
+                    border: `1px solid ${audioArtist.trim() ? "rgba(255,255,255,0.08)" : `${accent}40`}`,
+                  }}
+                />
+                <p className="text-white/40" style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)" }}>
+                  {audioFile.name} · {(audioFile.size / 1024 / 1024).toFixed(1)} MB — uploaded with the journey
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Your own photos — bypass AI imagery, cycle user-provided files */}
           <div className="mb-5">

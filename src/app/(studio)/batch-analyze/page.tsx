@@ -77,6 +77,46 @@ export default function BatchAnalyzePage() {
     loadTracks();
   }, [loadTracks]);
 
+  // Verify an analysis row exists and is completed. runAnalysis swallows
+  // errors internally (shows a toast) and never throws, so the only honest
+  // signal that a track succeeded is "is there a completed row in the DB?".
+  const verifyAnalysis = async (recordingId: string): Promise<boolean> => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("analyses")
+      .select("status")
+      .eq("recording_id", recordingId)
+      .maybeSingle();
+    return data?.status === "completed";
+  };
+
+  const runOne = async (i: number, t: Track) => {
+    setTracks((prev) =>
+      prev.map((p, idx) => (idx === i ? { ...p, status: "running", error: undefined, stage: "Starting...", progress: 0 } : p))
+    );
+    try {
+      const audioUrl = `/api/audio/${t.id}`;
+      await runAnalysis(t.id, audioUrl, t.cleanTitle);
+      // Post-hoc verify — runAnalysis eats errors via internal toast handling.
+      const ok = await verifyAnalysis(t.id);
+      setTracks((prev) =>
+        prev.map((p, idx) => (idx === i ? {
+          ...p,
+          status: ok ? "done" : "error",
+          error: ok ? undefined : "Analysis did not save — retry this one.",
+          progress: ok ? 100 : p.progress,
+        } : p))
+      );
+      return ok;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setTracks((prev) =>
+        prev.map((p, idx) => (idx === i ? { ...p, status: "error", error: msg } : p))
+      );
+      return false;
+    }
+  };
+
   const runAll = async () => {
     if (running) return;
     setRunning(true);
@@ -84,31 +124,33 @@ export default function BatchAnalyzePage() {
 
     for (let i = 0; i < tracks.length; i++) {
       const t = tracks[i];
-      if (t.status === "already-done") continue;
-
-      setTracks((prev) =>
-        prev.map((p, idx) => (idx === i ? { ...p, status: "running", stage: "Starting...", progress: 0 } : p))
-      );
-
-      try {
-        const audioUrl = `/api/audio/${t.id}`;
-        await runAnalysis(t.id, audioUrl, t.cleanTitle);
-        setTracks((prev) =>
-          prev.map((p, idx) => (idx === i ? { ...p, status: "done", progress: 100 } : p))
-        );
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setTracks((prev) =>
-          prev.map((p, idx) => (idx === i ? { ...p, status: "error", error: msg } : p))
-        );
-      }
+      // Skip anything already confirmed successful. Re-run `pending` and `error`.
+      if (t.status === "already-done" || t.status === "done") continue;
+      await runOne(i, t);
+      // Small breather lets the TF WebGL model GC before next track — helped on
+      // weak hardware where back-to-back transcription runs leaked context.
+      await new Promise((r) => setTimeout(r, 1500));
     }
 
     setRunning(false);
     setFinished(true);
   };
 
+  const retryErrored = async () => {
+    if (running) return;
+    setRunning(true);
+    setFinished(false);
+    for (let i = 0; i < tracks.length; i++) {
+      if (tracks[i].status !== "error") continue;
+      await runOne(i, tracks[i]);
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+    setRunning(false);
+    setFinished(true);
+  };
+
   const remaining = tracks.filter((t) => t.status === "pending" || t.status === "running").length;
+  const erroredCount = tracks.filter((t) => t.status === "error").length;
   const doneCount = tracks.filter((t) => t.status === "done" || t.status === "already-done").length;
 
   return (
@@ -143,7 +185,21 @@ export default function BatchAnalyzePage() {
               {running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
               {running ? `Analyzing… ${doneCount}/${tracks.length}` : remaining === 0 ? "All tracks analyzed" : `Start (${remaining} to go)`}
             </button>
-            {finished && (
+            {erroredCount > 0 && !running && (
+              <button
+                onClick={retryErrored}
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-white/80 hover:text-white transition-colors"
+                style={{
+                  fontSize: "0.78rem",
+                  fontFamily: "var(--font-geist-mono)",
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                }}
+              >
+                Retry {erroredCount} failed
+              </button>
+            )}
+            {finished && erroredCount === 0 && (
               <span className="text-white/60" style={{ fontSize: "0.78rem", fontFamily: "var(--font-geist-mono)" }}>
                 Done. Message Claude to run the journey + path builder.
               </span>

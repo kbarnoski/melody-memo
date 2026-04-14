@@ -18,6 +18,7 @@ import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { JOURNEY_PATHS, getPathForJourney, isPathCulminationUnlocked, GRAND_CULMINATION_ID } from "@/lib/journeys/paths";
 import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { getCulminationJourney } from "@/lib/journeys/culmination-journeys";
+import { getDeviceTier } from "@/lib/audio/device-tier";
 
 /** Journeys pinned to the top of the grid (in order) */
 const PINNED_JOURNEY_IDS = ["ghost", "first-snow"];
@@ -480,8 +481,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
 
   return (
     <>
-      {/* Card hover styles + shader window effect via backdrop-filter */}
-      <style>{`
+      {/* Card hover styles. The "shader window" backdrop-filter blur is gorgeous
+          on Apple Silicon but tanks frame rates on older GPUs (the compositor
+          re-samples the running visualizer behind every card on every frame).
+          High-tier devices keep the effect; medium/low fall back to a flat
+          translucent fill. */}
+      <style>{getDeviceTier() === "high" ? `
         .jcard {
           transition: background-color 0.15s ease, border-color 0.15s ease;
           -webkit-backdrop-filter: brightness(2.2) saturate(1.2) blur(24px);
@@ -496,6 +501,18 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         .jcard.jcard-active {
           -webkit-backdrop-filter: brightness(2.8) saturate(1.3) blur(20px);
           backdrop-filter: brightness(2.8) saturate(1.3) blur(20px);
+        }
+      ` : `
+        .jcard {
+          transition: background-color 0.15s ease, border-color 0.15s ease;
+          background-color: rgba(255,255,255,0.025);
+        }
+        .jcard:not(.jcard-active):hover {
+          background-color: rgba(255,255,255,0.06) !important;
+          border-color: rgba(255,255,255,0.14) !important;
+        }
+        .jcard.jcard-active {
+          background-color: rgba(255,255,255,0.05);
         }
       `}</style>
       {/* Full-area journey browser — solid black, no blur */}

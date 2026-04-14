@@ -68,6 +68,17 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+        // Journeys that belong to a user-owned path are "path-only" — they
+        // should only appear via /path/[token], not in the flat selector list.
+        const { data: pathRows } = await supabase
+          .from("journey_paths")
+          .select("journey_ids")
+          .eq("user_id", user.id);
+        const pathJourneyIds = new Set<string>();
+        for (const row of pathRows ?? []) {
+          for (const jid of (row.journey_ids ?? []) as string[]) pathJourneyIds.add(jid);
+        }
+
         const { data, error } = await supabase
           .from("journeys")
           .select("*")
@@ -81,6 +92,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               const theme = row.theme as Record<string, unknown> | null;
               if (theme?.builtinJourneyId) return false;
               if (builtinNames.has(row.name as string)) return false;
+              if (pathJourneyIds.has(row.id as string)) return false;
               return true;
             })
             .map((row: Record<string, unknown>) => ({

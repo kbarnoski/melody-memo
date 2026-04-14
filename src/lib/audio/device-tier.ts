@@ -3,64 +3,127 @@
  *
  * Three tiers — `high`, `medium`, `low` — drive the heavy render knobs
  * (AI image generation interval, dual-shader compositing, bloom intensity,
- * particle density, clone overlays). The goal: a brand-new M-series Mac
- * gets the full installation experience, an older Intel laptop or mobile
- * device gets a smoother mode automatically.
+ * particle density, clone overlays).
  *
- * Detection is cheap and runs once per session, then cached in localStorage.
- * Users can override via `setDeviceTierOverride()` from anywhere.
+ * Detection philosophy: **default to `medium`**. Only promote to `high`
+ * with a strong positive signal (Apple Silicon detected via the WebGL
+ * renderer string). Older Intel Macs running Safari or Chrome will land
+ * in `medium`. Anything that smells like mobile or very weak hardware
+ * lands in `low`.
+ *
+ * This is intentionally conservative — false-positive `high` detections
+ * caused the lag-on-old-Macs issue. Better to under-promise and let
+ * users force `high` via `?tier=high` URL param than to over-promise.
+ *
+ * Override priority:
+ *   1. `?tier=high|medium|low` URL query (this session only)
+ *   2. localStorage manual override (persists across sessions)
+ *   3. localStorage cached auto-detect
+ *   4. fresh auto-detect (cached after first call)
  */
 
 export type DeviceTier = "high" | "medium" | "low";
 
-const STORAGE_KEY = "resonance-device-tier";
+// Bumped from v1 to v2 when detection logic tightened (older v1 caches wrongly
+// marked old Intel Macs as `high`). Anyone with a stale v1 entry will get a
+// fresh detection run on next page load.
+const STORAGE_KEY = "resonance-device-tier-v2";
 const OVERRIDE_KEY = "resonance-device-tier-override";
 
 let cachedTier: DeviceTier | null = null;
+let loggedTier = false;
 
-/**
- * Detect device tier from runtime signals. Heuristic:
- * - `low`  : mobile UA, OR navigator.deviceMemory <= 4, OR hardwareConcurrency <= 4
- * - `high` : >= 8 GB memory + >= 8 cores + not mobile
- * - `medium`: everything in between
- *
- * Apple Silicon Macs (M1+) report 8+ cores and 8+ GB and pass `high` cleanly.
- * Intel MacBook Air / older Macs typically land in `medium`.
- * Phones/tablets / very old laptops land in `low`.
- */
+function isValidTier(s: unknown): s is DeviceTier {
+  return s === "high" || s === "medium" || s === "low";
+}
+
+/** Read the WebGL UNMASKED_RENDERER string. Returns null if blocked or unavailable.
+ *  On Apple Silicon Macs in Chrome this returns something like "Apple M1 Pro" or
+ *  "ANGLE (Apple, Apple M3 Max, OpenGL 4.1)". Safari blocks this for privacy. */
+function getGpuRenderer(): string | null {
+  if (typeof document === "undefined") return null;
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = (canvas.getContext("webgl2") || canvas.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return null;
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    if (!ext) return null;
+    const renderer = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+    return typeof renderer === "string" ? renderer : null;
+  } catch {
+    return null;
+  }
+}
+
 function detect(): DeviceTier {
-  if (typeof navigator === "undefined") return "high"; // SSR fallback
+  if (typeof navigator === "undefined") return "medium"; // SSR fallback (was "high" before)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = navigator as any;
-  const ua = nav.userAgent ?? "";
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
-  if (isMobile) return "low";
+  const ua: string = nav.userAgent ?? "";
 
-  const memory: number | undefined = typeof nav.deviceMemory === "number" ? nav.deviceMemory : undefined;
+  // Mobile devices: always low (touch performance is the bigger story than CPU)
+  if (/iPhone|iPad|iPod|Android/i.test(ua)) return "low";
+
   const cores: number | undefined = typeof nav.hardwareConcurrency === "number" ? nav.hardwareConcurrency : undefined;
+  const memory: number | undefined = typeof nav.deviceMemory === "number" ? nav.deviceMemory : undefined;
 
-  // Most browsers cap deviceMemory at 8. M-series Macs report 8 even on 16/24 GB.
-  // hardwareConcurrency on M1/M2/M3/M4 is typically 8/10/12.
-  const enoughMemory = (memory ?? 8) >= 8;
-  const enoughCores = (cores ?? 8) >= 8;
+  // Strong negative signal: clearly weak hardware → low tier
+  if ((cores ?? 99) <= 4) return "low";
+  if ((memory ?? 99) <= 2) return "low";
 
-  if (!enoughMemory || !enoughCores) {
-    if ((memory ?? 0) <= 4 || (cores ?? 0) <= 4) return "low";
-    return "medium";
+  // Strong positive signal: Apple Silicon detected via GPU renderer string.
+  // Only this earns the `high` tier — everything else stays at the safe medium
+  // default. Users can force `high` via the URL override or settings if they
+  // know their machine can handle it.
+  const renderer = getGpuRenderer();
+  if (renderer) {
+    // "Apple M1", "Apple M2 Pro", "Apple M3 Max", "Apple M4", etc.
+    if (/Apple M\d/.test(renderer)) return "high";
+    // Newer NVIDIA / AMD discrete GPUs would also qualify, but we'd need
+    // very specific patterns to avoid promoting weak integrated GPUs. Skip
+    // for now — those users can manually override via ?tier=high.
   }
 
-  return "high";
+  // Default — safe middle ground that runs everywhere
+  return "medium";
 }
 
-/** Get the active tier (override > cached > fresh detect). */
-export function getDeviceTier(): DeviceTier {
-  if (typeof window === "undefined") return "high";
+function tierFromUrlParam(): DeviceTier | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tier");
+    return isValidTier(t) ? t : null;
+  } catch {
+    return null;
+  }
+}
 
-  // Manual override always wins
+/** Get the active tier (URL > localStorage override > cached > fresh detect). */
+export function getDeviceTier(): DeviceTier {
+  if (typeof window === "undefined") return "medium";
+
+  // URL param override takes top priority — easy testing without clearing storage
+  const urlTier = tierFromUrlParam();
+  if (urlTier) {
+    if (!loggedTier) {
+      // eslint-disable-next-line no-console
+      console.log(`[Resonance] Device tier: ${urlTier} (?tier= override)`);
+      loggedTier = true;
+    }
+    return urlTier;
+  }
+
+  // Manual override (set via setDeviceTierOverride) wins next
   try {
     const override = window.localStorage.getItem(OVERRIDE_KEY);
-    if (override === "high" || override === "medium" || override === "low") {
+    if (isValidTier(override)) {
+      if (!loggedTier) {
+        // eslint-disable-next-line no-console
+        console.log(`[Resonance] Device tier: ${override} (manual override)`);
+        loggedTier = true;
+      }
       return override;
     }
   } catch { /* localStorage blocked */ }
@@ -70,8 +133,13 @@ export function getDeviceTier(): DeviceTier {
   // Cached auto-detected tier
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "high" || stored === "medium" || stored === "low") {
+    if (isValidTier(stored)) {
       cachedTier = stored;
+      if (!loggedTier) {
+        // eslint-disable-next-line no-console
+        console.log(`[Resonance] Device tier: ${stored} (cached)`);
+        loggedTier = true;
+      }
       return stored;
     }
   } catch {}
@@ -79,6 +147,11 @@ export function getDeviceTier(): DeviceTier {
   const detected = detect();
   cachedTier = detected;
   try { window.localStorage.setItem(STORAGE_KEY, detected); } catch {}
+  if (!loggedTier) {
+    // eslint-disable-next-line no-console
+    console.log(`[Resonance] Device tier: ${detected} (auto-detected). Override with ?tier=high|medium|low`);
+    loggedTier = true;
+  }
   return detected;
 }
 

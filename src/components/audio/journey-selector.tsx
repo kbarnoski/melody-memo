@@ -214,25 +214,29 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
   }, [currentTrack, autoGenerating, startCustomJourney, setAiImageEnabled, onClose]);
 
   // Load a track for a custom journey — specific recording if set, else random
+  // (random pool is scoped to the current user — never another user's recordings)
   const loadCustomJourneyTrack = useCallback(async (journey: Journey) => {
     const supabase = createClient();
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
       if (journey.recordingId) {
         const { data: rec } = await supabase
           .from("recordings")
           .select("id, title, audio_url, artist")
           .eq("id", journey.recordingId)
+          .eq("user_id", user.id)
           .single();
         if (rec) {
           play({ id: rec.id, title: rec.title, audioUrl: `/api/audio/${rec.id}`, artist: rec.artist ?? undefined }, 0);
-
           return;
         }
       }
-      // No specific recording or not found — load a random track
+      // No specific recording or not found — load a random track from this user's library
       const { data } = await supabase
         .from("recordings")
         .select("id, title, audio_url, artist")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (data && data.length > 0) {
         const row = data[Math.floor(Math.random() * data.length)];
@@ -303,9 +307,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
       let trackLoaded = false;
       try {
         const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
         const { data, error } = await supabase
           .from("recordings")
           .select("id, title, audio_url, duration, artist")
+          .eq("user_id", user.id)
           .ilike("title", pairedSearch)
           .limit(1);
 
@@ -363,10 +370,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         }
 
         // If paired track not found anywhere, fall back to a random recording
+        // from the current user's own library
         if (!trackLoaded) {
           const { data: fallback } = await supabase
             .from("recordings")
             .select("id, title, audio_url, artist")
+            .eq("user_id", user.id)
             .order("created_at", { ascending: false });
           if (fallback && fallback.length > 0) {
             // Exclude Joseph's track from random pool
@@ -385,12 +394,15 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         console.warn("[journey] failed to load paired track:", err);
       }
     } else {
-      // No paired track — load a random recording (excluding Joseph's track)
+      // No paired track — load a random recording from the current user's library
       try {
         const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
         const { data, error } = await supabase
           .from("recordings")
           .select("id, title, audio_url, artist")
+          .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
         if (!error && data && data.length > 0) {

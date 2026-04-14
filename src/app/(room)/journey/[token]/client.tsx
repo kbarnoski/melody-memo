@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { ShaderVisualizer, SHADERS, type VisualizerMode } from "@/components/audio/visualizer";
-import { Visualizer3D, type Visualizer3DMode } from "@/components/audio/visualizer-3d";
+import type { Visualizer3DMode } from "@/components/audio/visualizer-3d";
+
+// Lazy-load Visualizer3D so three.js doesn't block first paint on shared journey routes.
+const Visualizer3D = dynamic(() => import("@/components/audio/visualizer-3d").then((m) => m.Visualizer3D), {
+  ssr: false,
+});
 import { JourneyCompositor } from "@/components/audio/journey-compositor";
 import { JourneyPhaseIndicator } from "@/components/audio/journey-phase-indicator";
 import { ShareSheet } from "@/components/ui/share-sheet";

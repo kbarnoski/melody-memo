@@ -643,9 +643,12 @@ export function VisualizerClient({
   const loadLibraryQueue = useCallback(async (autoPlay: boolean) => {
     try {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
       const { data, error } = await supabase
         .from("recordings")
         .select("id, title, audio_url, duration")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
       if (!error && data && data.length > 0) {
         const tracks = data.map((row) => ({

@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import dynamic from "next/dynamic";
 import { ShaderVisualizer, SHADERS, type VisualizerMode } from "@/components/audio/visualizer";
-import { Visualizer3D, type Visualizer3DMode } from "@/components/audio/visualizer-3d";
+import type { Visualizer3DMode } from "@/components/audio/visualizer-3d";
+
+const Visualizer3D = dynamic(() => import("@/components/audio/visualizer-3d").then((m) => m.Visualizer3D), {
+  ssr: false,
+});
 import { PoetryOverlay } from "@/components/audio/poetry-overlay";
 import { MODES_3D } from "@/lib/shaders";
 

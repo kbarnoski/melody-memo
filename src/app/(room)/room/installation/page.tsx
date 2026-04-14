@@ -13,8 +13,9 @@ export default async function InstallationPage({ searchParams }: Props) {
 
   try {
     const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    // Try featured recordings first
+    // Try featured recordings first (cross-user, public-facing curation)
     const { data: featured } = await supabase
       .from("recordings")
       .select("id, title, duration")
@@ -28,11 +29,12 @@ export default async function InstallationPage({ searchParams }: Props) {
         audioUrl: `/api/audio/${r.id}`,
         duration: r.duration,
       }));
-    } else {
-      // Fallback to all recordings
+    } else if (user) {
+      // Fallback to the current user's own recordings
       const { data: all } = await supabase
         .from("recordings")
         .select("id, title, duration")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
 
@@ -49,9 +51,16 @@ export default async function InstallationPage({ searchParams }: Props) {
     // If DB isn't ready (missing column), fall back gracefully
     try {
       const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return (
+        <div className="h-screen w-screen overflow-hidden bg-black">
+          <InstallationClient tracks={[]} journey={journey} />
+        </div>
+      );
       const { data: all } = await supabase
         .from("recordings")
         .select("id, title, duration")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(50);
 

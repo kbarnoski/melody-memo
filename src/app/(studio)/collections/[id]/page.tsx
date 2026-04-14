@@ -9,6 +9,8 @@ export default async function CollectionPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
 
   const { data: collection } = await supabase
     .from("collections")
@@ -32,10 +34,11 @@ export default async function CollectionPage({
     }))
     .filter((r) => r.id);
 
-  // Get ALL user recordings to power the "add recording" picker
+  // Get this user's recordings to power the "add recording" picker
   const { data: allRecordings } = await supabase
     .from("recordings")
     .select("id, title, duration, created_at")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: false });
 
   const collectionRecordingIds = new Set(recordings.map((r) => r.id));

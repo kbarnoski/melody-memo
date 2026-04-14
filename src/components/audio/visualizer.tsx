@@ -6,9 +6,17 @@ import { getAudioEngine, ensureResumed, type AnalyserLike } from "@/lib/audio/au
 import { detectVibe, type Mood } from "@/lib/audio/vibe-detection";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
 import type { AnalysisResult } from "@/lib/audio/types";
+import dynamic from "next/dynamic";
 import { PoetryOverlay } from "./poetry-overlay";
 import { StoryOverlay } from "./story-overlay";
-import { Visualizer3D, type Visualizer3DMode } from "./visualizer-3d";
+import type { Visualizer3DMode } from "./visualizer-3d";
+
+// Lazy-load Visualizer3D so three.js parse cost is deferred until a 3D shader
+// is actually selected. Saves ~200-400ms parse time on first paint of /room
+// on older hardware where the bundle is the bottleneck.
+const Visualizer3D = dynamic(() => import("./visualizer-3d").then((m) => m.Visualizer3D), {
+  ssr: false,
+});
 import { useAudioStore } from "@/lib/audio/audio-store";
 import { SHADERS, MODE_META, MODE_CATEGORIES, MODES_3D, MODES_AI } from "@/lib/shaders";
 // Performance monitor is now FPS-based, started/stopped by JourneyFeedback component

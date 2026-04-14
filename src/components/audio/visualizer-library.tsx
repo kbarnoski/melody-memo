@@ -59,20 +59,27 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
   const setAnalysisLoading = useAudioStore((s) => s.setAnalysisLoading);
   const setQueue = useAudioStore((s) => s.setQueue);
 
-  // Fetch recordings on first open
+  // Fetch recordings on first open — own recordings only
   useEffect(() => {
     if (!open || hasFetched) return;
     setLoading(true);
 
     const supabase = createClient();
-    supabase
-      .from("recordings")
-      .select("id, title, duration, created_at, analyses(status, key_signature, tempo)")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        setRecordings((data as RecordingRow[] | null) ?? []);
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setRecordings([]);
         setLoading(false);
-      });
+        return;
+      }
+      const { data } = await supabase
+        .from("recordings")
+        .select("id, title, duration, created_at, analyses(status, key_signature, tempo)")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setRecordings((data as RecordingRow[] | null) ?? []);
+      setLoading(false);
+    })();
   }, [open, hasFetched]);
 
   // Fetch featured albums on first open

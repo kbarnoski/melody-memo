@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { createSeededRandom } from "@/lib/journeys/seeded-random";
+import { getTierProfile } from "@/lib/audio/device-tier";
 
 interface AiImageLayerProps {
   /** AI prompt for image generation */
@@ -62,8 +63,11 @@ const DISSOLVE_DURATION = 5500; // 5.5s fade-in — unhurried, deliberate cross-
 const FADEOUT_DURATION = 12000; // 12s fade-out — long tail keeps images layered deep into the next arrival
 const PURGE_FADEOUT_DURATION = 2500; // 2.5s — gentle fade when a new journey begins, no snap
 const MIN_PEAK_DURATION = 8000; // image must hold at full opacity 8s before eviction — slower scene churn
-const GEN_INTERVAL_MIN = 8000; // 8s between generations — gives each image room to breathe
-const GEN_INTERVAL_MAX = 10000; // 10s max — ensures constant visual movement
+// Base generation cadence — actual interval is multiplied by the device tier
+// (high: 1×, medium: 1.6×, low: 3×) so weaker hardware gets fewer expensive
+// network round-trips and the main thread has room to breathe.
+const GEN_INTERVAL_MIN_BASE = 8000;
+const GEN_INTERVAL_MAX_BASE = 10000;
 const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
 const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
 const KEN_BURNS_DURATION = 50; // seconds — full motion cycle
@@ -584,7 +588,8 @@ export function AiImageLayer({
 
       if (now - lastGenTimeRef.current < nextInterval) return;
       genCountRef.current++;
-      nextInterval = GEN_INTERVAL_MIN + Math.random() * (GEN_INTERVAL_MAX - GEN_INTERVAL_MIN);
+      const tierMul = getTierProfile().aiImageIntervalMultiplier;
+      nextInterval = (GEN_INTERVAL_MIN_BASE + Math.random() * (GEN_INTERVAL_MAX_BASE - GEN_INTERVAL_MIN_BASE)) * tierMul;
       triggerGeneration(true); // always skip cache for ongoing gens
     };
 

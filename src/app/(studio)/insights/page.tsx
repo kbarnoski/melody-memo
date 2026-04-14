@@ -5,12 +5,17 @@ import Link from "next/link";
 
 export default async function InsightsPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return null;
+  }
 
   const { data: recordings, error } = await supabase
     .from("recordings")
     .select(
       "id, title, duration, created_at, analyses(key_signature, tempo, time_signature, chords)"
-    );
+    )
+    .eq("user_id", user.id);
 
   if (error) {
     console.error("Insights query error:", error);

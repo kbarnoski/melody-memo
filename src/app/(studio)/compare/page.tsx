@@ -192,11 +192,17 @@ export default function ComparePage() {
   useEffect(() => {
     async function fetchRecordings() {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       const { data } = await supabase
         .from("recordings")
         .select(
           "id, title, duration, analyses(key_signature, tempo, time_signature, chords, notes, summary, status)"
         )
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (data) {

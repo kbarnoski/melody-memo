@@ -37,7 +37,10 @@ export function AiOverlayElements({
 }: AiOverlayElementsProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const activeClonesRef = useRef<CloneRecord[]>([]);
-  const prevJourneyRef = useRef(journeyId);
+  // Initialize as undefined so the first journey load triggers the purge
+  // effect — otherwise prev would equal current on first mount and any
+  // stale clones from a previous mount/HMR could survive.
+  const prevJourneyRef = useRef<string | undefined>(undefined);
   const prevPhaseRef = useRef(phase);
   const imageCountRef = useRef(0);
   const lastImageUrlRef = useRef<string | null>(null);

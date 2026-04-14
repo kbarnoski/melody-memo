@@ -161,6 +161,13 @@ class RealtimeImageService {
     this.frameCallback = callback;
   }
 
+  /** Clear the frame callback so a stale WebSocket response can't push into
+   *  a previous mount's callback after a journey change. The next mount will
+   *  re-register via onFrame(). */
+  clearFrameCallback(): void {
+    this.frameCallback = null;
+  }
+
   /** Send frame via WebSocket */
   sendFrame(options: RealtimeImageOptions): boolean {
     if (!this.connection || !this.connected) return false;
@@ -269,6 +276,7 @@ class RealtimeImageService {
     this.restInFlight = 0;
     this.imageCache.clear();
     this.cancelInFlight();
+    this.frameCallback = null;
   }
 }
 

@@ -234,27 +234,29 @@ export function AiImageLayer({
     journeyIdRef.current = journeyId;
     promptRef.current = prompt;
 
-    const isNewJourney = journeyId !== prevJourneyId && prevJourneyId != null;
+    // Reset on EVERY journey id change, including the first one this session.
+    // Previously this only fired on switches (prev != null), so any stale state
+    // from a singleton, HMR, or prior page navigation could leak into the first
+    // journey of a new session — leading to imagery that doesn't match the prompt.
+    const isJourneyStart = journeyId != null && journeyId !== prevJourneyId;
 
-    if (isNewJourney) {
-      // New journey: aggressive reset — cancel everything, clear cache, trigger fast fill
+    if (isJourneyStart) {
+      // Aggressive reset: cancel everything, clear cache, force-remove layers
+      // so the next journey starts truly fresh with no leftover frames in
+      // flight, no leftover images on the stack, and no stale callbacks.
       const service = getRealtimeImageService();
       service.cancelInFlight();
       service.clearImageCache();
+      service.clearFrameCallback();
       promptChangeTimeRef.current = performance.now();
       lastGenTimeRef.current = 0;
+      genCountRef.current = 0;
+      firstImageFiredRef.current = false;
 
-      // Fast-fade old journey's images
-      const layers = layersRef.current;
-      const now = performance.now();
-      for (const layer of layers) {
-        if (layer.state !== "fading-out") {
-          layer.fadeStartOpacity = layer.opacity;
-          layer.state = "fading-out";
-          layer.fadeStartTime = now;
-          layer.purge = true;
-        }
-      }
+      // Hard-purge any existing layers immediately. On first load the array
+      // is empty so this is a no-op; on switches it removes any leftover
+      // imagery from the previous journey instead of letting it fade for 2.5s.
+      layersRef.current = [];
     } else {
       // Same-journey phase transition: gentle handoff.
       // DON'T cancel in-flight requests — let them land and be discarded by prompt check.

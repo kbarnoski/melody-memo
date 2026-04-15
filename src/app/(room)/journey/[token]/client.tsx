@@ -61,9 +61,9 @@ interface SharedJourneyClientProps {
   cueMarkers: { time: number; label: string }[];
   recordingDuration: number;
   /** Optional path context — set when the viewer arrived from a shared
-   *  /path/[token] landing. Drives the Continue Path + Return to Path
-   *  buttons in the end overlay so shared viewers get the same album-
-   *  walkthrough flow as in-app users. */
+   *  /path/[token] landing. Drives the Continue Path + Return to Path +
+   *  Enter Culmination buttons in the end overlay so shared viewers get
+   *  the same album-walkthrough flow as in-app users. */
   pathContext?: {
     pathToken: string;
     pathName: string;
@@ -71,6 +71,7 @@ interface SharedJourneyClientProps {
     glow: string;
     steps: Array<{ journeyId: string; shareToken: string | null; name: string }>;
     currentIndex: number;
+    culmination: { journeyId: string; shareToken: string | null; name: string } | null;
   } | null;
 }
 
@@ -1584,10 +1585,9 @@ export function SharedJourneyClient({
 
             {/* Action buttons */}
             <div className="flex items-center gap-3 flex-wrap justify-center" style={{ marginTop: "0.25rem" }}>
-              {/* Continue Path — only when part of a shared path and a
-                  next step exists. Reloads the page to the next journey's
-                  share token while preserving the pathToken so the
-                  breadcrumb keeps working. */}
+              {/* Continue Path — next step in the sequence. Reloads the
+                  page to the next journey's share token while preserving
+                  pathToken so the breadcrumb keeps working. */}
               {pathContext && pathContext.currentIndex >= 0 && pathContext.currentIndex < pathContext.steps.length - 1 && (() => {
                 const next = pathContext.steps[pathContext.currentIndex + 1];
                 if (!next.shareToken) return null;
@@ -1605,6 +1605,37 @@ export function SharedJourneyClient({
                     }}
                   >
                     Continue Path →
+                  </a>
+                );
+              })()}
+
+              {/* Enter The Culmination — shown on the LAST step if all
+                  tracks have been completed on this device. Reads from
+                  path-progress-store (localStorage) so anonymous walkers
+                  can unlock it too. */}
+              {pathContext && pathContext.culmination?.shareToken && pathContext.currentIndex === pathContext.steps.length - 1 && (() => {
+                const completedIds = usePathProgressStore.getState().completedJourneyIds;
+                // Include the current journey — the completeJourney() call
+                // happens inside the ended handler which fires right before
+                // this overlay renders, so it's usually already recorded,
+                // but include it defensively in case of a race.
+                const allDone = pathContext.steps.every((s) => completedIds.includes(s.journeyId) || s.journeyId === journey.id);
+                if (!allDone) return null;
+                return (
+                  <a
+                    href={`/journey/${pathContext.culmination.shareToken}?pathToken=${pathContext.pathToken}`}
+                    className="px-5 py-2.5 rounded-lg text-white hover:text-white transition-all duration-150"
+                    style={{
+                      border: `1px solid ${pathContext.accent}`,
+                      fontSize: "0.8rem",
+                      fontFamily: "var(--font-geist-mono)",
+                      letterSpacing: "0.02em",
+                      textDecoration: "none",
+                      background: `${pathContext.accent}30`,
+                      boxShadow: `0 0 24px ${pathContext.glow}30`,
+                    }}
+                  >
+                    Enter {pathContext.culmination.name} ✦
                   </a>
                 );
               })()}

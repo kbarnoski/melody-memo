@@ -139,8 +139,8 @@ export default async function SharedJourneyPage({
       };
 
   // If the viewer came from a shared path (?pathToken=...), fetch the
-  // path so the shared client can render Continue Path + Back to Path
-  // buttons in the end overlay, matching the in-app experience.
+  // path so the shared client can render Continue Path + Back to Path +
+  // Enter The Culmination buttons in the end overlay.
   let pathContext: {
     pathToken: string;
     pathName: string;
@@ -148,18 +148,21 @@ export default async function SharedJourneyPage({
     glow: string;
     steps: Array<{ journeyId: string; shareToken: string | null; name: string }>;
     currentIndex: number;
+    culmination: { journeyId: string; shareToken: string | null; name: string } | null;
   } | null = null;
   if (pathToken) {
     const { data: pRow } = await supabase
       .from("journey_paths")
-      .select("name, journey_ids, accent_color, glow_color")
+      .select("name, journey_ids, culmination_journey_id, accent_color, glow_color")
       .eq("share_token", pathToken)
       .single();
     if (pRow && Array.isArray(pRow.journey_ids)) {
+      const allIds = [...(pRow.journey_ids as string[])];
+      if (pRow.culmination_journey_id) allIds.push(pRow.culmination_journey_id as string);
       const { data: stepJourneys } = await supabase
         .from("journeys")
         .select("id, name, share_token")
-        .in("id", pRow.journey_ids as string[]);
+        .in("id", allIds);
       const byId = new Map<string, { id: string; name: string; share_token: string | null }>();
       for (const j of stepJourneys ?? []) byId.set(j.id as string, j as { id: string; name: string; share_token: string | null });
       const steps = (pRow.journey_ids as string[])
@@ -170,6 +173,7 @@ export default async function SharedJourneyPage({
         })
         .filter((s): s is { journeyId: string; shareToken: string | null; name: string } => !!s);
       const currentIndex = steps.findIndex((s) => s.journeyId === journeyRow.id);
+      const culmRow = pRow.culmination_journey_id ? byId.get(pRow.culmination_journey_id as string) : null;
       pathContext = {
         pathToken,
         pathName: (pRow.name as string) ?? "Path",
@@ -177,6 +181,7 @@ export default async function SharedJourneyPage({
         glow: (pRow.glow_color as string) ?? "#e0b080",
         steps,
         currentIndex,
+        culmination: culmRow ? { journeyId: culmRow.id, shareToken: culmRow.share_token ?? null, name: culmRow.name } : null,
       };
     }
   }

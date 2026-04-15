@@ -918,26 +918,29 @@ export function SharedJourneyClient({
         style={{ cursor: "pointer" }}
         onClick={() => setStarted(true)}
       >
-        {/* Close back to the path landing — only when launched from a path.
-            Listeners aren't forced to commit before hearing the first note. */}
+        <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+        {/* Back-to-path text link — in-flow, top-left of the pre-start
+            screen. Only present when launched from a shared path so the
+            listener can exit before starting. */}
         {pathContext && (
           // eslint-disable-next-line @next/next/no-html-link-for-pages
           <a
             href={`/path/${pathContext.pathToken}`}
             onClick={(e) => e.stopPropagation()}
-            className="absolute top-5 right-5 flex items-center justify-center w-10 h-10 rounded-full text-white/40 hover:text-white/90 transition-colors"
+            className="absolute text-white/35 hover:text-white/80 transition-colors"
             style={{
+              top: "calc(env(safe-area-inset-top, 0px) + 18px)",
+              left: "24px",
+              fontSize: "0.68rem",
+              fontFamily: "var(--font-geist-mono)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
               zIndex: 20,
-              background: "rgba(0,0,0,0.4)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              backdropFilter: "blur(8px)",
             }}
-            title={`Back to ${pathContext.pathName}`}
           >
-            <X className="h-4 w-4" />
+            ← {pathContext.pathName}
           </a>
         )}
-        <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
         <div
           style={{
             display: "flex",
@@ -1086,27 +1089,6 @@ export function SharedJourneyClient({
 
   return (
     <div className="h-dvh w-screen overflow-hidden bg-black relative">
-      {/* Persistent close-to-path button — always available when launched
-          from a shared path so the listener can bail out mid-journey
-          without waiting for the end overlay. */}
-      {pathContext && (
-        // eslint-disable-next-line @next/next/no-html-link-for-pages
-        <a
-          href={`/path/${pathContext.pathToken}`}
-          className="fixed top-5 right-5 flex items-center justify-center w-10 h-10 rounded-full text-white/50 hover:text-white/95 transition-all"
-          style={{
-            zIndex: 60,
-            background: "rgba(0,0,0,0.45)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            backdropFilter: "blur(8px)",
-            opacity: controlsVisible ? 1 : 0.25,
-            transition: "opacity 0.4s ease",
-          }}
-          title={`Back to ${pathContext.pathName}`}
-        >
-          <X className="h-4 w-4" />
-        </a>
-      )}
       {analyser && dataArray && (
         <JourneyCompositor
           frame={journeyFrame}
@@ -1397,6 +1379,17 @@ export function SharedJourneyClient({
             >
               {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
             </button>
+            {pathContext && (
+              // eslint-disable-next-line @next/next/no-html-link-for-pages
+              <a
+                href={`/path/${pathContext.pathToken}`}
+                className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+                style={{ border: "1px solid rgba(255,255,255,0.1)" }}
+                title={`Close — back to ${pathContext.pathName}`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </a>
+            )}
           </div>
         </div>
 
@@ -1430,6 +1423,16 @@ export function SharedJourneyClient({
               >
                 {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
               </button>
+              {pathContext && (
+                // eslint-disable-next-line @next/next/no-html-link-for-pages
+                <a
+                  href={`/path/${pathContext.pathToken}`}
+                  className="min-w-[36px] min-h-[32px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                  title={`Close — back to ${pathContext.pathName}`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </a>
+              )}
             </div>
           </div>
 

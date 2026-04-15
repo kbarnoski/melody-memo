@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { PathShareButton } from "./share-button";
 import { CulminationCard } from "./culmination-card";
 
@@ -52,6 +53,14 @@ export default async function SharedPathPage({
   const { token } = await params;
   const supabase = createAnonClient();
 
+  // Detect signed-in viewer — if they're in Resonance, track clicks route
+  // into The Room (native playback) and the back button is shown. Anonymous
+  // viewers get the pure shared-album experience: no back button, tracks go
+  // to the shared /journey/[share] client.
+  const authClient = await createServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  const isSignedIn = !!user;
+
   const { data: path, error: pathErr } = await supabase
     .from("journey_paths")
     .select("*")
@@ -86,15 +95,21 @@ export default async function SharedPathPage({
       className="min-h-dvh w-full overflow-y-auto"
       style={{ backgroundColor: "#000", color: "#fff" }}
     >
-      {/* Back + Share row — pinned at top, no vertical overhead */}
+      {/* Top bar — back link only visible when the viewer is signed in to
+          Resonance. Shared (anonymous) visitors see no back link so the page
+          feels like a standalone album landing. */}
       <div className="mx-auto max-w-2xl px-6 pt-6 flex items-center justify-between">
-        <Link
-          href="/room"
-          className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors"
-          style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}
-        >
-          ← back
-        </Link>
+        {isSignedIn ? (
+          <Link
+            href="/room"
+            className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors"
+            style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}
+          >
+            ← back
+          </Link>
+        ) : (
+          <div />
+        )}
         <PathShareButton token={token} pathName={path.name} />
       </div>
 
@@ -175,7 +190,14 @@ export default async function SharedPathPage({
         <div className="space-y-2">
           {journeys.map((j, idx) => {
             const num = String(idx + 1).padStart(2, "0");
-            const href = j.share_token ? `/journey/${j.share_token}` : "#";
+            // Signed-in viewers play tracks natively in The Room with full
+            // path context so the end overlay shows Continue Path / progress.
+            // Anonymous viewers walk the album via the shared journey client.
+            const href = isSignedIn
+              ? `/room?customJourneyId=${j.id}&pathToken=${token}`
+              : j.share_token
+                ? `/journey/${j.share_token}?pathToken=${token}`
+                : "#";
             return (
               <Link
                 key={j.id}

@@ -71,6 +71,22 @@ interface AudioState {
   aiImageEnabled: boolean;
   ambientEnabled: boolean;
 
+  /** Active custom journey_path context. When a user plays a journey that
+   *  belongs to a custom path (e.g. Welcome Home album), this is populated so
+   *  the journey end overlay can render path-aware continue/culmination UI
+   *  identical to built-in paths. Persists across journey transitions within
+   *  the same path; cleared when the user explicitly leaves the path. */
+  activePath: {
+    id: string;
+    name: string;
+    subtitle: string | null;
+    shareToken: string | null;
+    journeyIds: string[];
+    culminationJourneyId: string | null;
+    accent: string;
+    glow: string;
+  } | null;
+
   // Cue markers for The Room
   cueMarkers: { time: number; label: string }[];
 
@@ -122,6 +138,7 @@ interface AudioState {
   startJourney: (journeyId: string) => void;
   startCustomJourney: (journey: Journey) => void;
   stopJourney: () => void;
+  setActivePath: (path: AudioState["activePath"]) => void;
   setJourneyPhase: (phase: JourneyPhaseId) => void;
   setAiImageEnabled: (enabled: boolean) => void;
   setAmbientEnabled: (enabled: boolean) => void;
@@ -158,6 +175,7 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   journeyProgress: 0,
   aiImageEnabled: true,
   ambientEnabled: true,
+  activePath: null,
   cueMarkers: [],
   roomMode: "journey" as const,
   language: "en",
@@ -406,6 +424,8 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
       vizMode: randomAmbientMode(),
     });
   },
+
+  setActivePath: (path) => set({ activePath: path }),
 
   setJourneyPhase: (phase) => set({ journeyPhase: phase }),
 

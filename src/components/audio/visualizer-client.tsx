@@ -68,6 +68,10 @@ interface VisualizerClientProps {
   isAdmin?: boolean;
   userId?: string;
   cueMarkers?: { time: number; label: string }[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialCustomJourney?: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialPath?: any;
 }
 
 export function VisualizerClient({
@@ -79,6 +83,8 @@ export function VisualizerClient({
   isAdmin: isAdminProp = false,
   userId,
   cueMarkers: cueMarkersProp = [],
+  initialCustomJourney,
+  initialPath,
 }: VisualizerClientProps) {
   const router = useRouter();
 
@@ -530,6 +536,59 @@ export function VisualizerClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
+  // Hydrate a custom journey + path context when the user navigates here
+  // from /path/[token]. The server fetched the journey + path rows; we turn
+  // them into the runtime Journey shape and start the journey with the
+  // active path stored so the end overlay can render Continue Path UI.
+  useEffect(() => {
+    if (!initialCustomJourney) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const r = initialCustomJourney as Record<string, any>;
+    const journey = {
+      id: r.id as string,
+      name: (r.name as string) ?? "Untitled",
+      subtitle: (r.subtitle as string) ?? "",
+      description: (r.description as string) ?? "",
+      realmId: (r.realm_id as string) ?? "custom",
+      aiEnabled: true,
+      phases: r.phases ?? [],
+      storyText: (r.story_text as string) ?? null,
+      recordingId: (r.recording_id as string) ?? null,
+      userId: r.user_id as string,
+      audioReactive: !!(r.audio_reactive),
+      creatorName: (r.creator_name as string) ?? null,
+      photographyCredit: (r.photography_credit as string) ?? null,
+      dedication: (r.dedication as string) ?? null,
+      ...(r.theme ? { theme: r.theme } : {}),
+      ...(Array.isArray(r.local_image_urls) && r.local_image_urls.length > 0
+        ? { localImageUrls: r.local_image_urls as string[] }
+        : {}),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+
+    if (initialPath) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const p = initialPath as Record<string, any>;
+      useAudioStore.getState().setActivePath({
+        id: p.id as string,
+        name: (p.name as string) ?? "Untitled Path",
+        subtitle: (p.subtitle as string) ?? null,
+        shareToken: (p.share_token as string) ?? null,
+        journeyIds: (p.journey_ids ?? []) as string[],
+        culminationJourneyId: (p.culmination_journey_id as string) ?? null,
+        accent: (p.accent_color as string) ?? "#d0a070",
+        glow: (p.glow_color as string) ?? "#e0b080",
+      });
+    }
+
+    ensureResumed();
+    useAudioStore.getState().setAiImageEnabled(true);
+    // Recording is already loaded on the page props (audio_url plays via
+    // the normal flow) — just start the journey.
+    useAudioStore.getState().startCustomJourney(journey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount
+
   // Push cue markers from server prop to store on mount
   useEffect(() => {
     if (cueMarkersProp.length > 0) {
@@ -718,7 +777,86 @@ export function VisualizerClient({
   }, []);
 
   // Continue to next journey in the path
+  // Looks like a UUID → custom journey in the DB. Built-in journey ids are
+  // short slugs like "inferno", "the-wellspring", etc.
+  const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+  // Fetch + start a custom journey + its recording by UUID, using the
+  // signed-in user's context. Clears the current journey first.
+  const startCustomById = useCallback(async (journeyId: string) => {
+    ensureResumed();
+    setJourneyCompleted(false);
+    completedJourneyRef.current = null;
+    seek(0);
+    useAudioStore.getState().stopJourney();
+
+    try {
+      const sb = createClient();
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const { data: jRow } = await sb
+        .from("journeys")
+        .select("*")
+        .eq("id", journeyId)
+        .eq("user_id", user.id)
+        .single();
+      if (!jRow) return;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = jRow as Record<string, any>;
+      const journey = {
+        id: r.id as string,
+        name: r.name ?? "Untitled",
+        subtitle: r.subtitle ?? "",
+        description: r.description ?? "",
+        realmId: r.realm_id ?? "custom",
+        aiEnabled: true,
+        phases: r.phases ?? [],
+        storyText: r.story_text ?? null,
+        recordingId: r.recording_id ?? null,
+        userId: r.user_id,
+        audioReactive: !!r.audio_reactive,
+        creatorName: r.creator_name ?? null,
+        photographyCredit: r.photography_credit ?? null,
+        dedication: r.dedication ?? null,
+        ...(r.theme ? { theme: r.theme } : {}),
+        ...(Array.isArray(r.local_image_urls) && r.local_image_urls.length > 0
+          ? { localImageUrls: r.local_image_urls as string[] }
+          : {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      // Culmination random-track swap — same logic as /journey/[token] page
+      if (!journey.recordingId && r.theme?.isCulmination && Array.isArray(r.theme.randomTrackPool) && r.theme.randomTrackPool.length > 0) {
+        journey.recordingId = r.theme.randomTrackPool[Math.floor(Math.random() * r.theme.randomTrackPool.length)];
+      }
+
+      // Load recording
+      if (journey.recordingId) {
+        const { data: rec } = await sb
+          .from("recordings")
+          .select("id, title, audio_url, artist")
+          .eq("id", journey.recordingId)
+          .single();
+        if (rec) {
+          useAudioStore.getState().play(
+            { id: rec.id, title: rec.title, audioUrl: `/api/audio/${rec.id}`, artist: rec.artist ?? undefined },
+            0
+          );
+        }
+      }
+      setTimeout(() => {
+        useAudioStore.getState().startCustomJourney(journey);
+      }, 60);
+    } catch (err) {
+      console.warn("[path] startCustomById failed:", err);
+    }
+  }, [seek]);
+
   const handleContinuePath = useCallback((nextJourneyId: string) => {
+    if (isUuid(nextJourneyId)) {
+      startCustomById(nextJourneyId);
+      return;
+    }
     ensureResumed();
     setJourneyCompleted(false);
     completedJourneyRef.current = null;
@@ -727,10 +865,14 @@ export function VisualizerClient({
     setTimeout(() => {
       useAudioStore.getState().startJourney(nextJourneyId);
     }, 50);
-  }, [seek]);
+  }, [seek, startCustomById]);
 
   // Enter a culmination journey
   const handleEnterCulmination = useCallback((culminationId: string) => {
+    if (isUuid(culminationId)) {
+      startCustomById(culminationId);
+      return;
+    }
     ensureResumed();
     setJourneyCompleted(false);
     completedJourneyRef.current = null;
@@ -739,7 +881,7 @@ export function VisualizerClient({
     setTimeout(() => {
       useAudioStore.getState().startJourney(culminationId);
     }, 50);
-  }, [seek]);
+  }, [seek, startCustomById]);
 
   const handleSwitchToVisualize = useCallback(() => {
     if (useAudioStore.getState().activeJourney) {
@@ -1188,19 +1330,65 @@ export function VisualizerClient({
 
       {/* Journey completion overlay — replay or end — above all visual layers */}
       {journeyCompleted && journeyActive && activeJourney && (() => {
-        const path = getPathForJourney(activeJourney.id);
+        const builtinPath = getPathForJourney(activeJourney.id);
+        const customPathCtx = useAudioStore.getState().activePath;
+        const customPathJourneyIds = customPathCtx?.journeyIds ?? [];
+        const inCustomPath = customPathCtx && customPathJourneyIds.includes(activeJourney.id);
+        const isCustomCulmination = !!customPathCtx && customPathCtx.culminationJourneyId === activeJourney.id;
+
+        // Unified shape so the render below can treat built-in and custom
+        // paths identically. We mimic the built-in JourneyPath shape
+        // (palette.accent, palette.glow, etc.) so the existing JSX keeps
+        // working without per-branch rewrites.
+        const pathLike = builtinPath
+          ? {
+              id: builtinPath.id,
+              name: builtinPath.name,
+              subtitle: builtinPath.subtitle,
+              journeyIds: builtinPath.journeyIds,
+              culminationJourneyId: builtinPath.culminationJourneyId,
+              palette: { accent: builtinPath.palette.accent, glow: builtinPath.palette.glow },
+              isCustom: false as const,
+            }
+          : (inCustomPath || isCustomCulmination) && customPathCtx
+            ? {
+                id: customPathCtx.id,
+                name: customPathCtx.name,
+                subtitle: customPathCtx.subtitle ?? "",
+                journeyIds: customPathCtx.journeyIds,
+                culminationJourneyId: customPathCtx.culminationJourneyId ?? "",
+                palette: { accent: customPathCtx.accent, glow: customPathCtx.glow },
+                isCustom: true as const,
+              }
+            : null;
+
         const progressState = usePathProgressStore.getState();
         const completedIds = progressState.completedJourneyIds;
-        const isCulmination = JOURNEY_PATHS.some(p => p.culminationJourneyId === activeJourney.id);
+        const isBuiltinCulmination = JOURNEY_PATHS.some(p => p.culminationJourneyId === activeJourney.id);
+        const isCulmination = isBuiltinCulmination || isCustomCulmination;
         const isGrandCulm = activeJourney.id === GRAND_CULMINATION_ID;
 
-        // Path context for regular journeys
-        const pathProgress = path ? {
-          completed: path.journeyIds.filter(id => completedIds.includes(id)).length,
-          total: path.journeyIds.length,
+        const pathProgress = pathLike ? {
+          completed: pathLike.journeyIds.filter(id => completedIds.includes(id)).length,
+          total: pathLike.journeyIds.length,
         } : null;
-        const justCompletedPath = path && pathProgress && pathProgress.completed === pathProgress.total;
-        const nextInPath = path && !justCompletedPath ? getNextInPath(path, completedIds) : null;
+        const justCompletedPath = pathLike && pathProgress && pathProgress.completed === pathProgress.total;
+
+        // Next journey id in the path sequence — works for both built-in
+        // (uses string ids + legacy getNextInPath) and custom (UUIDs).
+        let nextInPath: string | null = null;
+        if (pathLike && !justCompletedPath) {
+          if (!pathLike.isCustom && builtinPath) {
+            nextInPath = getNextInPath(builtinPath, completedIds);
+          } else {
+            nextInPath = pathLike.journeyIds.find((id) => !completedIds.includes(id)) ?? null;
+          }
+        }
+
+        // Legacy local name for the existing JSX — keep `path` referring to
+        // pathLike so the big JSX block below compiles without edits.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const path = pathLike as any;
 
         // Grand culmination unlock check
         const justUnlockedGrand = isCulmination && progressState.grandCulminationUnlocked
@@ -1344,7 +1532,7 @@ export function VisualizerClient({
                   </span>
                   {/* Progress dots */}
                   <div className="flex items-center gap-1.5" style={{ position: "relative" }}>
-                    {path.journeyIds.map((jid) => (
+                    {path.journeyIds.map((jid: string) => (
                       <div
                         key={jid}
                         style={{

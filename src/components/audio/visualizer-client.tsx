@@ -1589,35 +1589,62 @@ export function VisualizerClient({
                   >
                     {path.name}{justCompletedPath ? " — complete" : ""}
                   </span>
-                  {/* Progress dots — hover for name, click to jump to any
-                      journey in the path. Works for both built-in and
-                      custom paths. */}
-                  <div className="flex items-center gap-1.5 flex-wrap" style={{ position: "relative" }}>
+                  {/* Progress dots — instant hover tooltip, click to jump
+                      to any journey in the path. Works for both built-in
+                      and custom paths. */}
+                  <div className="flex items-center gap-2 flex-wrap" style={{ position: "relative" }}>
                     {path.journeyIds.map((jid: string, i: number) => {
                       const done = completedIds.includes(jid);
-                      // For built-in journeys we can resolve a human-readable
-                      // name. Custom (UUID) journeys fall back to the index.
                       const builtin = getJourney(jid);
-                      const label = builtin?.name ?? `Step ${i + 1}`;
+                      const name = builtin?.name ?? `Step ${i + 1}`;
+                      const label = `${String(i + 1).padStart(2, "0")} · ${name}`;
                       return (
                         <button
                           key={jid}
                           type="button"
                           onClick={() => handleContinuePath(jid)}
-                          title={`${String(i + 1).padStart(2, "0")} · ${label}`}
-                          aria-label={label}
+                          aria-label={name}
+                          className="group relative inline-flex items-center justify-center"
                           style={{
-                            width: "10px",
-                            height: "10px",
-                            borderRadius: "50%",
-                            backgroundColor: done ? path.palette.accent : "rgba(255,255,255,0.2)",
-                            boxShadow: done ? `0 0 6px ${path.palette.glow}55` : "none",
+                            width: "16px",
+                            height: "16px",
                             border: "none",
+                            background: "transparent",
                             padding: 0,
                             cursor: "pointer",
-                            transition: "all 0.2s ease",
                           }}
-                        />
+                        >
+                          <span
+                            className="block transition-all"
+                            style={{
+                              width: "14px",
+                              height: "14px",
+                              borderRadius: "50%",
+                              backgroundColor: done ? path.palette.accent : "rgba(255,255,255,0.2)",
+                              boxShadow: done ? `0 0 8px ${path.palette.glow}55` : "none",
+                            }}
+                          />
+                          <span
+                            className="pointer-events-none absolute opacity-0 group-hover:opacity-100 transition-opacity duration-75"
+                            style={{
+                              bottom: "calc(100% + 10px)",
+                              left: "50%",
+                              transform: "translateX(-50%)",
+                              background: "rgba(0,0,0,0.92)",
+                              color: "#fff",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              whiteSpace: "nowrap",
+                              fontSize: "0.78rem",
+                              fontFamily: "var(--font-geist-mono)",
+                              letterSpacing: "0.03em",
+                              border: "1px solid rgba(255,255,255,0.12)",
+                              zIndex: 60,
+                            }}
+                          >
+                            {label}
+                          </span>
+                        </button>
                       );
                     })}
                     <span

@@ -111,7 +111,7 @@ export function CulminationCard({ journeyIds, culmination, pathShareToken, accen
               color: accent,
             }}
           >
-            Play →  (a random track from the album)
+            Enter →
           </div>
         </Link>
       ) : (

@@ -1583,38 +1583,66 @@ export function SharedJourneyClient({
                 >
                   {pathContext.pathName}
                 </span>
-                <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
                   {pathContext.steps.map((s, i) => {
                     const done = i <= pathContext.currentIndex;
                     const linkable = !!s.shareToken;
                     const href = linkable ? `/journey/${s.shareToken}?pathToken=${pathContext.pathToken}` : undefined;
+                    const label = `${String(i + 1).padStart(2, "0")} · ${s.name}`;
                     const dot = (
-                      <div
+                      <span
+                        className="block transition-all"
                         style={{
-                          width: "10px",
-                          height: "10px",
+                          width: "14px",
+                          height: "14px",
                           borderRadius: "50%",
                           backgroundColor: done ? pathContext.accent : "rgba(255,255,255,0.2)",
-                          boxShadow: done ? `0 0 6px ${pathContext.glow}55` : "none",
-                          cursor: linkable ? "pointer" : "default",
-                          transition: "all 0.2s ease",
+                          boxShadow: done ? `0 0 8px ${pathContext.glow}55` : "none",
                         }}
                       />
+                    );
+                    const tooltip = (
+                      <span
+                        className="pointer-events-none absolute opacity-0 group-hover:opacity-100 transition-opacity duration-75"
+                        style={{
+                          bottom: "calc(100% + 10px)",
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          background: "rgba(0,0,0,0.92)",
+                          color: "#fff",
+                          padding: "6px 12px",
+                          borderRadius: "8px",
+                          whiteSpace: "nowrap",
+                          fontSize: "0.78rem",
+                          fontFamily: "var(--font-geist-mono)",
+                          letterSpacing: "0.03em",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          zIndex: 60,
+                        }}
+                      >
+                        {label}
+                      </span>
                     );
                     return href ? (
                       // eslint-disable-next-line @next/next/no-html-link-for-pages
                       <a
                         key={s.journeyId}
                         href={href}
-                        title={`${String(i + 1).padStart(2, "0")} · ${s.name}`}
                         aria-label={s.name}
-                        className="inline-flex"
+                        className="group relative inline-flex items-center justify-center"
+                        style={{ width: "16px", height: "16px" }}
                       >
                         {dot}
+                        {tooltip}
                       </a>
                     ) : (
-                      <div key={s.journeyId} title={s.name}>
+                      <div
+                        key={s.journeyId}
+                        className="group relative inline-flex items-center justify-center"
+                        style={{ width: "16px", height: "16px" }}
+                      >
                         {dot}
+                        {tooltip}
                       </div>
                     );
                   })}

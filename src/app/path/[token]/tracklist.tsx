@@ -103,12 +103,12 @@ export function Tracklist({ journeys, isInAppContext, pathToken, accent, glow }:
     <>
       {/* Progress ribbon — stepper dots above the tracklist so users
           see where they are in the path at a glance. Each dot is
-          clickable and shows the journey name on hover. */}
+          clickable and shows an instant name tooltip on hover. */}
       <div
         className="mb-5 flex items-center justify-center gap-2 flex-wrap"
         style={{ opacity: mounted ? 1 : 0, transition: "opacity 0.3s ease" }}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {journeys.map((j, i) => {
             const done = completedSet.has(j.id);
             const href = isInAppContext
@@ -116,26 +116,55 @@ export function Tracklist({ journeys, isInAppContext, pathToken, accent, glow }:
               : j.share_token
                 ? `/journey/${j.share_token}?pathToken=${pathToken}`
                 : "#";
+            const label = `${String(i + 1).padStart(2, "0")} · ${j.name}`;
             return (
               <Link
                 key={j.id}
                 href={href}
                 prefetch
-                title={`${String(i + 1).padStart(2, "0")} · ${j.name}`}
                 onMouseEnter={() => preloadTrack(j)}
                 onFocus={() => preloadTrack(j)}
                 onTouchStart={() => preloadTrack(j)}
                 aria-label={j.name}
-                className="group flex items-center justify-center"
+                className="group relative inline-flex items-center justify-center"
                 style={{
-                  width: "14px",
-                  height: "14px",
-                  borderRadius: "50%",
-                  background: done ? accent : "rgba(255,255,255,0.12)",
-                  boxShadow: done ? `0 0 8px ${glow}55` : "none",
-                  transition: "all 0.2s ease",
+                  width: "16px",
+                  height: "16px",
                 }}
-              />
+              >
+                <span
+                  className="block transition-all"
+                  style={{
+                    width: "14px",
+                    height: "14px",
+                    borderRadius: "50%",
+                    background: done ? accent : "rgba(255,255,255,0.15)",
+                    boxShadow: done ? `0 0 8px ${glow}55` : "none",
+                  }}
+                />
+                {/* Custom instant tooltip — shows immediately on hover,
+                    no 1.5s native title delay. */}
+                <span
+                  className="pointer-events-none absolute opacity-0 group-hover:opacity-100 transition-opacity duration-75"
+                  style={{
+                    top: "calc(100% + 10px)",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "rgba(0,0,0,0.92)",
+                    color: "#fff",
+                    padding: "6px 12px",
+                    borderRadius: "8px",
+                    whiteSpace: "nowrap",
+                    fontSize: "0.78rem",
+                    fontFamily: "var(--font-geist-mono)",
+                    letterSpacing: "0.03em",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    zIndex: 50,
+                  }}
+                >
+                  {label}
+                </span>
+              </Link>
             );
           })}
         </div>

@@ -592,6 +592,19 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         .jcard.jcard-active {
           background-color: rgba(255,255,255,0.05);
         }
+      `}{`
+        /* Custom path cards (Welcome Home etc.) — more prominent hover
+           so the entry point to the album doesn't feel dead. */
+        .wh-path-card {
+          transform: translateY(0);
+          transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .wh-path-card:hover {
+          background-color: rgba(255,255,255,0.055) !important;
+          border-color: rgba(255,255,255,0.22) !important;
+          transform: translateY(-1px);
+          box-shadow: 0 6px 24px rgba(255,255,255,0.04);
+        }
       `}</style>
       {/* Full-area journey browser — solid black, no blur */}
       <div
@@ -699,16 +712,24 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                     // this param the page assumes it's a shared landing.
                     if (path.shareToken) router.push(`/path/${path.shareToken}?view=app`);
                   };
+                  const warmPath = () => {
+                    if (!path.shareToken) return;
+                    try { router.prefetch(`/path/${path.shareToken}?view=app`); } catch {}
+                  };
                   return (
                     <div
                       key={path.id}
-                      className="jcard rounded-xl cursor-pointer"
+                      className="jcard wh-path-card rounded-xl cursor-pointer"
                       style={{
-                        backgroundColor: "rgba(255,255,255,0.01)",
+                        backgroundColor: "rgba(255,255,255,0.02)",
                         border: `1px solid rgba(255,255,255,0.08)`,
                         padding: "16px 20px",
+                        transition: "all 0.15s ease",
                       }}
                       onClick={openPath}
+                      onMouseEnter={warmPath}
+                      onFocus={warmPath}
+                      onTouchStart={warmPath}
                     >
                       <div className="flex items-start gap-2.5 mb-2">
                         <div

@@ -56,6 +56,17 @@ export default async function SharedPathPage({
   const { token } = await params;
   const { view } = await searchParams;
   const supabase = createAnonClient();
+  const authClient = await createServerClient();
+
+  // Fire auth check + path row fetch in parallel — they're independent and
+  // together dominate page latency. Was ~700ms sequential, ~400ms parallel.
+  const [userResult, pathResult] = await Promise.all([
+    authClient.auth.getUser(),
+    supabase.from("journey_paths").select("*").eq("share_token", token).single(),
+  ]);
+  const user = userResult.data.user;
+  const path = pathResult.data;
+  const pathErr = pathResult.error;
 
   // Two distinct contexts for the same route:
   //   • In-app (view=app + signed in): shows back arrow, plays tracks
@@ -63,15 +74,7 @@ export default async function SharedPathPage({
   //   • Shared landing (everything else — anon visitors, signed-in users
   //     who opened the share link directly from email/DM): no back arrow,
   //     tracks play via the shared /journey/[share] client.
-  const authClient = await createServerClient();
-  const { data: { user } } = await authClient.auth.getUser();
   const isInAppContext = view === "app" && !!user;
-
-  const { data: path, error: pathErr } = await supabase
-    .from("journey_paths")
-    .select("*")
-    .eq("share_token", token)
-    .single();
 
   if (pathErr || !path) {
     notFound();

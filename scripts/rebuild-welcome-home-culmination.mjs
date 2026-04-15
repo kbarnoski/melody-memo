@@ -147,79 +147,90 @@ async function main() {
   for (const t of tracks) moodCounts[t.vibe] = (moodCounts[t.vibe] ?? 0) + 1;
   const moodSummary = Object.entries(moodCounts).sort((a, b) => b[1] - a[1]).map(([m, n]) => `${m} ×${n}`).join(", ");
 
-  const story = `The culmination of Welcome Home by Karel Barnoski — a grand finale that weaves together the emotional threads of all 13 tracks into one maximalist journey. Not a single theme. Not a quiet room. A collage of every feeling the album contained, integrated and interwoven, building toward a place of incredible infinite spirit. A place that feels at once like heaven and like home — where all your prior experiences collapse into a single vast radiant knowing.
+  const story = `The culmination of Welcome Home by Karel Barnoski. This plays with the track "Welcome Home" as its music — the title track of the album, always, every time. The visual arc is an infinite spiritual cosmos slowly revealing itself as the song unfolds: at first the listener stands at the edge of darkness with only faint threads of starlight, then nebulae breathe open, then galaxies bloom, then the entire known universe peels back to show more behind it, and more, and more, until by the end the listener realizes they are standing inside their own home made of starfield — the album's whole journey resolving into a single infinite moment of coming home.
 
 The album's thirteen songs, each with its own vibe:
 ${vibeLine}
 
 Dominant moods across the album: ${moodSummary}.
 
-This is not a "return to stillness" journey. This is a GRAND FINALE. It should build and build — each phase layering in more textures, more color, more light, more motion — until the final phase is a full integration of dream and earth and sky and body, a heavenly home where every previous journey's image bleeds through at once. Think: Gustav Klimt meets Hilma af Klint meets James Turrell meets a cathedral you've walked toward your whole life.
+NO CHRISTIAN CHURCH IMAGERY. Do not use cathedrals, stained glass, altars, crosses, pews, choirs, saints, angels, religious iconography of any organized faith. This is not a religious journey — it is a COSMIC HOMECOMING journey.
 
 Core directives:
-— Weave vibes from multiple tracks into single phases. Don't sit on one mood.
-— Build intensity consistently from threshold → transcendence. No dips.
-— The "transcendence" phase should be the most maximalist, saturated, interwoven, and overwhelming — a collage of everything the album touched.
-— "Illumination" and "return" should NOT retreat into minimalism. They should stay LUSH and warm, translating the grand finale into felt sense.
-— "Integration" is homecoming — infinite spirit at rest, a doorway of light standing open in a vast field of color, dreamlike but settled.
-— Warm color palette dominant (amber, gold, rose, violet) with cool accents (cobalt, pale green) so the interweaving reads as collage not monotone.
-— References to prior-journey elements: water (Bath), knives of light (The Knife), rolling waves of time (Rolling), isolation softened into belonging (Isolation/Quarantine), celebratory movement (Playa/All Together), rebirth cycles (Rebound/Interplay).
+— The visual arc is COSMIC UNVEILING. Each phase should reveal more of the universe than the last. Start with a nearly dark void with one thread of light. End standing in the luminous heart of infinity where every previous journey's feeling is a distant shining body in the field of view.
+— NO single repeating motif. NO doorway. NO cathedral. NO threshold over and over. The motif is "more is being revealed" — each phase discovers space behind space.
+— Build intensity consistently. Transcendence is full cosmic maximalism — multiple nebulae, galaxies interleaving, lightyears of depth visible simultaneously, particles at every scale from dust to planets to star clusters.
+— Illumination and return stay LUSH. Don't retreat into minimalism. They translate the cosmic grandeur into felt intimacy — the vastness warming into homecoming.
+— Integration is the final revelation: the listener realizes the infinite cosmos they've been journeying through IS home. Not a doorway in the cosmos — the COSMOS ITSELF is home. Warm amber and rose gold washing through endless starfield. Total recognition. "Welcome home" felt in the bones.
+— Weave echoes of other tracks into the cosmic imagery: ripples of water (Bath) as distant planetary rings, blades of light (The Knife) as refracted starlight cutting through nebulae, rolling fields (Rolling) as waves of galactic dust, celebratory movement (Playa, All Together) as constellation patterns dancing.
+— Warm color palette dominant: deep indigo/violet base with amber, gold, rose, copper highlights. Cool accents ONLY from distant stars and nebular cyans/teals.
+— Think: Carl Sagan at the edge of the universe, Hilma af Klint's cosmic diagrams, James Turrell's skyspaces, deep-field Hubble photography, the ending of 2001.
 
-Feel: awe, gratitude, homecoming, "every path was leading here", the moment after a long journey when your whole life turns to gold.`;
+Feel: awe, reverence for infinity, the moment you realize you were home all along, the grand scale of everything collapsing into one warm recognition.`;
 
-  const musicalContext = `Album: Welcome Home — 13 tracks across multiple keys, tempos, and moods. At playback the track is randomly picked from the 13 so every replay surprises. Tracks span ${moodSummary}. The visual arc must feel universal to the album, not tied to any one song's mood — treat it as "all of it at once".`;
+  const musicalContext = `The song for this journey is the title track "Welcome Home" — always. The culmination is permanently paired with it. The visual arc should build across the full length of the song, beginning at the very first quiet moments with a dark starfield and ending at full cosmic revelation synchronized with the song's final swell.`;
 
-  console.log("Generating grand theme…");
+  console.log("Generating cosmic theme…");
   const { object: theme } = await generateObject({
     model,
     schema: themeSchema,
     mode: "tool",
     maxTokens: 3500,
-    prompt: `You are designing the visual theme for the GRAND CULMINATION of an album called Welcome Home.
+    prompt: `You are designing the visual theme for the COSMIC HOMECOMING culmination of an album called Welcome Home.
 
 ${story}
 
 ${musicalContext}
 
-Generate a rich, maximalist theme that can hold the weight of 13 tracks' worth of emotional material integrated at once. Visual vocabulary must be lush, specific, and varied — environments that feel sacred and warm, entities that suggest infinite spirit and interwoven dream-logic, textures that carry both dream softness and radiant heat, atmospheres that modulate from amber to rose to cobalt across the journey.
+The vocabulary must be COSMIC — starfields, nebulae, galactic clouds, orbital rings, interstellar dust, deep space, planetary silhouettes, constellation lines, lightyears of depth. The aesthetic is Hubble deep field + Carl Sagan wonder + warm amber homecoming, never religious.
+
+Generate the theme:
+— environments: only cosmic/deep-space settings. No rooms, no cathedrals, no doorways, no temples.
+— entities: celestial bodies, particles, energy, star clusters, comet trails, light streams — things that live in space.
+— textures: plasma, stardust, nebular gas, iridescent particle fields, galactic shimmer, cosmic haze.
+— atmospheres: cosmic dark with warm interior glow, nebular color washes, stellar radiance.
+— shader categories: Cosmic MUST be the primary. At most two more — pick from Visionary, Elemental, Dark.
+— palette: deep indigo/violet primary, cosmic black secondary, warm amber-rose accent, stellar gold glow.
 
 Return every field as its proper type (arrays as arrays, not strings).`,
-    temperature: 0.9,
+    temperature: 0.88,
   });
 
-  console.log("Generating grand phase arc…");
+  console.log("Generating cosmic-unveiling phase arc…");
   const { object: journeyAi } = await generateObject({
     model,
     schema: journeySchema,
     mode: "tool",
     maxTokens: 4500,
-    prompt: `Design the GRAND CULMINATION journey of Welcome Home.
+    prompt: `Design the COSMIC HOMECOMING culmination of Welcome Home.
 
 ${story}
 
-Visual world we're working in: ${theme.visualVocabulary.environments.slice(0, 4).join(", ")}, ${theme.visualVocabulary.textures.slice(0, 4).join(", ")}, ${theme.visualVocabulary.atmospheres.slice(0, 4).join(", ")}. Mood: ${theme.poetryMood}.
+Visual world: ${theme.visualVocabulary.environments.slice(0, 4).join(", ")}, ${theme.visualVocabulary.textures.slice(0, 4).join(", ")}, ${theme.visualVocabulary.atmospheres.slice(0, 4).join(", ")}. Mood: ${theme.poetryMood}.
 
-Generate exactly 6 phases in order, following the BUILD-TO-GRAND-FINALE curve — each phase should feel MORE intense and layered than the last until transcendence, then stay lush through illumination and return, landing at integration as infinite spirit at rest:
+The ARC is a progressive COSMIC UNVEILING — the universe peels back layer after layer as the song unfolds, revealing more of infinity with each phase, until the final phase the listener realizes the entire cosmos IS home. This is synchronized to the song "Welcome Home" (the album's title track).
 
-1. Threshold (0–10%) — first stepping through the doorway, all 13 tracks' colors faintly visible at the edges
-2. Expansion (10–26%) — multiple phase-vibes interleaving, color fields beginning to layer
-3. Transcendence (26–48%) — the GRAND FINALE: full collage of every track's feeling, maximalist, radiant, interwoven, overwhelming in the best way
-4. Illumination (48–65%) — the radiance resolves into clarity but stays lush, warm, luminous
-5. Return (65–82%) — carrying the whole album inside you, walking home through gold and rose
-6. Integration (82–100%) — HOMECOMING: a luminous threshold standing open in a vast warm field, heaven and home at once, infinite spirit at rest
+Generate exactly 6 phases, each revealing more cosmic depth than the last:
+
+1. Threshold (0–10%) — standing in near-total darkness with a single filament of starlight forming. The first whisper of cosmos. 2–3 tiny points of light beginning to appear.
+2. Expansion (10–26%) — the darkness peels back to show a thin nebular mist with scattered stars. A first galaxy silhouette hinted in the distance. Space is opening.
+3. Transcendence (26–48%) — FULL COSMIC MAXIMALISM. Multiple nebulae interweaving, galactic arms visible, stardust at every scale, lightyears of depth layered through the frame. Every previous track's emotional residue shimmers as a distant celestial body somewhere in the field. Overwhelming in the best way.
+4. Illumination (48–65%) — the vastness warms. The cosmos stays full but becomes suffused with amber and rose glow. Warmth inside immensity.
+5. Return (65–82%) — still inside the infinite cosmos but now intimate. Star clusters close enough to touch, gentle particle drift, the feeling of being held by everything.
+6. Integration (82–100%) — FINAL REVELATION: the listener realizes the cosmos IS home. Warm amber and rose gold washing through endless starfield. Every nebula and galaxy suddenly legible as a piece of the self. Total homecoming, total recognition. The entire universe saying "welcome home".
 
 EACH phase's aiPrompt MUST:
-— be 25 to 45 words long
-— reference multiple textures/atmospheres/entities from the theme vocabulary
-— build on the previous phase's intensity
-— avoid monotony — variety of color, light direction, spatial scale
-— mention specific warm colors (amber, gold, rose, violet) and maybe one cool accent
-— never default to "a single door" or "a single light" — this is a multi-element collage journey
+— be 25 to 45 words
+— be entirely cosmic/space vocabulary — no buildings, no doorways, no cathedrals, no interiors, no religious imagery
+— reference the theme's cosmic entities, textures, and atmospheres
+— build visibly on the previous phase's depth and revelation
+— specify warm cosmic colors (amber, gold, rose, copper) alongside stellar cyans/whites
+— be distinct from the other phases — don't repeat the same image with different adjectives
 
-guidancePhrases should feel grateful and homecoming, 2–3 short lines each.
+guidancePhrases should feel reverent and homecoming — "the cosmos is opening", "more is here than you knew", "you are held by all of it", "welcome home". 2–3 short lines each phase.
 
-IMPORTANT: phases must be an array of 6 objects.`,
-    temperature: 0.85,
+IMPORTANT: phases must be an array of exactly 6 objects.`,
+    temperature: 0.82,
   });
 
   const phases = TEMPLATE_PHASES.map((tpl, i) => ({
@@ -236,13 +247,23 @@ IMPORTANT: phases must be an array of 6 objects.`,
   const augmentedTheme = {
     ...theme,
     isCulmination: true,
-    randomTrackPool: output.journeys.map((j) => j.recordingId),
+    // No more random track pool — culmination is now permanently paired
+    // with the title track. The randomTrackPool field stays defined but
+    // empty so the random-swap logic in /journey/[token]/page.tsx skips it.
+    randomTrackPool: [],
   };
+
+  // Pair permanently with the "Welcome Home" title track (track 03).
+  const welcomeHomeTrack = output.journeys.find((j) => j.cleanTitle === "Welcome Home");
+  if (!welcomeHomeTrack) {
+    console.error("Could not find Welcome Home track in output.json");
+    process.exit(1);
+  }
 
   const newToken = randomUUID().replace(/-/g, "").slice(0, 16);
   const row = {
     user_id: USER_ID,
-    recording_id: null,
+    recording_id: welcomeHomeTrack.recordingId,
     name: journeyAi.name,
     subtitle: journeyAi.subtitle,
     description: journeyAi.description,

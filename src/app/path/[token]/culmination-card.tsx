@@ -13,11 +13,14 @@ interface CulminationCardProps {
     description: string | null;
     share_token: string | null;
   };
+  /** Path's own share token — so the culmination journey link can
+   *  carry pathToken and expose the Close/Back-to-path nav. */
+  pathShareToken: string;
   accent: string;
   glow: string;
 }
 
-export function CulminationCard({ journeyIds, culmination, accent, glow }: CulminationCardProps) {
+export function CulminationCard({ journeyIds, culmination, pathShareToken, accent, glow }: CulminationCardProps) {
   // Hydration guard — the store reads from localStorage on client only. Render
   // the locked state on the server + first client render, then reconcile.
   const [mounted, setMounted] = useState(false);
@@ -50,7 +53,7 @@ export function CulminationCard({ journeyIds, culmination, accent, glow }: Culmi
 
       {unlocked && culmination.share_token ? (
         <Link
-          href={`/journey/${culmination.share_token}`}
+          href={`/journey/${culmination.share_token}?pathToken=${pathShareToken}`}
           className="group block rounded-xl px-5 py-5 transition-all hover:bg-white/[0.05]"
           style={{
             border: `1px solid ${accent}40`,

@@ -295,6 +295,7 @@ export default async function SharedPathPage({
               description: culmination.description,
               share_token: culmination.share_token,
             }}
+            pathShareToken={token}
             accent={accent}
             glow={glow}
           />

@@ -1686,16 +1686,18 @@ export function SharedJourneyClient({
                 );
               })()}
 
-              {/* Return to Welcome Home landing */}
+              {/* Return to Welcome Home landing — styled to match the
+                  pre-start back pill so both screens feel consistent. */}
               {pathContext && (
                 <a
                   href={`/path/${pathContext.pathToken}`}
-                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                  className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors duration-150"
                   style={{
                     border: "1px solid rgba(255,255,255,0.2)",
-                    fontSize: "0.8rem",
+                    fontSize: "0.72rem",
                     fontFamily: "var(--font-geist-mono)",
-                    letterSpacing: "0.02em",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
                     textDecoration: "none",
                   }}
                 >

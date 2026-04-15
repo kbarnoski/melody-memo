@@ -109,6 +109,7 @@ export default async function SharedPathPage({
         {isInAppContext ? (
           <Link
             href="/room"
+            prefetch
             className="inline-flex items-center gap-1.5 text-white/40 hover:text-white/80 transition-colors"
             style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.08em", textTransform: "uppercase" }}
           >

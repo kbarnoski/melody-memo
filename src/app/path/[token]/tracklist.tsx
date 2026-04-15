@@ -12,7 +12,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 interface TrackRow {
   id: string;
@@ -33,6 +33,16 @@ interface TracklistProps {
 export function Tracklist({ journeys, isInAppContext, pathToken, accent }: TracklistProps) {
   const router = useRouter();
   const preloadedRef = useRef(new Set<string>());
+
+  // Prefetch the back destination as soon as the path screen mounts.
+  // /room is dynamic (reads auth cookies) so Next.js skips viewport
+  // prefetch for it — we have to ask explicitly. By the time the user
+  // clicks ← back, the RSC payload is already cached and the transition
+  // back to The Room feels instant.
+  useEffect(() => {
+    if (!isInAppContext) return;
+    try { router.prefetch("/room"); } catch {}
+  }, [isInAppContext, router]);
 
   const preloadTrack = useCallback(
     (journey: TrackRow) => {

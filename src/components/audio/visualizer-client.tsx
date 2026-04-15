@@ -139,6 +139,10 @@ export function VisualizerClient({
 
   // Journey completion state
   const [journeyCompleted, setJourneyCompleted] = useState(false);
+  // Set true immediately before navigating away so the visualizer renders
+  // a solid black screen instead of flashing the default shader for one
+  // frame between stopJourney() and the route transition.
+  const [isExiting, setIsExiting] = useState(false);
   const completedJourneyRef = useRef<string | null>(null);
 
   // Journey intro screen — shows name + subtitle on journey start
@@ -777,6 +781,7 @@ export function VisualizerClient({
     // rather than opening the generic journey picker.
     const activePath = state.activePath;
     if (activePath?.shareToken) {
+      setIsExiting(true);
       state.stopJourney();
       state.setActivePath(null);
       router.push(`/path/${activePath.shareToken}?view=app`);
@@ -933,6 +938,7 @@ export function VisualizerClient({
     // arrow stays visible.
     const activePath = state.activePath;
     if (activePath && state.activeJourney) {
+      setIsExiting(true);
       state.stopJourney();
       state.setActivePath(null);
       if (activePath.shareToken) {
@@ -941,11 +947,14 @@ export function VisualizerClient({
       }
     }
     if (state.activeJourney) {
+      setIsExiting(true);
       state.stopJourney();
       router.push("/library");
     } else if (state.currentTrack) {
+      setIsExiting(true);
       router.push("/library");
     } else {
+      setIsExiting(true);
       router.push("/library");
     }
   }, [router]);
@@ -1102,6 +1111,13 @@ export function VisualizerClient({
 
   if (!analyser || !dataArray) return null;
 
+  // Exiting to another route: render a solid black screen so the visualizer
+  // doesn't paint a single frame of the default non-journey shader between
+  // stopJourney() and the route transition. Eliminates the exit flash.
+  if (isExiting) {
+    return <div className="h-dvh w-screen bg-black" />;
+  }
+
   // Always render — compositor contains the bottom bar; journey selector
   // covers shaders with its own solid black background at z-index 7
   const showViz = true;
@@ -1181,6 +1197,7 @@ export function VisualizerClient({
               // picker — that's the screen they launched from.
               const activePath = state.activePath;
               if (activePath?.shareToken) {
+                setIsExiting(true);
                 state.stopJourney();
                 state.setActivePath(null);
                 setJourneyCompleted(false);

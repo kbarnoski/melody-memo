@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { PathShareButton } from "./share-button";
 import { CulminationCard } from "./culmination-card";
+import { Tracklist } from "./tracklist";
 
 export const dynamic = "force-dynamic";
 
@@ -192,98 +193,20 @@ export default async function SharedPathPage({
           </div>
         </div>
 
-        {/* Track list */}
-        <div className="space-y-2">
-          {journeys.map((j, idx) => {
-            const num = String(idx + 1).padStart(2, "0");
-            // In-app context plays tracks natively in The Room. Shared
-            // landing routes through the public /journey/[share] client so
-            // the same share URL works for anyone regardless of auth.
-            const href = isInAppContext
-              ? `/room?customJourneyId=${j.id}&pathToken=${token}`
-              : j.share_token
-                ? `/journey/${j.share_token}?pathToken=${token}`
-                : "#";
-            return (
-              <Link
-                key={j.id}
-                href={href}
-                className="group block rounded-xl px-5 py-4 transition-all hover:bg-white/[0.04]"
-                style={{
-                  border: "1px solid rgba(255,255,255,0.07)",
-                  backgroundColor: "rgba(255,255,255,0.015)",
-                }}
-              >
-                <div className="flex items-start gap-4">
-                  <div
-                    className="flex-shrink-0 pt-0.5"
-                    style={{
-                      fontFamily: "var(--font-geist-mono)",
-                      fontSize: "0.7rem",
-                      letterSpacing: "0.1em",
-                      color: "rgba(255,255,255,0.35)",
-                      minWidth: "1.75rem",
-                    }}
-                  >
-                    {num}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div
-                      className="transition-colors group-hover:text-white"
-                      style={{
-                        fontFamily: "'Cormorant Garamond', Georgia, serif",
-                        fontStyle: "italic",
-                        fontSize: "1.35rem",
-                        color: "rgba(255,255,255,0.9)",
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {j.name}
-                    </div>
-                    {j.subtitle && (
-                      <div
-                        className="mt-0.5"
-                        style={{
-                          fontFamily: "var(--font-geist-mono)",
-                          fontSize: "0.7rem",
-                          color: "rgba(255,255,255,0.4)",
-                          letterSpacing: "0.03em",
-                        }}
-                      >
-                        {j.subtitle}
-                      </div>
-                    )}
-                    {j.description && (
-                      <p
-                        className="mt-2"
-                        style={{
-                          fontFamily: "var(--font-geist-sans)",
-                          fontSize: "0.8rem",
-                          color: "rgba(255,255,255,0.55)",
-                          lineHeight: 1.55,
-                        }}
-                      >
-                        {j.description}
-                      </p>
-                    )}
-                  </div>
-                  <div
-                    className="flex-shrink-0 self-center transition-opacity opacity-40 group-hover:opacity-100"
-                    style={{
-                      fontFamily: "var(--font-geist-mono)",
-                      fontSize: "0.65rem",
-                      letterSpacing: "0.15em",
-                      textTransform: "uppercase",
-                      color: accent,
-                    }}
-                  >
-                    Play →
-                  </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        {/* Track list — client component preloads audio on hover */}
+        <Tracklist
+          journeys={journeys.map((j) => ({
+            id: j.id,
+            name: j.name,
+            subtitle: j.subtitle,
+            description: j.description,
+            share_token: j.share_token,
+            recording_id: j.recording_id,
+          }))}
+          isInAppContext={isInAppContext}
+          pathToken={token}
+          accent={accent}
+        />
 
         {/* Culmination — locked until all journeys in the path are complete */}
         {culmination && (

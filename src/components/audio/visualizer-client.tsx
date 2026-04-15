@@ -139,10 +139,6 @@ export function VisualizerClient({
 
   // Journey completion state
   const [journeyCompleted, setJourneyCompleted] = useState(false);
-  // Set true immediately before navigating away so the visualizer renders
-  // a solid black screen instead of flashing the default shader for one
-  // frame between stopJourney() and the route transition.
-  const [isExiting, setIsExiting] = useState(false);
   const completedJourneyRef = useRef<string | null>(null);
 
   // Journey intro screen — shows name + subtitle on journey start
@@ -590,6 +586,11 @@ export function VisualizerClient({
     // Recording is already loaded on the page props (audio_url plays via
     // the normal flow) — just start the journey.
     useAudioStore.getState().startCustomJourney(journey);
+    // Prefetch the path's dedicated screen so closing the journey feels
+    // instant — the page is already cached by the time the user taps X.
+    if (initialPath?.share_token) {
+      try { router.prefetch(`/path/${initialPath.share_token}?view=app`); } catch {}
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount
 
@@ -774,19 +775,22 @@ export function VisualizerClient({
 
   // End the journey after completion — return to journey picker
   const handleEndJourney = useCallback(() => {
-    setJourneyCompleted(false);
     completedJourneyRef.current = null;
     const state = useAudioStore.getState();
-    // If we're inside a custom path, "End" returns to the path screen
-    // rather than opening the generic journey picker.
+    // Inside a custom path: navigate first, stop after — same
+    // approach as handleExit to avoid shader flashes during transition.
     const activePath = state.activePath;
     if (activePath?.shareToken) {
-      setIsExiting(true);
-      state.stopJourney();
-      state.setActivePath(null);
       router.push(`/path/${activePath.shareToken}?view=app`);
+      setJourneyCompleted(false);
+      setTimeout(() => {
+        const s = useAudioStore.getState();
+        if (s.activeJourney) s.stopJourney();
+        s.setActivePath(null);
+      }, 80);
       return;
     }
+    setJourneyCompleted(false);
     state.stopJourney();
     setJourneyOpen(true);
   }, [router]);
@@ -929,34 +933,26 @@ export function VisualizerClient({
   }, [router]);
 
   const handleExit = useCallback(() => {
-    setJourneyCompleted(false);
     completedJourneyRef.current = null;
     const state = useAudioStore.getState();
-    // If the journey was launched from a custom path (Welcome Home etc.),
-    // closing should return to that path's dedicated screen — not the
-    // generic library. Preserve the in-app ?view=app context so the back
-    // arrow stays visible.
     const activePath = state.activePath;
-    if (activePath && state.activeJourney) {
-      setIsExiting(true);
-      state.stopJourney();
-      state.setActivePath(null);
-      if (activePath.shareToken) {
-        router.push(`/path/${activePath.shareToken}?view=app`);
-        return;
-      }
-    }
-    if (state.activeJourney) {
-      setIsExiting(true);
-      state.stopJourney();
-      router.push("/library");
-    } else if (state.currentTrack) {
-      setIsExiting(true);
-      router.push("/library");
+    // Navigate FIRST so the current journey shader stays painted during
+    // the route transition — no black flash, no shader pop. The audio
+    // engine stop happens in the next tick, by which point the new route
+    // is already rendering.
+    if (activePath?.shareToken && state.activeJourney) {
+      router.push(`/path/${activePath.shareToken}?view=app`);
     } else {
-      setIsExiting(true);
       router.push("/library");
     }
+    setJourneyCompleted(false);
+    // Defer journey teardown: the small delay lets the route transition
+    // begin before the store mutation causes a re-render of this page.
+    setTimeout(() => {
+      const s = useAudioStore.getState();
+      if (s.activeJourney) s.stopJourney();
+      s.setActivePath(null);
+    }, 80);
   }, [router]);
 
   // Seek by offset
@@ -1111,12 +1107,6 @@ export function VisualizerClient({
 
   if (!analyser || !dataArray) return null;
 
-  // Exiting to another route: render a solid black screen so the visualizer
-  // doesn't paint a single frame of the default non-journey shader between
-  // stopJourney() and the route transition. Eliminates the exit flash.
-  if (isExiting) {
-    return <div className="h-dvh w-screen bg-black" />;
-  }
 
   // Always render — compositor contains the bottom bar; journey selector
   // covers shaders with its own solid black background at z-index 7
@@ -1194,15 +1184,18 @@ export function VisualizerClient({
             if (state.activeJourney) {
               // If we're inside a user path (Welcome Home, etc.) return to
               // the dedicated path screen instead of opening the journey
-              // picker — that's the screen they launched from.
+              // picker. Navigate first then stop — same pattern as
+              // handleExit to avoid the transition shader flash.
               const activePath = state.activePath;
               if (activePath?.shareToken) {
-                setIsExiting(true);
-                state.stopJourney();
-                state.setActivePath(null);
+                router.push(`/path/${activePath.shareToken}?view=app`);
                 setJourneyCompleted(false);
                 completedJourneyRef.current = null;
-                router.push(`/path/${activePath.shareToken}?view=app`);
+                setTimeout(() => {
+                  const s = useAudioStore.getState();
+                  if (s.activeJourney) s.stopJourney();
+                  s.setActivePath(null);
+                }, 80);
                 return;
               }
               // Default: stop journey and open journey picker

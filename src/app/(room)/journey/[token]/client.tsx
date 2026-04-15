@@ -21,7 +21,7 @@ import { getTierProfile } from "@/lib/audio/device-tier";
 import { createClient } from "@/lib/supabase/client";
 import { MODES_3D, MODES_AI } from "@/lib/shaders";
 import type { Journey, JourneyFrame, JourneyPhaseId } from "@/lib/journeys/types";
-import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, RotateCcw } from "lucide-react";
+import { Pause, Play, Volume2, VolumeX, Share2, Maximize2, Minimize2, RotateCcw, X } from "lucide-react";
 
 function formatTime(s: number): string {
   if (!s || isNaN(s)) return "0:00";
@@ -918,6 +918,25 @@ export function SharedJourneyClient({
         style={{ cursor: "pointer" }}
         onClick={() => setStarted(true)}
       >
+        {/* Close back to the path landing — only when launched from a path.
+            Listeners aren't forced to commit before hearing the first note. */}
+        {pathContext && (
+          // eslint-disable-next-line @next/next/no-html-link-for-pages
+          <a
+            href={`/path/${pathContext.pathToken}`}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-5 right-5 flex items-center justify-center w-10 h-10 rounded-full text-white/40 hover:text-white/90 transition-colors"
+            style={{
+              zIndex: 20,
+              background: "rgba(0,0,0,0.4)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(8px)",
+            }}
+            title={`Back to ${pathContext.pathName}`}
+          >
+            <X className="h-4 w-4" />
+          </a>
+        )}
         <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
         <div
           style={{
@@ -1067,6 +1086,27 @@ export function SharedJourneyClient({
 
   return (
     <div className="h-dvh w-screen overflow-hidden bg-black relative">
+      {/* Persistent close-to-path button — always available when launched
+          from a shared path so the listener can bail out mid-journey
+          without waiting for the end overlay. */}
+      {pathContext && (
+        // eslint-disable-next-line @next/next/no-html-link-for-pages
+        <a
+          href={`/path/${pathContext.pathToken}`}
+          className="fixed top-5 right-5 flex items-center justify-center w-10 h-10 rounded-full text-white/50 hover:text-white/95 transition-all"
+          style={{
+            zIndex: 60,
+            background: "rgba(0,0,0,0.45)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            backdropFilter: "blur(8px)",
+            opacity: controlsVisible ? 1 : 0.25,
+            transition: "opacity 0.4s ease",
+          }}
+          title={`Back to ${pathContext.pathName}`}
+        >
+          <X className="h-4 w-4" />
+        </a>
+      )}
       {analyser && dataArray && (
         <JourneyCompositor
           frame={journeyFrame}

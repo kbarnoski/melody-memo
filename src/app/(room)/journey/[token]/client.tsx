@@ -1320,7 +1320,7 @@ export function SharedJourneyClient({
             {audioUrl && (
               <button
                 onClick={togglePlay}
-                className="flex items-center justify-center p-2 text-white/80 hover:text-white transition-colors duration-75"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 text-white/80 hover:text-white transition-colors duration-75"
               >
                 {isPlaying ? (
                   <Pause className="h-4 w-4" fill="currentColor" />
@@ -1342,7 +1342,7 @@ export function SharedJourneyClient({
             {audioUrl && (
               <button
                 onClick={toggleMute}
-                className="flex items-center justify-center p-1.5 text-white/35 hover:text-white/70 transition-colors duration-75"
+                className="flex items-center justify-center min-w-[44px] min-h-[44px] p-1.5 text-white/35 hover:text-white/70 transition-colors duration-75"
               >
                 {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
               </button>
@@ -1411,14 +1411,14 @@ export function SharedJourneyClient({
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleShare}
-                className="min-w-[36px] min-h-[32px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
                 title="Share"
               >
                 <Share2 className="h-3.5 w-3.5" />
               </button>
               <button
                 onClick={toggleFullscreen}
-                className="min-w-[36px] min-h-[32px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
                 title="Fullscreen"
               >
                 {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -1427,7 +1427,7 @@ export function SharedJourneyClient({
                 // eslint-disable-next-line @next/next/no-html-link-for-pages
                 <a
                   href={`/path/${pathContext.pathToken}`}
-                  className="min-h-[32px] flex items-center gap-1 px-2 rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
+                  className="min-h-[44px] flex items-center gap-1 px-2 rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
                   style={{ fontSize: "0.62rem", fontFamily: "var(--font-geist-mono)" }}
                   title={`Close — back to ${pathContext.pathName}`}
                 >
@@ -1465,7 +1465,7 @@ export function SharedJourneyClient({
             {audioUrl && (
               <button
                 onClick={toggleMute}
-                className="min-w-[36px] min-h-[36px] flex items-center justify-center text-white/35 hover:text-white/65 transition-colors duration-75"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/35 hover:text-white/65 transition-colors duration-75"
               >
                 {muted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
               </button>

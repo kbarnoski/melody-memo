@@ -626,7 +626,6 @@ export function SharedJourneyClient({
 
     if (allEvents.length > 0) {
       engine.setEvents(allEvents, dur);
-      console.log(`[shared-journey] wired ${allEvents.length} events (duration: ${dur}s)`);
     }
   }, [started, analysisEvents, cueMarkers, journey.enableBassFlash, recordingDuration]);
 

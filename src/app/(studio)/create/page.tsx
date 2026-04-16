@@ -48,7 +48,7 @@ function CreateJourneyPageInner() {
 
 export default function CreateJourneyPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="mx-auto w-full max-w-xl animate-pulse"><div className="h-8 w-56 rounded-md bg-white/[0.06] mb-8" /><div className="h-64 rounded-xl bg-white/[0.03]" /></div>}>
       <CreateJourneyPageInner />
     </Suspense>
   );

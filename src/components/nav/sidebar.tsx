@@ -98,7 +98,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
                 isActive
                   ? "bg-white/[0.08] text-white/90"
                   : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
@@ -154,6 +154,7 @@ export function Sidebar() {
           size="icon"
           className="h-9 w-9 text-white/40 hover:text-white/70"
           onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>

@@ -18,7 +18,7 @@ export default async function InsightsPage() {
     .eq("user_id", user.id);
 
   if (error) {
-    console.error("Insights query error:", error);
+    // Silently handle — the page renders with empty state below
   }
 
   const allRecordings = recordings ?? [];
@@ -53,7 +53,7 @@ export default async function InsightsPage() {
   if (totalRecordings === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Insights</h1>
+        <h1 className="text-2xl font-extralight tracking-tight">Insights</h1>
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <Upload className="mb-4 h-10 w-10 text-muted-foreground" />
           <p className="mb-2 text-lg font-medium">No recordings yet</p>
@@ -74,7 +74,7 @@ export default async function InsightsPage() {
   if (analysesData.length === 0) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Insights</h1>
+        <h1 className="text-2xl font-extralight tracking-tight">Insights</h1>
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-16">
           <BarChart3 className="mb-4 h-10 w-10 text-muted-foreground" />
           <p className="mb-2 text-lg font-medium">No analyzed recordings yet</p>
@@ -95,7 +95,7 @@ export default async function InsightsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Insights</h1>
+        <h1 className="text-2xl font-extralight tracking-tight">Insights</h1>
         <p className="text-muted-foreground">
           Patterns across {analysesData.length} analyzed recording{analysesData.length !== 1 ? "s" : ""}
         </p>

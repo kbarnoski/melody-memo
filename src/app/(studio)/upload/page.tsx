@@ -195,7 +195,7 @@ export default function UploadPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-extralight tracking-tight">Upload Recordings</h1>
+        <h1 className="text-2xl font-extralight tracking-tight">Upload Recordings</h1>
         <p className="text-muted-foreground">
           Drag and drop your voice memos or click to browse
         </p>

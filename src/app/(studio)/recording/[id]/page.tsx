@@ -44,7 +44,7 @@ export default async function RecordingPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{recording.title}</h1>
+        <h1 className="text-2xl font-extralight tracking-tight">{recording.title}</h1>
         {recording.description && (
           <p className="mt-1 text-sm text-muted-foreground">{recording.description}</p>
         )}

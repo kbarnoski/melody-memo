@@ -128,8 +128,9 @@ export function Tracklist({ journeys, isInAppContext, pathToken, accent, glow }:
                 aria-label={j.name}
                 className="group relative inline-flex items-center justify-center"
                 style={{
-                  width: "16px",
-                  height: "16px",
+                  width: "24px",
+                  height: "24px",
+                  padding: "5px",
                 }}
               >
                 <span
@@ -199,7 +200,7 @@ export function Tracklist({ journeys, isInAppContext, pathToken, accent, glow }:
               onMouseEnter={() => preloadTrack(j)}
               onTouchStart={() => preloadTrack(j)}
               onFocus={() => preloadTrack(j)}
-              className="group block rounded-xl px-5 py-4 transition-all hover:bg-white/[0.04]"
+              className="group block rounded-xl px-5 py-4 transition-all hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/25"
               style={{
                 border: done
                   ? `1px solid ${accent}45`

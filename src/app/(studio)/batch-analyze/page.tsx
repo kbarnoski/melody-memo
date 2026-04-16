@@ -40,6 +40,7 @@ export default function BatchAnalyzePage() {
   const [loading, setLoading] = useState(true);
   const [running, setRunning] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const hasAutoStartedRef = useRef(false);
 
   const loadTracks = useCallback(async () => {
@@ -49,6 +50,13 @@ export default function BatchAnalyzePage() {
       setLoading(false);
       return;
     }
+    // Admin gate — only the admin email can access this page
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+    if (!adminEmail || user.email?.toLowerCase().trim() !== adminEmail.toLowerCase().trim()) {
+      setLoading(false);
+      return;
+    }
+    setIsAdmin(true);
 
     const { data: recs } = await supabase
       .from("recordings")
@@ -182,6 +190,14 @@ export default function BatchAnalyzePage() {
   const remaining = tracks.filter((t) => t.status === "pending" || t.status === "running").length;
   const erroredCount = tracks.filter((t) => t.status === "error").length;
   const doneCount = tracks.filter((t) => t.status === "done" || t.status === "already-done").length;
+
+  if (!isAdmin && !loading) {
+    return (
+      <div className="max-w-2xl py-16 text-center text-white/40" style={{ fontSize: "0.85rem" }}>
+        This page is admin-only.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl">

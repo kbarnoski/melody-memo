@@ -37,6 +37,7 @@ export function PathShareButton({ token, pathName }: { token: string; pathName: 
         textTransform: "uppercase",
       }}
       title="Copy share link"
+      aria-label="Share this path"
     >
       {copied ? <Check className="h-3.5 w-3.5" /> : <Share2 className="h-3.5 w-3.5" />}
       {copied ? "copied" : "share"}

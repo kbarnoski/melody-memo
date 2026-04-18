@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute =
     pathname.startsWith("/share/") ||
     pathname.startsWith("/journey/") ||
+    pathname.startsWith("/path/") ||
     (pathname.startsWith("/room/") &&
       pathname !== "/room/installation" &&
       pathname.split("/").length === 3);
@@ -57,6 +58,12 @@ export async function middleware(request: NextRequest) {
     url.pathname = "/library";
     return NextResponse.redirect(url);
   }
+
+  // Security headers — defense-in-depth against XSS, clickjacking, sniffing
+  supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
+  supabaseResponse.headers.set("X-Frame-Options", "DENY");
+  supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=()");
 
   return supabaseResponse;
 }

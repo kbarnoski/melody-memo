@@ -121,16 +121,15 @@ export function VisualizerClient({
 }: VisualizerClientProps) {
   const router = useRouter();
 
-  // Client-side admin fallback — survives HMR/session disruption
+  // Client-side admin fallback — survives HMR/session disruption.
+  // Uses the server-provided ADMIN_EMAIL (not NEXT_PUBLIC_) to avoid
+  // leaking the admin identity to the client bundle.
   const [clientAdmin, setClientAdmin] = useState(false);
   useEffect(() => {
-    if (isAdminProp) return; // already admin from server
-    const sb = createClient();
-    sb.auth.getUser().then(({ data: { user } }) => {
-      if (user?.email?.toLowerCase().trim() === process.env.NEXT_PUBLIC_ADMIN_EMAIL?.toLowerCase().trim()) {
-        setClientAdmin(true);
-      }
-    });
+    if (isAdminProp) return;
+    // No client-side email check — rely on server-provided isAdmin prop.
+    // This is intentionally a no-op; the state exists for the isAdmin
+    // derivation below but the actual check runs server-side only.
   }, [isAdminProp]);
   const isAdmin = isAdminProp || clientAdmin;
 

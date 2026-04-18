@@ -167,7 +167,7 @@ function CompareChat({
             placeholder="Ask about these recordings..."
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" aria-label="Send message" disabled={isLoading || !input.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </form>
@@ -256,10 +256,12 @@ export default function ComparePage() {
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
             <div className="space-y-1.5">
-              <label className="text-xs uppercase tracking-widest text-muted-foreground">
+              <label htmlFor="compare-recording-a" className="text-xs uppercase tracking-widest text-muted-foreground">
                 Recording A
               </label>
               <select
+                id="compare-recording-a"
+                name="recordingA"
                 value={idA}
                 onChange={(e) => setIdA(e.target.value)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
@@ -274,10 +276,12 @@ export default function ComparePage() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs uppercase tracking-widest text-muted-foreground">
+              <label htmlFor="compare-recording-b" className="text-xs uppercase tracking-widest text-muted-foreground">
                 Recording B
               </label>
               <select
+                id="compare-recording-b"
+                name="recordingB"
                 value={idB}
                 onChange={(e) => setIdB(e.target.value)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-ring"

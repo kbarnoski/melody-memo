@@ -719,6 +719,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   return (
                     <div
                       key={path.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open path ${path.name}`}
                       className="jcard wh-path-card rounded-xl cursor-pointer"
                       style={{
                         backgroundColor: "rgba(255,255,255,0.02)",
@@ -727,6 +730,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                         transition: "all 0.15s ease",
                       }}
                       onClick={openPath}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openPath();
+                        }
+                      }}
                       onMouseEnter={warmPath}
                       onFocus={warmPath}
                       onTouchStart={warmPath}
@@ -765,6 +774,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                         {path.shareToken && (
                           <button
                             type="button"
+                            aria-label="Copy share link"
                             onClick={copyLink}
                             className="p-1.5 rounded-md text-white/30 hover:text-white/80 transition-colors shrink-0"
                             title="Copy share link"
@@ -840,8 +850,18 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   >
                     {/* Collapsed header — always visible */}
                     <div
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      aria-label={`${isExpanded ? "Collapse" : "Expand"} path ${path.name}`}
                       className="cursor-pointer"
                       onClick={() => setExpandedPath(isExpanded ? null : path.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setExpandedPath(isExpanded ? null : path.id);
+                        }
+                      }}
                     >
                       <div className="flex items-start gap-2.5 mb-2">
                         <div
@@ -917,8 +937,17 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             return (
                               <div
                                 key={jid}
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Open journey ${journey.name}`}
                                 className="flex items-center gap-3 py-1.5 cursor-pointer group rounded-md px-2 hover:bg-white/[0.03] transition-colors"
                                 onClick={() => handleJourneyClick(journey)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    handleJourneyClick(journey);
+                                  }
+                                }}
                                 style={{
                                   backgroundColor: isActive ? "rgba(255,255,255,0.04)" : undefined,
                                 }}
@@ -967,9 +996,20 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                         >
                           {culminationUnlocked ? (
                             <div
+                              role="button"
+                              tabIndex={0}
+                              aria-label={`Start culmination ${culmination?.name ?? "culmination"}`}
                               className="flex items-center gap-3 cursor-pointer group rounded-md py-1.5 flex-1 hover:bg-white/[0.03] transition-colors"
                               onClick={() => {
                                 if (culmination) {
+                                  ensureResumed();
+                                  startJourney(path.culminationJourneyId);
+                                  onClose();
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if ((e.key === "Enter" || e.key === " ") && culmination) {
+                                  e.preventDefault();
                                   ensureResumed();
                                   startJourney(path.culminationJourneyId);
                                   onClose();
@@ -1022,6 +1062,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             {/* Grand Culmination — The Spirit */}
             {grandCulminationUnlocked && (
               <div
+                role="button"
+                tabIndex={0}
+                aria-label="Enter The Spirit"
                 className="mt-4 jcard rounded-xl cursor-pointer"
                 style={{
                   backgroundColor: "rgba(160,128,208,0.03)",
@@ -1032,6 +1075,14 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   ensureResumed();
                   startJourney(GRAND_CULMINATION_ID);
                   onClose();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    ensureResumed();
+                    startJourney(GRAND_CULMINATION_ID);
+                    onClose();
+                  }
                 }}
               >
                 <div className="flex items-center gap-2.5">
@@ -1096,6 +1147,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 return (
                   <div
                     key={journey.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open journey ${journey.name}`}
                     className={`jcard cursor-pointer group rounded-xl${isActive ? " jcard-active" : ""}`}
                     style={{
                       backgroundColor: isActive
@@ -1106,6 +1160,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       padding: "24px",
                     }}
                     onClick={() => handleJourneyClick(journey)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleJourneyClick(journey);
+                      }
+                    }}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
@@ -1143,6 +1203,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           </div>
                         )}
                         <button
+                          type="button"
+                          aria-label="Share journey"
                           onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
                           className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
                           title="Share"
@@ -1235,6 +1297,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 return (
                   <div
                     key={journey.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open journey ${journey.name}`}
                     className="py-4 cursor-pointer group transition-colors"
                     style={{
                       backgroundColor: isActive ? "rgba(255,255,255,0.03)" : "transparent",
@@ -1242,6 +1307,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       paddingLeft: "12px",
                     }}
                     onClick={() => handleJourneyClick(journey)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleJourneyClick(journey);
+                      }
+                    }}
                   >
                     <div className="flex items-start justify-between gap-3 mb-1.5">
                       <div className="flex items-start gap-2 min-w-0 flex-1">
@@ -1395,6 +1466,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   return (
                     <div
                       key={journey.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open journey ${journey.name}`}
                       className="py-3.5 cursor-pointer group transition-colors"
                       style={{
                         backgroundColor: isActive ? "rgba(255,255,255,0.03)" : "transparent",
@@ -1402,6 +1476,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                         paddingLeft: "12px",
                       }}
                       onClick={() => handleJourneyClick(journey)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          handleJourneyClick(journey);
+                        }
+                      }}
                     >
                       <div className="flex items-start justify-between gap-3 mb-1.5">
                         <div className="flex items-start gap-2 min-w-0 flex-1">
@@ -1471,6 +1551,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             </div>
                           )}
                           <button
+                            type="button"
+                            aria-label="Share journey"
                             onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
                             className={`p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                             title="Share"
@@ -1527,21 +1609,31 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                   const isActive = activeJourney?.id === journey.id;
                   const realm = journey.realmId !== "custom" ? REALMS.find((r) => r.id === journey.realmId) : null;
                   const accent = journey.theme?.palette?.accent ?? realm?.palette.accent ?? "#8b5cf6";
+                  const customOpen = async () => {
+                    ensureResumed();
+                    setAiImageEnabled(journey.aiEnabled);
+                    await loadCustomJourneyTrack(journey);
+                    startCustomJourney(journey);
+                    onClose();
+                  };
                   return (
                     <div
                       key={journey.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={`Open journey ${journey.name}`}
                       className="py-3.5 cursor-pointer group transition-colors"
                       style={{
                         backgroundColor: isActive ? "rgba(255,255,255,0.03)" : "transparent",
                         borderLeft: isActive ? `2px solid ${accent}` : "2px solid transparent",
                         paddingLeft: "12px",
                       }}
-                      onClick={async () => {
-                        ensureResumed();
-                        setAiImageEnabled(journey.aiEnabled);
-                        await loadCustomJourneyTrack(journey);
-                        startCustomJourney(journey);
-                        onClose();
+                      onClick={customOpen}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          customOpen();
+                        }
                       }}
                     >
                       <div className="flex items-center justify-between mb-1.5">
@@ -1581,6 +1673,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             </span>
                           )}
                           <button
+                            type="button"
+                            aria-label="Share journey"
                             onClick={(e) => handleShare(journey.id, journey.name, e)}
                             className={`p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                             title="Share"
@@ -1589,6 +1683,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             <Share2 className="h-3 w-3" />
                           </button>
                           <button
+                            type="button"
+                            aria-label="Delete journey"
                             onClick={(e) => handleDelete(journey.id, e)}
                             className={`p-1.5 rounded-md text-white/20 hover:text-red-400/60 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
                             title="Delete"
@@ -1629,6 +1725,9 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                 return (
                   <div
                     key={journey.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Open journey ${journey.name}`}
                     className={`jcard cursor-pointer group rounded-xl${isActive ? " jcard-active" : ""}`}
                     style={{
                       backgroundColor: isActive
@@ -1639,6 +1738,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                       padding: "20px",
                     }}
                     onClick={() => handleJourneyClick(journey)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleJourneyClick(journey);
+                      }
+                    }}
                   >
                     {/* Top row: realm dot + name ... AI badge + share */}
                     <div className="flex items-center justify-between mb-3">
@@ -1677,6 +1782,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           </div>
                         )}
                         <button
+                          type="button"
+                          aria-label="Share journey"
                           onClick={(e) => handleShareBuiltIn(journey.id, journey.name, e)}
                           className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
                           title="Share"
@@ -1770,9 +1877,18 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                     const isActive = activeJourney?.id === journey.id;
                     const cRealm = journey.realmId !== "custom" ? REALMS.find((r) => r.id === journey.realmId) : null;
                     const accent = journey.theme?.palette?.accent ?? cRealm?.palette.accent ?? "#8b5cf6";
+                    const desktopCustomOpen = async () => {
+                      setAiImageEnabled(journey.aiEnabled);
+                      await loadCustomJourneyTrack(journey);
+                      startCustomJourney(journey);
+                      onClose();
+                    };
                     return (
                       <div
                         key={journey.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Open journey ${journey.name}`}
                         className={`jcard cursor-pointer group rounded-xl${isActive ? " jcard-active" : ""}`}
                         style={{
                           backgroundColor: isActive
@@ -1782,11 +1898,12 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           borderLeft: isActive ? `2px solid ${accent}` : undefined,
                           padding: "20px",
                         }}
-                        onClick={async () => {
-                          setAiImageEnabled(journey.aiEnabled);
-                          await loadCustomJourneyTrack(journey);
-                          startCustomJourney(journey);
-                          onClose();
+                        onClick={desktopCustomOpen}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            desktopCustomOpen();
+                          }
                         }}
                       >
                         {/* Top row: accent dot + name ... share + delete */}
@@ -1813,6 +1930,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <button
+                              type="button"
+                              aria-label="Share journey"
                               onClick={(e) => handleShare(journey.id, journey.name, e)}
                               className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
                               title="Share"
@@ -1821,6 +1940,8 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                               <Share2 className="h-3 w-3" />
                             </button>
                             <button
+                              type="button"
+                              aria-label="Delete journey"
                               onClick={(e) => handleDelete(journey.id, e)}
                               className="p-1.5 rounded-md text-white/20 hover:text-red-400/60 transition-all opacity-0 group-hover:opacity-100"
                               title="Delete"

@@ -121,13 +121,18 @@ export function SettingsClient({
               </div>
               <div className="flex gap-3">
                 <input
+                  id="settings-display-name"
+                  name="displayName"
                   type="text"
+                  autoComplete="name"
+                  aria-label="Display name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Your name"
                   className={inputClass}
                 />
                 <button
+                  type="button"
                   onClick={handleSaveName}
                   disabled={savingName || name.trim() === displayName}
                   className={buttonClass}
@@ -161,13 +166,18 @@ export function SettingsClient({
               </div>
               <div className="flex gap-3">
                 <input
+                  id="settings-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  aria-label="Email address"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   placeholder="you@example.com"
                   className={inputClass}
                 />
                 <button
+                  type="button"
                   onClick={handleUpdateEmail}
                   disabled={
                     savingEmail || newEmail.trim() === email || !newEmail.trim()
@@ -203,20 +213,29 @@ export function SettingsClient({
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <input
+                  id="settings-new-password"
+                  name="newPassword"
                   type="password"
+                  autoComplete="new-password"
+                  aria-label="New password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="New password"
                   className={inputClass}
                 />
                 <input
+                  id="settings-confirm-password"
+                  name="confirmPassword"
                   type="password"
+                  autoComplete="new-password"
+                  aria-label="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
                   className={inputClass}
                 />
                 <button
+                  type="button"
                   onClick={handleUpdatePassword}
                   disabled={savingPassword || !password}
                   className={buttonClass}

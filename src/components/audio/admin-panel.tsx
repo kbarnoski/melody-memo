@@ -162,7 +162,7 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <span style={headerStyle}>Admin</span>
-          <button onClick={onClose} style={closeBtnStyle} title="Close (A)">
+          <button type="button" aria-label="Close admin panel" onClick={onClose} style={closeBtnStyle} title="Close (A)">
             <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
               stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeLinecap="round">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -180,6 +180,8 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
             padding: "6px 0",
           }}>
             <button
+              type="button"
+              aria-label="Previous shader"
               onClick={onPrevShader}
               style={{
                 width: 24,
@@ -216,6 +218,8 @@ export function AdminPanel({ visible, onClose, currentShader, dualShader, tertia
               {MODE_META.find((m) => m.mode === currentShader)?.label ?? currentShader}
             </span>
             <button
+              type="button"
+              aria-label="Next shader"
               onClick={onNextShader}
               style={{
                 width: 24,
@@ -467,7 +471,10 @@ const ShaderRow = forwardRef<HTMLDivElement, {
         }}>{LAYER_LABEL[activeLayer]}</span>
       )}
       <span
+        role={onClick ? "button" : undefined}
+        tabIndex={onClick ? 0 : undefined}
         onClick={onClick}
+        onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
         style={{
           ...shaderLabelStyle,
           color: isHighlighted ? "rgba(255,255,255,0.95)" : shaderLabelStyle.color,
@@ -518,6 +525,8 @@ const ShaderRow = forwardRef<HTMLDivElement, {
 function FavButton({ active, onClick }: { active: boolean; onClick: () => void }) {
   return (
     <button
+      type="button"
+      aria-label={active ? "Remove from favorites" : "Add to favorites"}
       onClick={onClick}
       title={active ? "Remove from favorites" : "Add to favorites"}
       style={{
@@ -556,6 +565,7 @@ function SmallButton({ onClick, color, children }: {
   const c = colors[color];
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
         fontFamily: "var(--font-geist-mono)",

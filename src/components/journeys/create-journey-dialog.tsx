@@ -25,6 +25,9 @@ export function CreateJourneyDialog({
     <>
       {/* Backdrop */}
       <div
+        role="button"
+        tabIndex={-1}
+        aria-label="Close dialog"
         className="fixed inset-0 z-[90] transition-opacity duration-300"
         style={{
           backdropFilter: "blur(32px) saturate(1.2)",
@@ -32,6 +35,12 @@ export function CreateJourneyDialog({
           backgroundColor: "rgba(0, 0, 0, 0.75)",
         }}
         onClick={handleClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+            e.preventDefault();
+            handleClose();
+          }
+        }}
       />
 
       {/* Content — scrollable column so Create button is always reachable */}
@@ -57,6 +66,8 @@ export function CreateJourneyDialog({
               </p>
             </div>
             <button
+              type="button"
+              aria-label="Close dialog"
               onClick={handleClose}
               className="p-2 rounded-lg text-white/30 hover:text-white/60 transition-colors"
             >

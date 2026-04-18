@@ -242,12 +242,14 @@ export function CreateJourneyForm({
       {/* Journey name */}
       <div className="mb-5">
         <label
+          htmlFor="journey-name"
           className="block text-white/40 mb-2"
           style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
         >
           Name
         </label>
         <input
+          id="journey-name"
           type="text"
           name="journeyName"
           autoComplete="off"
@@ -268,12 +270,16 @@ export function CreateJourneyForm({
       {/* Story input */}
       <div className="mb-5">
         <label
+          htmlFor="journey-story"
           className="block text-white/40 mb-2"
           style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
         >
           Your story
         </label>
         <textarea
+          id="journey-story"
+          name="storyText"
+          autoComplete="off"
           placeholder="A walk through autumn woods at dusk, leaves turning to gold..."
           value={storyText}
           onChange={(e) => setStoryText(e.target.value)}
@@ -293,13 +299,13 @@ export function CreateJourneyForm({
       {/* Song picker */}
       {recordings.length > 0 && (
         <div className="mb-6">
-          <label
+          <span
             className="block text-white/40 mb-2"
             style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
           >
             <Music className="inline h-3 w-3 mr-1 -mt-0.5" />
             Song
-          </label>
+          </span>
           <div className="max-h-32 overflow-y-auto scrollbar-thin pr-1 space-y-1">
             <button
               type="button"
@@ -345,6 +351,7 @@ export function CreateJourneyForm({
       {/* Upload a new track */}
       <div className="mb-5">
         <label
+          htmlFor="journey-audio-file"
           className="block text-white/40 mb-2"
           style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
         >
@@ -352,6 +359,9 @@ export function CreateJourneyForm({
           Or upload a new track
         </label>
         <input
+          id="journey-audio-file"
+          name="journeyAudioFile"
+          aria-label="Upload audio track"
           type="file"
           accept="audio/*,.m4a,.mp3,.wav,.flac"
           disabled={creating}
@@ -369,8 +379,10 @@ export function CreateJourneyForm({
         {audioFile && (
           <div className="mt-3 space-y-2">
             <input
+              id="journey-audio-title"
               type="text"
               name="audioTitle"
+              aria-label="Track title"
               autoComplete="off"
               placeholder="Track title"
               value={audioTitle}
@@ -385,8 +397,10 @@ export function CreateJourneyForm({
               }}
             />
             <input
+              id="journey-audio-artist"
               type="text"
               name="audioArtist"
+              aria-label="Artist name"
               autoComplete="off"
               placeholder="Artist (required)"
               value={audioArtist}
@@ -410,6 +424,7 @@ export function CreateJourneyForm({
       {/* Your own photos */}
       <div className="mb-5">
         <label
+          htmlFor="journey-image-files"
           className="block text-white/40 mb-2"
           style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
         >
@@ -417,6 +432,9 @@ export function CreateJourneyForm({
           Your own photos (optional)
         </label>
         <input
+          id="journey-image-files"
+          name="journeyImageFiles"
+          aria-label="Upload photos"
           type="file"
           accept="image/*"
           multiple
@@ -476,6 +494,7 @@ export function CreateJourneyForm({
 
       {/* Create button */}
       <button
+        type="button"
         onClick={handleCreate}
         disabled={creating || !storyText.trim()}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white/80 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
@@ -498,6 +517,7 @@ export function CreateJourneyForm({
 
       {(onCancel || creating) && (
         <button
+          type="button"
           onClick={handleCancel}
           className="w-full mt-2 px-4 py-2 text-white/30 hover:text-white/50 transition-colors"
           style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}

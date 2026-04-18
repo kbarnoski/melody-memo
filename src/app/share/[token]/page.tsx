@@ -106,8 +106,11 @@ export default async function SharedRecordingPage({
             preload="metadata"
             src={audioUrl}
             className="w-full"
+            aria-label={`Playback controls for ${recording.title}`}
             style={{ colorScheme: "dark light" }}
-          />
+          >
+            <track kind="captions" />
+          </audio>
         </section>
 
         {/* Analysis Summary */}

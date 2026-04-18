@@ -144,6 +144,9 @@ export function ShareSheet({ open, onClose, url, title, text }: ShareSheetProps)
     <>
       {/* Backdrop */}
       <div
+        role="button"
+        tabIndex={-1}
+        aria-label="Close share sheet"
         className="fixed inset-0 z-[70]"
         style={{
           backdropFilter: "blur(12px) saturate(1.1)",
@@ -151,6 +154,12 @@ export function ShareSheet({ open, onClose, url, title, text }: ShareSheetProps)
           backgroundColor: "rgba(0, 0, 0, 0.6)",
         }}
         onClick={onClose}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+            e.preventDefault();
+            onClose();
+          }
+        }}
       />
 
       {/* Sheet */}
@@ -168,6 +177,8 @@ export function ShareSheet({ open, onClose, url, title, text }: ShareSheetProps)
               Share
             </h3>
             <button
+              type="button"
+              aria-label="Close share sheet"
               onClick={onClose}
               className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors"
             >

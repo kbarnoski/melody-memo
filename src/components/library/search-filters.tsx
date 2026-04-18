@@ -64,6 +64,10 @@ export function SearchFilters() {
       <div className="relative flex-1 min-w-[200px]">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          id="library-filter-search"
+          name="q"
+          type="search"
+          autoComplete="off"
           placeholder="Search recordings..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -86,8 +90,10 @@ export function SearchFilters() {
         </PopoverTrigger>
         <PopoverContent className="w-72 space-y-4" align="end">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Key</label>
+            <label htmlFor="library-filter-key" className="text-sm font-medium">Key</label>
             <select
+              id="library-filter-key"
+              name="key"
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={keyFilter}
               onChange={(e) => setKeyFilter(e.target.value)}
@@ -100,8 +106,10 @@ export function SearchFilters() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Tag</label>
+            <label htmlFor="library-filter-tag" className="text-sm font-medium">Tag</label>
             <select
+              id="library-filter-tag"
+              name="tag"
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
               value={tagFilter}
               onChange={(e) => setTagFilter(e.target.value)}
@@ -114,10 +122,11 @@ export function SearchFilters() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">
+            <label htmlFor="library-filter-tempo" className="text-sm font-medium">
               Tempo: {tempoRange[0]}–{tempoRange[1]} BPM
             </label>
             <Slider
+              id="library-filter-tempo"
               min={0}
               max={300}
               step={5}
@@ -131,7 +140,7 @@ export function SearchFilters() {
               Apply
             </Button>
             {hasFilters && (
-              <Button size="sm" variant="ghost" onClick={clearFilters}>
+              <Button size="sm" variant="ghost" aria-label="Clear filters" onClick={clearFilters}>
                 <X className="h-4 w-4" />
               </Button>
             )}

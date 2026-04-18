@@ -64,10 +64,10 @@ export function CreateCollectionDialog() {
         </DialogHeader>
         <form onSubmit={handleCreate} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="collection-name">Name</Label>
             <Input
-              id="name"
-              name="name"
+              id="collection-name"
+              name="collectionName"
               autoComplete="off"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -76,10 +76,10 @@ export function CreateCollectionDialog() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="desc">Description (optional)</Label>
+            <Label htmlFor="collection-description">Description (optional)</Label>
             <Input
-              id="desc"
-              name="description"
+              id="collection-description"
+              name="collectionDescription"
               autoComplete="off"
               value={description}
               onChange={(e) => setDescription(e.target.value)}

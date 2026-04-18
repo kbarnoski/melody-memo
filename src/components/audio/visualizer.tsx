@@ -1035,8 +1035,18 @@ export function VisualizerCore({
       {!installationMode && modePaletteOpen && (
         <>
           <div
+            role="button"
+            tabIndex={-1}
+            aria-label="Close shader picker"
             className="hidden md:block fixed inset-0 z-30"
             onClick={() => { setModePaletteOpen(false); setModeSearch(""); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+                e.preventDefault();
+                setModePaletteOpen(false);
+                setModeSearch("");
+              }
+            }}
           />
           <div
             className="shader-picker-panel z-40 flex flex-col"
@@ -1047,8 +1057,10 @@ export function VisualizerCore({
               <Search className="h-4 w-4 md:h-3.5 md:w-3.5 text-white/30 flex-shrink-0" />
               <input
                 ref={searchInputRef}
+                id="visualizer-mode-search"
                 type="search"
                 name="mode"
+                aria-label="Search shader modes"
                 autoComplete="off"
                 value={modeSearch}
                 onChange={(e) => setModeSearch(e.target.value)}
@@ -1060,11 +1072,11 @@ export function VisualizerCore({
                   if (e.key === "Escape") { setModePaletteOpen(false); setModeSearch(""); }
                 }}
               />
-              <button onClick={() => { setModePaletteOpen(false); setModeSearch(""); }} className="text-white/40 hover:text-white/70 md:hidden p-1">
+              <button type="button" aria-label="Close shader picker" onClick={() => { setModePaletteOpen(false); setModeSearch(""); }} className="text-white/40 hover:text-white/70 md:hidden p-1">
                 <X className="h-4 w-4" />
               </button>
               {modeSearch && (
-                <button onClick={() => { setModeSearch(""); searchInputRef.current?.focus(); }} className="text-white/30 hover:text-white/60 hidden md:block">
+                <button type="button" aria-label="Clear search" onClick={() => { setModeSearch(""); searchInputRef.current?.focus(); }} className="text-white/30 hover:text-white/60 hidden md:block">
                   <X className="h-3 w-3" />
                 </button>
               )}
@@ -1245,6 +1257,8 @@ export function VisualizerCore({
               <div className="flex items-center gap-1">
                 {onPrevShader && (
                   <button
+                    type="button"
+                    aria-label="Previous shader"
                     onClick={onPrevShader}
                     className="flex items-center justify-center rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/10 transition-colors duration-75"
                     title="Previous shader"
@@ -1266,6 +1280,8 @@ export function VisualizerCore({
                 </button>
                 {onNextShader && (
                   <button
+                    type="button"
+                    aria-label="Next shader"
                     onClick={onNextShader}
                     className="flex items-center justify-center rounded-lg p-2 text-white/50 hover:text-white hover:bg-white/10 transition-colors duration-75"
                     title="Next shader"
@@ -1316,6 +1332,8 @@ export function VisualizerCore({
                 </button>
                 {showLiveButton && onLiveToggle && !journeyActive && (
                   <button
+                    type="button"
+                    aria-label={liveEnabled ? "Turn off live mode" : "Turn on live mode"}
                     onClick={onLiveToggle}
                     className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-75 ${liveEnabled ? "bg-red-500/20 text-red-400" : "text-white/50 hover:text-white/80 hover:bg-white/10"}`}
                     style={{
@@ -1346,7 +1364,19 @@ export function VisualizerCore({
                   </button>
                   {langPickerOpen && (
                     <>
-                      <div className="fixed inset-0 z-30" onClick={() => setLangPickerOpen(false)} />
+                      <div
+                        role="button"
+                        tabIndex={-1}
+                        aria-label="Close language picker"
+                        className="fixed inset-0 z-30"
+                        onClick={() => setLangPickerOpen(false)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+                            e.preventDefault();
+                            setLangPickerOpen(false);
+                          }
+                        }}
+                      />
                       <div
                         className="absolute bottom-12 left-0 z-40 py-2 rounded-xl overflow-hidden min-w-[140px]"
                         style={{
@@ -1357,6 +1387,7 @@ export function VisualizerCore({
                         {LANGUAGES.map((lang) => (
                           <button
                             key={lang.code}
+                            type="button"
                             onClick={() => { setLanguage(lang.code); setLangPickerOpen(false); }}
                             className={`w-full text-left px-4 py-1.5 transition-colors ${
                               language === lang.code
@@ -1383,6 +1414,8 @@ export function VisualizerCore({
           {showTransport && currentTrack && !inJourneyMode && (
             <div className="flex items-center gap-1">
               <button
+                type="button"
+                aria-label="Previous track"
                 onClick={playPrev}
                 className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 title="Previous track"
@@ -1390,6 +1423,8 @@ export function VisualizerCore({
                 <SkipBack className="h-3.5 w-3.5" fill="currentColor" />
               </button>
               <button
+                type="button"
+                aria-label={isPlaying ? "Pause" : "Play"}
                 onClick={() => {
                   ensureResumed();
                   isPlaying ? storePause() : storeResume();
@@ -1403,6 +1438,8 @@ export function VisualizerCore({
                 )}
               </button>
               <button
+                type="button"
+                aria-label="Next track"
                 onClick={playNext}
                 className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 title="Next track"
@@ -1410,6 +1447,8 @@ export function VisualizerCore({
                 <SkipForward className="h-3.5 w-3.5" fill="currentColor" />
               </button>
               <button
+                type="button"
+                aria-label={isMuted ? "Unmute" : "Mute"}
                 onClick={toggleMute}
                 className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 title={isMuted ? "Unmute" : "Mute"}
@@ -1448,6 +1487,8 @@ export function VisualizerCore({
           {journeyActive && currentTrack && (
             <div className="flex items-center gap-2">
               <button
+                type="button"
+                aria-label={isMuted ? "Unmute" : "Mute"}
                 onClick={toggleMute}
                 className="flex items-center justify-center p-2 text-white/40 hover:text-white/80 transition-colors duration-75"
                 title={isMuted ? "Unmute" : "Mute"}
@@ -1496,6 +1537,8 @@ export function VisualizerCore({
             </button>
           ) : (
             <button
+              type="button"
+              aria-label="Close"
               onClick={onExit}
               className="min-w-[44px] min-h-[44px] flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors"
               title="Close"
@@ -1505,6 +1548,8 @@ export function VisualizerCore({
           )}
           {onSignOut && (
             <button
+              type="button"
+              aria-label="Sign out"
               onClick={onSignOut}
               className="flex items-center justify-center p-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/10 transition-colors duration-75"
               title="Sign out"
@@ -1679,7 +1724,19 @@ export function VisualizerCore({
                         </button>
                         {langPickerOpen && (
                           <>
-                            <div className="fixed inset-0 z-30" onClick={() => setLangPickerOpen(false)} />
+                            <div
+                              role="button"
+                              tabIndex={-1}
+                              aria-label="Close language picker"
+                              className="fixed inset-0 z-30"
+                              onClick={() => setLangPickerOpen(false)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+                                  e.preventDefault();
+                                  setLangPickerOpen(false);
+                                }
+                              }}
+                            />
                             <div
                               className="absolute bottom-10 left-0 z-40 py-2 rounded-xl overflow-hidden min-w-[140px]"
                               style={{

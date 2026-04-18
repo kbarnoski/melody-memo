@@ -913,9 +913,18 @@ export function SharedJourneyClient({
   if (!started) {
     return (
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Start journey"
         className="h-dvh w-screen overflow-hidden bg-black relative flex items-center justify-center"
         style={{ cursor: "pointer" }}
         onClick={() => setStarted(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setStarted(true);
+          }
+        }}
       >
         <style>{`@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
         <div
@@ -1024,6 +1033,8 @@ export function SharedJourneyClient({
           </div>
 
           <button
+            type="button"
+            aria-label="Start journey"
             onClick={(e) => { e.stopPropagation(); setStarted(true); }}
             style={{
               display: "flex",
@@ -1319,6 +1330,8 @@ export function SharedJourneyClient({
           <div className="flex items-center gap-2">
             {audioUrl && (
               <button
+                type="button"
+                aria-label={isPlaying ? "Pause" : "Play"}
                 onClick={togglePlay}
                 className="flex items-center justify-center min-w-[44px] min-h-[44px] p-2 text-white/80 hover:text-white transition-colors duration-75"
               >
@@ -1341,6 +1354,8 @@ export function SharedJourneyClient({
             </span>
             {audioUrl && (
               <button
+                type="button"
+                aria-label={muted ? "Unmute" : "Mute"}
                 onClick={toggleMute}
                 className="flex items-center justify-center min-w-[44px] min-h-[44px] p-1.5 text-white/35 hover:text-white/70 transition-colors duration-75"
               >
@@ -1371,6 +1386,8 @@ export function SharedJourneyClient({
               Share
             </button>
             <button
+              type="button"
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
               onClick={toggleFullscreen}
               className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
               style={{ border: "1px solid rgba(255,255,255,0.1)" }}
@@ -1410,6 +1427,8 @@ export function SharedJourneyClient({
             </a>
             <div className="flex items-center gap-0.5">
               <button
+                type="button"
+                aria-label="Share journey"
                 onClick={handleShare}
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
                 title="Share"
@@ -1417,6 +1436,8 @@ export function SharedJourneyClient({
                 <Share2 className="h-3.5 w-3.5" />
               </button>
               <button
+                type="button"
+                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 onClick={toggleFullscreen}
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
                 title="Fullscreen"
@@ -1442,6 +1463,8 @@ export function SharedJourneyClient({
           <div className="flex items-center justify-center gap-2 px-3" style={{ height: "44px" }}>
             {audioUrl && (
               <button
+                type="button"
+                aria-label={isPlaying ? "Pause" : "Play"}
                 onClick={togglePlay}
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors duration-75"
               >
@@ -1464,6 +1487,8 @@ export function SharedJourneyClient({
             </span>
             {audioUrl && (
               <button
+                type="button"
+                aria-label={muted ? "Unmute" : "Mute"}
                 onClick={toggleMute}
                 className="min-w-[44px] min-h-[44px] flex items-center justify-center text-white/35 hover:text-white/65 transition-colors duration-75"
               >
@@ -1483,9 +1508,17 @@ export function SharedJourneyClient({
 
       {/* Progress bar — thin overlay at the very bottom of the bar */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Seek to position"
         className="absolute bottom-0 inset-x-0 cursor-pointer"
         style={{ zIndex: 11, height: "24px", display: "flex", alignItems: "flex-end" }}
         onClick={handleProgressClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+          }
+        }}
       >
         <div className="w-full h-[2px] overflow-hidden">
           <div

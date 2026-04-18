@@ -163,8 +163,17 @@ export function Sidebar() {
       {/* Mobile sidebar overlay */}
       {mobileOpen && (
         <div
+          role="button"
+          tabIndex={-1}
+          aria-label="Close menu"
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+              e.preventDefault();
+              setMobileOpen(false);
+            }
+          }}
         />
       )}
 

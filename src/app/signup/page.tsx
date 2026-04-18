@@ -72,9 +72,9 @@ function SignupForm() {
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="displayName">Your name</Label>
+            <Label htmlFor="signup-display-name">Your name</Label>
             <Input
-              id="displayName"
+              id="signup-display-name"
               name="displayName"
               type="text"
               autoComplete="name"
@@ -85,9 +85,9 @@ function SignupForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="signup-email">Email</Label>
             <Input
-              id="email"
+              id="signup-email"
               name="email"
               type="email"
               autoComplete="email"
@@ -98,9 +98,9 @@ function SignupForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="signup-password">Password</Label>
             <Input
-              id="password"
+              id="signup-password"
               name="password"
               type="password"
               autoComplete="new-password"

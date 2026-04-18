@@ -98,8 +98,10 @@ export function EditableDate({ recordingId, recordedAt, createdAt, readOnly }: E
       {editing && !readOnly ? (
         <input
           ref={inputRef}
+          id="recording-recorded-at"
           type="text"
           name="recordedAt"
+          aria-label="Recording date"
           autoComplete="off"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

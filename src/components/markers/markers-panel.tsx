@@ -184,6 +184,7 @@ export function MarkersPanel({
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Cancel adding marker"
             className="h-8 w-8 shrink-0"
             onClick={() => {
               setIsAdding(false);
@@ -208,7 +209,12 @@ export function MarkersPanel({
               role="button"
               tabIndex={0}
               onClick={() => onSeek(marker.time)}
-              onKeyDown={(e) => { if (e.key === "Enter") onSeek(marker.time); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSeek(marker.time);
+                }
+              }}
               className="flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-muted transition-colors text-left group cursor-pointer"
             >
               <span className="font-mono text-xs text-muted-foreground shrink-0 w-10">
@@ -224,6 +230,7 @@ export function MarkersPanel({
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label="Delete marker"
                   className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive"
                   onClick={(e) => {
                     e.stopPropagation();

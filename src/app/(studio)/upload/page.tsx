@@ -221,6 +221,9 @@ export default function UploadPage() {
           </p>
           <input
             ref={fileInputRef}
+            id="upload-file-input"
+            name="audioFiles"
+            aria-label="Choose audio files to upload"
             type="file"
             accept="audio/*,.m4a,.mp3,.wav"
             multiple
@@ -254,7 +257,9 @@ export default function UploadPage() {
                   {f.status !== "done" && (
                     <>
                       <Input
+                        id={`upload-artist-${i}`}
                         name="artist"
+                        aria-label="Artist name"
                         autoComplete="off"
                         placeholder="Artist name (required)"
                         value={f.artist}
@@ -271,7 +276,9 @@ export default function UploadPage() {
                         required
                       />
                       <Input
+                        id={`upload-description-${i}`}
                         name="description"
+                        aria-label="Recording description"
                         autoComplete="off"
                         placeholder="Add a description (optional)"
                         value={f.description}
@@ -306,6 +313,7 @@ export default function UploadPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label="Remove file"
                     onClick={() => removeFile(i)}
                     className="shrink-0"
                   >

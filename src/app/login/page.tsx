@@ -64,9 +64,9 @@ function LoginForm() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="login-email">Email</Label>
             <Input
-              id="email"
+              id="login-email"
               name="email"
               type="email"
               autoComplete="email"
@@ -78,13 +78,13 @@ function LoginForm() {
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="login-password">Password</Label>
               <Link href="/forgot-password" className="text-xs text-muted-foreground underline hover:text-foreground">
                 Forgot password?
               </Link>
             </div>
             <Input
-              id="password"
+              id="login-password"
               name="password"
               type="password"
               autoComplete="current-password"

@@ -219,6 +219,7 @@ export function RecordingDetail({
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Create a journey"
             className="shrink-0 text-muted-foreground hover:text-foreground"
             onClick={() => router.push(`/create?recordingId=${recording.id}`)}
             title="Create a journey"
@@ -229,6 +230,7 @@ export function RecordingDetail({
           <Button
             variant="ghost"
             size="icon"
+            aria-label={shareToken ? "Open share link" : "Share recording"}
             className="shrink-0 text-muted-foreground hover:text-foreground"
             onClick={handleShare}
             disabled={sharing}
@@ -256,6 +258,7 @@ export function RecordingDetail({
                 <Button
                   variant="outline"
                   size="icon"
+                  aria-label="Copy share link"
                   className="shrink-0"
                   onClick={copyShareUrl}
                 >
@@ -270,6 +273,7 @@ export function RecordingDetail({
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Delete recording"
                 className="shrink-0 text-muted-foreground hover:text-destructive"
                 disabled={deleting}
               >

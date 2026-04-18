@@ -50,9 +50,9 @@ export default function ForgotPasswordPage() {
         {!sent ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="forgot-password-email">Email</Label>
               <Input
-                id="email"
+                id="forgot-password-email"
                 name="email"
                 type="email"
                 autoComplete="email"

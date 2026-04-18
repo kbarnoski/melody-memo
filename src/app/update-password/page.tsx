@@ -45,9 +45,9 @@ export default function UpdatePasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="update-password">Password</Label>
             <Input
-              id="password"
+              id="update-password"
               name="password"
               type="password"
               autoComplete="new-password"

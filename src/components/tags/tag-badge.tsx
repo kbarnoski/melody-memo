@@ -29,7 +29,7 @@ export function TagBadge({ name, color, onRemove }: TagBadgeProps) {
     <Badge variant="secondary" className={`gap-1 ${colorClass}`}>
       {name}
       {onRemove && (
-        <button onClick={onRemove} className="ml-0.5 hover:opacity-70">
+        <button type="button" aria-label={`Remove tag ${name}`} onClick={onRemove} className="ml-0.5 hover:opacity-70">
           <X className="h-3 w-3" />
         </button>
       )}

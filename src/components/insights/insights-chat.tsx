@@ -96,7 +96,7 @@ export function InsightsChat({ analyses }: InsightsChatProps) {
             placeholder="Ask about your library patterns..."
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" aria-label="Send message" disabled={isLoading || !input.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </form>

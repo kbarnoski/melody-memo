@@ -440,6 +440,8 @@ function RatingRow({
     <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 32 }}>
       {/* Thumbs down */}
       <button
+        type="button"
+        aria-label={`Dislike: ${label}`}
         onClick={onDown}
         style={{
           width: 28, height: 28,
@@ -476,6 +478,8 @@ function RatingRow({
 
       {/* Thumbs up */}
       <button
+        type="button"
+        aria-label={`Love: ${label}`}
         onClick={onUp}
         style={{
           width: 28, height: 28,

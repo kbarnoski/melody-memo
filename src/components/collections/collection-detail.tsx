@@ -62,6 +62,8 @@ function SortableRecording({
       <Card>
         <CardContent className="flex items-center gap-3 py-3">
           <button
+            type="button"
+            aria-label="Drag to reorder"
             {...attributes}
             {...listeners}
             className="cursor-grab text-muted-foreground hover:text-foreground"

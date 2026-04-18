@@ -1186,66 +1186,72 @@ export function VisualizerClient({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = initialCustomJourney as Record<string, any>;
     const journeyName = (r.name as string) ?? "Journey";
+    const handleGestureBegin = () => {
+      setNeedsGesture(false);
+      ensureResumed();
+
+      const journey = {
+        id: r.id as string,
+        name: r.name ?? "Untitled",
+        subtitle: r.subtitle ?? "",
+        description: r.description ?? "",
+        realmId: r.realm_id ?? "custom",
+        aiEnabled: true,
+        phases: r.phases ?? [],
+        storyText: r.story_text ?? null,
+        recordingId: r.recording_id ?? null,
+        userId: r.user_id,
+        audioReactive: !!r.audio_reactive,
+        creatorName: r.creator_name ?? null,
+        photographyCredit: r.photography_credit ?? null,
+        dedication: r.dedication ?? null,
+        ...(r.theme ? { theme: r.theme } : {}),
+        ...(Array.isArray(r.local_image_urls) && r.local_image_urls.length > 0
+          ? { localImageUrls: r.local_image_urls as string[] }
+          : {}),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
+
+      if (initialPath) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p = initialPath as Record<string, any>;
+        useAudioStore.getState().setActivePath({
+          id: p.id as string,
+          name: (p.name as string) ?? "Untitled Path",
+          subtitle: (p.subtitle as string) ?? null,
+          shareToken: (p.share_token as string) ?? null,
+          journeyIds: (p.journey_ids ?? []) as string[],
+          culminationJourneyId: (p.culmination_journey_id as string) ?? null,
+          accent: (p.accent_color as string) ?? "#d0a070",
+          glow: (p.glow_color as string) ?? "#e0b080",
+        });
+      }
+
+      if (recording) {
+        play({
+          id: recording.id,
+          title: recording.title ?? "Untitled",
+          audioUrl: recording.audio_url,
+          artist: recording.artist ?? undefined,
+        });
+      }
+
+      useAudioStore.getState().setAiImageEnabled(true);
+      useAudioStore.getState().startCustomJourney(journey);
+    };
     return (
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Tap to begin journey"
         className="h-dvh w-screen bg-black flex items-center justify-center"
         style={{ cursor: "pointer" }}
-        onClick={() => {
-          setNeedsGesture(false);
-          ensureResumed();
-
-          // Build the journey object (same as the hydration effect)
-          const journey = {
-            id: r.id as string,
-            name: r.name ?? "Untitled",
-            subtitle: r.subtitle ?? "",
-            description: r.description ?? "",
-            realmId: r.realm_id ?? "custom",
-            aiEnabled: true,
-            phases: r.phases ?? [],
-            storyText: r.story_text ?? null,
-            recordingId: r.recording_id ?? null,
-            userId: r.user_id,
-            audioReactive: !!r.audio_reactive,
-            creatorName: r.creator_name ?? null,
-            photographyCredit: r.photography_credit ?? null,
-            dedication: r.dedication ?? null,
-            ...(r.theme ? { theme: r.theme } : {}),
-            ...(Array.isArray(r.local_image_urls) && r.local_image_urls.length > 0
-              ? { localImageUrls: r.local_image_urls as string[] }
-              : {}),
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any;
-
-          // Set path context
-          if (initialPath) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const p = initialPath as Record<string, any>;
-            useAudioStore.getState().setActivePath({
-              id: p.id as string,
-              name: (p.name as string) ?? "Untitled Path",
-              subtitle: (p.subtitle as string) ?? null,
-              shareToken: (p.share_token as string) ?? null,
-              journeyIds: (p.journey_ids ?? []) as string[],
-              culminationJourneyId: (p.culmination_journey_id as string) ?? null,
-              accent: (p.accent_color as string) ?? "#d0a070",
-              glow: (p.glow_color as string) ?? "#e0b080",
-            });
+        onClick={handleGestureBegin}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleGestureBegin();
           }
-
-          // Play recording (the gesture makes this work on mobile)
-          if (recording) {
-            play({
-              id: recording.id,
-              title: recording.title ?? "Untitled",
-              audioUrl: recording.audio_url,
-              artist: recording.artist ?? undefined,
-            });
-          }
-
-          // Start journey + AI
-          useAudioStore.getState().setAiImageEnabled(true);
-          useAudioStore.getState().startCustomJourney(journey);
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", animation: "journeyEndFadeIn 0.8s ease-out both" }}>
@@ -1261,6 +1267,8 @@ export function VisualizerClient({
             {journeyName}
           </span>
           <button
+            type="button"
+            aria-label="Start journey"
             style={{
               display: "flex",
               alignItems: "center",

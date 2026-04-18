@@ -464,6 +464,8 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
                 return (
                   <button
                     key={i}
+                    type="button"
+                    aria-label={`Seek to ${marker.label} at ${formatTime(marker.time)}`}
                     className="absolute top-0 pointer-events-auto group p-2 -m-2"
                     style={{ left: `${pct}%` }}
                     onClick={() => handleMarkerClick(marker.time)}
@@ -490,7 +492,8 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
               <p>{error || "Unable to load waveform"}</p>
             </div>
             <p className="text-xs text-muted-foreground">Fallback player:</p>
-            <audio controls src={audioUrl} className="w-full" preload="metadata">
+            <audio controls src={audioUrl} className="w-full" preload="metadata" aria-label={title ? `Playback controls for ${title}` : "Audio playback controls"}>
+              <track kind="captions" />
               Your browser does not support the audio element.
             </audio>
           </div>
@@ -503,6 +506,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Skip back 10 seconds"
               onClick={() => skip(-10)}
               disabled={!isReady}
             >
@@ -510,6 +514,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
             </Button>
             <Button
               size="icon"
+              aria-label={storeIsPlaying ? "Pause" : "Play"}
               onClick={togglePlay}
               disabled={!isReady || isLoadingAudio}
             >
@@ -524,6 +529,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
             <Button
               variant="ghost"
               size="icon"
+              aria-label="Skip forward 10 seconds"
               onClick={() => skip(10)}
               disabled={!isReady}
             >
@@ -533,6 +539,7 @@ export const WaveformPlayer = forwardRef<WaveformPlayerHandle, WaveformPlayerPro
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label="Enter The Room"
                 onClick={onVisualizerOpen}
                 disabled={!isReady}
                 title="Enter The Room"

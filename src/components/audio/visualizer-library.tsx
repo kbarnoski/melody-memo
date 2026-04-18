@@ -187,9 +187,18 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
       {/* Backdrop */}
       {open && (
         <div
+          role="button"
+          tabIndex={-1}
+          aria-label="Close library"
           className="fixed inset-0 bg-black/30 transition-opacity duration-300"
           style={{ zIndex: 59 }}
           onClick={onClose}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+              e.preventDefault();
+              onClose();
+            }
+          }}
         />
       )}
 
@@ -235,6 +244,8 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
             )}
           </div>
           <button
+            type="button"
+            aria-label="Close library"
             onClick={onClose}
             className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors"
           >
@@ -247,8 +258,10 @@ export function VisualizerLibrary({ open, onClose }: VisualizerLibraryProps) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/20" />
             <input
+              id="visualizer-library-search"
               type="search"
               name="q"
+              aria-label="Search library"
               autoComplete="off"
               placeholder="Search..."
               value={search}

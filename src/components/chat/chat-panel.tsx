@@ -108,7 +108,7 @@ export function ChatPanel({ recordingId, analysis, initialMessages = [] }: ChatP
             placeholder="Ask about your recording..."
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" aria-label="Send message" disabled={isLoading || !input.trim()}>
             <Send className="h-4 w-4" />
           </Button>
         </form>

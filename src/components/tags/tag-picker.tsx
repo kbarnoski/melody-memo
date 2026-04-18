@@ -99,7 +99,7 @@ export function TagPicker({ recordingId, initialTags = [] }: TagPickerProps) {
       ))}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+          <Button variant="ghost" size="sm" aria-label="Add tag" className="h-7 gap-1 text-xs">
             <Plus className="h-3 w-3" />
             <Tag className="h-3 w-3" />
           </Button>

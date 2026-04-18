@@ -75,7 +75,9 @@ function SignupForm() {
             <Label htmlFor="displayName">Your name</Label>
             <Input
               id="displayName"
+              name="displayName"
               type="text"
+              autoComplete="name"
               placeholder="How you'll appear on journeys"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -86,7 +88,9 @@ function SignupForm() {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -97,7 +101,9 @@ function SignupForm() {
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
+              name="password"
               type="password"
+              autoComplete="new-password"
               placeholder="At least 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}

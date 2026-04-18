@@ -331,10 +331,9 @@ export function JourneyCompositor({
               backgroundColor: `rgba(255, 255, 255, ${flashOpacity})`,
             }}
           />
-          {/* Angel flash — opacity + blur live on the <img> itself so the
-              parent div isn't an isolated stacking context; otherwise the
-              mix-blend-mode: screen can't composite through to the shader
-              backdrop and the image renders as a solid black rectangle. */}
+          {/* Angel flash — single image per session, transparency via
+              luminance chroma-key so the figure floats cleanly above the
+              shader without a rectangular black frame. */}
           {(() => {
             const flashImpulse = impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08);
             return (
@@ -350,7 +349,6 @@ export function JourneyCompositor({
                 }}
               >
                 <FlashAngel
-                  variant={(bassHitCountRef.current % 2) as 0 | 1}
                   opacity={flashImpulse}
                   blurPx={(1 - flashImpulse) * 1.5}
                 />

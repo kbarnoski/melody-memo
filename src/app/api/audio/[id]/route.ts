@@ -191,7 +191,7 @@ export async function GET(
             .eq("id", id)
             .then(({ error: dbErr }) => {
               if (dbErr) console.error("[AUDIO] Failed to save aac_file_name:", dbErr.message);
-              else console.log("[AUDIO] Persisted AAC transcode:", aacFileName);
+              // Persisted; no log in prod.
             });
         });
     } catch (err) {
@@ -229,19 +229,38 @@ export async function GET(
   });
 }
 
+const MAX_PEAK_PAIRS = 8192;
+
+function isValidWaveformPeaks(peaks: unknown): peaks is number[][] {
+  if (!Array.isArray(peaks)) return false;
+  if (peaks.length > MAX_PEAK_PAIRS) return false;
+  for (const pair of peaks) {
+    if (!Array.isArray(pair) || pair.length !== 2) return false;
+    const [lo, hi] = pair;
+    if (typeof lo !== "number" || typeof hi !== "number") return false;
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) return false;
+    if (lo < -1 || lo > 1 || hi < -1 || hi > 1) return false;
+  }
+  return true;
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Verify the user owns this recording
   const { data: recording } = await supabase
     .from("recordings")
     .select("id")
     .eq("id", id)
-    .single();
+    .eq("user_id", user.id)
+    .maybeSingle();
 
   if (!recording) {
     return NextResponse.json({ error: "Recording not found" }, { status: 404 });
@@ -249,10 +268,15 @@ export async function PATCH(
 
   const body = await request.json();
 
-  // Save waveform peaks (and optionally duration)
   if (body.waveform_peaks) {
+    if (!isValidWaveformPeaks(body.waveform_peaks)) {
+      return NextResponse.json(
+        { error: "Invalid waveform_peaks: expected array of [number, number] pairs in [-1, 1]" },
+        { status: 400 }
+      );
+    }
     const updates: Record<string, unknown> = { waveform_peaks: body.waveform_peaks };
-    if (typeof body.duration === "number" && body.duration > 0) {
+    if (typeof body.duration === "number" && body.duration > 0 && body.duration < 86400) {
       updates.duration = body.duration;
     }
 
@@ -262,7 +286,8 @@ export async function PATCH(
       .eq("id", id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("waveform update failed:", error);
+      return NextResponse.json({ error: "Failed to save" }, { status: 500 });
     }
     return NextResponse.json({ ok: true });
   }

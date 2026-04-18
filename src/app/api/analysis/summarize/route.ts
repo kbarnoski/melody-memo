@@ -18,10 +18,24 @@ const summarySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const { analysisId, analysis, title } = await request.json();
 
     if (!analysis || !analysisId) {
       return Response.json({ error: "Missing analysis data" }, { status: 400 });
+    }
+
+    const { data: ownedAnalysis } = await supabase
+      .from("analyses")
+      .select("id, recordings!inner(user_id)")
+      .eq("id", analysisId)
+      .eq("recordings.user_id", user.id)
+      .maybeSingle();
+    if (!ownedAnalysis) {
+      return Response.json({ error: "Analysis not found" }, { status: 404 });
     }
 
     const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -63,8 +77,6 @@ Think about this as a music teacher would: identify natural sections, explain th
       prompt,
     });
 
-    // Save to database
-    const supabase = await createClient();
     const { error } = await supabase
       .from("analyses")
       .update({ summary })

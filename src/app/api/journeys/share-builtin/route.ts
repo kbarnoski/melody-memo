@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { randomUUID, randomInt } from "crypto";
 import { getJourney } from "@/lib/journeys/journeys";
 import { PAIRED_TRACKS } from "@/lib/journeys/paired-tracks";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   try {
@@ -40,12 +41,12 @@ export async function POST(request: Request) {
         .select("id, title")
         .ilike("title", pairedSearch)
         .limit(1);
-      console.log("[share-builtin] paired track search:", pairedSearch, "→", data, searchErr);
+      logger.debug("share-builtin", "paired track search", { pairedSearch, data, searchErr });
       if (data?.[0]) {
         resolvedRecordingId = data[0].id;
       }
     }
-    console.log("[share-builtin] resolvedRecordingId:", resolvedRecordingId);
+    logger.debug("share-builtin", "resolved recording", { resolvedRecordingId });
 
     // Reuse existing share row if this user already shared this built-in journey
     const { data: existing } = await supabase
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     if (existing?.share_token) {
       token = existing.share_token;
     } else {
-      token = randomUUID().replace(/-/g, "").slice(0, 16);
+      token = randomUUID().replace(/-/g, "");
       const seed = String(randomInt(0, 4294967296));
 
       // Insert a reference to the built-in journey (live link — always uses latest definition).
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
 
     // Mark the recording as shared so anonymous users can access audio via RLS
     if (resolvedRecordingId) {
-      const recToken = randomUUID().replace(/-/g, "").slice(0, 16);
+      const recToken = randomUUID().replace(/-/g, "");
       await supabase
         .from("recordings")
         .update({ share_token: recToken })

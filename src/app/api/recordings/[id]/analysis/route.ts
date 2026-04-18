@@ -1,6 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAnonClient } from "@supabase/supabase-js";
+import { z } from "zod";
+
+const analysisPostSchema = z.object({
+  status: z.enum(["pending", "completed", "failed"]).optional(),
+  key_signature: z.string().max(20).nullable().optional(),
+  key_confidence: z.number().min(0).max(1).nullable().optional(),
+  tempo: z.number().min(20).max(400).nullable().optional(),
+  time_signature: z.string().max(20).nullable().optional(),
+  chords: z.array(z.unknown()).max(5000).nullable().optional(),
+  notes: z.array(z.unknown()).max(20000).nullable().optional(),
+  midi_data: z.record(z.string(), z.unknown()).nullable().optional(),
+  events: z.array(z.unknown()).max(5000).nullable().optional(),
+  summary: z.record(z.string(), z.unknown()).nullable().optional(),
+}).strict();
 
 export async function GET(
   _request: NextRequest,
@@ -43,14 +57,36 @@ export async function POST(
 ) {
   const { id } = await params;
   const supabase = await createClient();
-  const body = await request.json();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { data: owned } = await supabase
+    .from("recordings")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (!owned) {
+    return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+  }
+
+  const rawBody = await request.json();
+  const parsed = analysisPostSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid analysis payload", issues: parsed.error.issues },
+      { status: 400 }
+    );
+  }
 
   const { data, error } = await supabase
     .from("analyses")
     .upsert(
       {
         recording_id: id,
-        ...body,
+        ...parsed.data,
       },
       { onConflict: "recording_id" }
     )
@@ -58,7 +94,8 @@ export async function POST(
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("analysis upsert failed:", error);
+    return NextResponse.json({ error: "Failed to save analysis" }, { status: 500 });
   }
 
   return NextResponse.json(data);

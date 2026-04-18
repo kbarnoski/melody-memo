@@ -1,4 +1,4 @@
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, AnalysisSummary } from "./types";
 export type Mood =
   | "melancholic"
   | "intense"
@@ -318,8 +318,7 @@ function summaryKeywords(summary: string | undefined, keywords: string[]): numbe
   }
   return hits;
 }
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function detectVibe(analysis: AnalysisResult, summary?: any): VibeResult {
+export function detectVibe(analysis: AnalysisResult, summary?: AnalysisSummary | null): VibeResult {
   const tempo = analysis.tempo ?? 100;
   const key = analysis.key_signature;
   const chords = analysis.chords ?? [];

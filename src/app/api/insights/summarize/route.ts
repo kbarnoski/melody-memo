@@ -1,5 +1,6 @@
 import { generateObject } from "ai";
 import { defaultModel } from "@/lib/ai/providers";
+import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 
 const insightsSummarySchema = z.object({
@@ -18,6 +19,10 @@ const insightsSummarySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+
     const { analyses } = await request.json();
 
     if (!analyses || !Array.isArray(analyses) || analyses.length === 0) {

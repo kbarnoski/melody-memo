@@ -28,6 +28,7 @@ const FLASH_PROMPTS = [
 const flashUrls: (string | null)[] = [null, null, null];
 let preparePromise: Promise<void> | null = null;
 let currentJourneyId: string | null = null;
+let abortController: AbortController | null = null;
 
 /**
  * Kick off (or reuse) a generation pass for the Ghost flash angel images.
@@ -36,12 +37,15 @@ let currentJourneyId: string | null = null;
  */
 export function prepareGhostFlashImages(journeyId: string): Promise<void> {
   if (currentJourneyId !== journeyId) {
-    // Different journey (or first call) — reset and regenerate
+    abortController?.abort();
     currentJourneyId = journeyId;
     for (let i = 0; i < flashUrls.length; i++) flashUrls[i] = null;
     preparePromise = null;
   }
   if (preparePromise) return preparePromise;
+
+  const controller = new AbortController();
+  abortController = controller;
 
   preparePromise = (async () => {
     await Promise.all(
@@ -50,6 +54,7 @@ export function prepareGhostFlashImages(journeyId: string): Promise<void> {
           const res = await fetch("/api/ai-image/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
             body: JSON.stringify({
               prompt,
               denoisingStrength: 0.5,
@@ -63,7 +68,7 @@ export function prepareGhostFlashImages(journeyId: string): Promise<void> {
             flashUrls[idx] = data.image;
           }
         } catch {
-          // Silent — FlashAngel will fall back to the static PNG
+          // Silent — FlashAngel will fall back to the static PNG. AbortError is expected on journey switch.
         }
       }),
     );
@@ -78,8 +83,10 @@ export function getGhostFlashUrl(variant: number): string | null {
   return flashUrls[idx] ?? null;
 }
 
-/** Clear cached flash images — called on journey stop. */
+/** Clear cached flash images and abort any in-flight generation — called on journey stop. */
 export function clearGhostFlashImages() {
+  abortController?.abort();
+  abortController = null;
   currentJourneyId = null;
   preparePromise = null;
   for (let i = 0; i < flashUrls.length; i++) flashUrls[i] = null;

@@ -27,6 +27,7 @@ class AiImageService {
   private sessionCost = 0;
   private costCap = DEFAULT_COST_CAP;
   private generating = false;
+  private inFlightControllers = new Set<AbortController>();
 
   /** Check if the AI image service is available (retries on failure after 10s) */
   async checkAvailability(): Promise<boolean> {
@@ -63,11 +64,14 @@ class AiImageService {
     if (this.generating) return null;
 
     this.generating = true;
+    const controller = new AbortController();
+    this.inFlightControllers.add(controller);
 
     try {
       const res = await fetch("/api/ai-image/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           prompt: options.prompt,
           denoisingStrength: options.denoisingStrength,
@@ -90,8 +94,16 @@ class AiImageService {
     } catch {
       return null;
     } finally {
+      this.inFlightControllers.delete(controller);
       this.generating = false;
     }
+  }
+
+  /** Abort all in-flight generate requests (call on journey stop). */
+  cancelInFlight(): void {
+    for (const c of this.inFlightControllers) c.abort();
+    this.inFlightControllers.clear();
+    this.generating = false;
   }
 
   /** Get current session cost */

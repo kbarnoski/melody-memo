@@ -610,6 +610,7 @@ class AmbientEngine {
   private baseIntensities: AmbientLayers = { wind: 0, rain: 0, drone: 0, chime: 0, fire: 0 };
   private breathingTimer: ReturnType<typeof setInterval> | null = null;
   private currentTheme: AmbientTheme = DEFAULT_THEME;
+  private deferredTimers: ReturnType<typeof setTimeout>[] = [];
 
   /** Initialize and start the ambient engine. Must be called after user gesture. */
   start(audioContext?: AudioContext): void {
@@ -639,27 +640,35 @@ class AmbientEngine {
 
     this.layers = { wind, rain: tempRain, drone, chime: tempChime, fire: tempFire };
 
-    // Defer heavier layers
-    setTimeout(() => {
-      if (!this.running) return;
-      const rain = createRainLayer(ctx, dest, theme.rain);
-      rain.start();
-      if (this.layers) this.layers.rain = rain;
-    }, 200);
+    // Defer heavier layers. Track timer IDs so stop() can cancel any that
+    // haven't fired yet — otherwise a rapid start→stop sequence leaks layers
+    // that get created (and never stopped) after stop() returned.
+    this.deferredTimers.push(
+      setTimeout(() => {
+        if (!this.running) return;
+        const rain = createRainLayer(ctx, dest, theme.rain);
+        rain.start();
+        if (this.layers) this.layers.rain = rain;
+      }, 200)
+    );
 
-    setTimeout(() => {
-      if (!this.running) return;
-      const chime = createChimeLayer(ctx, dest, theme.chime);
-      chime.start();
-      if (this.layers) this.layers.chime = chime;
-    }, 400);
+    this.deferredTimers.push(
+      setTimeout(() => {
+        if (!this.running) return;
+        const chime = createChimeLayer(ctx, dest, theme.chime);
+        chime.start();
+        if (this.layers) this.layers.chime = chime;
+      }, 400)
+    );
 
-    setTimeout(() => {
-      if (!this.running) return;
-      const fire = createFireLayer(ctx, dest, theme.fire);
-      fire.start();
-      if (this.layers) this.layers.fire = fire;
-    }, 600);
+    this.deferredTimers.push(
+      setTimeout(() => {
+        if (!this.running) return;
+        const fire = createFireLayer(ctx, dest, theme.fire);
+        fire.start();
+        if (this.layers) this.layers.fire = fire;
+      }, 600)
+    );
 
     this.startBreathing();
   }
@@ -667,7 +676,14 @@ class AmbientEngine {
   /** Stop all ambient layers */
   stop(): void {
     this.stopBreathing();
-    if (!this.running || !this.layers) return;
+
+    for (const id of this.deferredTimers) clearTimeout(id);
+    this.deferredTimers = [];
+
+    if (!this.running || !this.layers) {
+      this.running = false;
+      return;
+    }
 
     for (const layer of Object.values(this.layers)) {
       layer.stop();

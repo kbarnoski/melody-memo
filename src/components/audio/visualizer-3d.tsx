@@ -2,6 +2,7 @@
 
 import React, { useRef, useMemo } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { getDeviceTier } from "@/lib/audio/device-tier";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import {
@@ -1295,12 +1296,20 @@ export function Visualizer3D({
     return <div className="absolute inset-0 bg-black" />;
   }
 
+  // Match the 2D shader path's device-tier scaling: retina is wasted on
+  // abstract shader motion, and low-tier GPUs benefit hugely from rendering
+  // at a reduced pixel count. The GPU upscales for free post-bloom.
+  const tier = getDeviceTier();
+  const dprCap = tier === "low" ? 0.55 : tier === "medium" ? 0.75 : 1.0;
+
   return (
     <Canvas3DErrorBoundary>
       <Canvas
         className="absolute inset-0 w-full h-full"
         camera={{ position: [0, 0, 5], fov: 60 }}
         gl={createSafeRenderer}
+        dpr={[0.5, dprCap]}
+        performance={{ min: 0.5 }}
         style={{ background: "#000" }}
       >
         <color attach="background" args={["#000000"]} />

@@ -64,6 +64,28 @@ export async function middleware(request: NextRequest) {
   supabaseResponse.headers.set("X-Frame-Options", "DENY");
   supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=()");
+  supabaseResponse.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+  // CSP: self + Supabase + fal.ai WebSocket + inline styles (Tailwind) + data/blob images.
+  // 'unsafe-eval' is required by @tensorflow/tfjs basic-pitch; 'unsafe-inline' by Next.js dev overlay.
+  supabaseResponse.headers.set(
+    "Content-Security-Policy",
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob: https:",
+      "media-src 'self' blob: https:",
+      "font-src 'self' data:",
+      "connect-src 'self' https: wss: blob:",
+      "worker-src 'self' blob:",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "object-src 'none'",
+    ].join("; ")
+  );
 
   return supabaseResponse;
 }

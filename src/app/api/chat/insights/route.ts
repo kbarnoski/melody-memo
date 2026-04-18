@@ -1,8 +1,15 @@
 import { streamText } from "ai";
 import { defaultModel } from "@/lib/ai/providers";
 import { buildInsightsSystemPrompt } from "@/lib/ai/build-system-prompt";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { messages, analyses } = await request.json();
 
   const systemPrompt = buildInsightsSystemPrompt(

@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useRef, useState, useEffect } from "react";
+import type { AnalysisResult } from "@/lib/audio/types";
 
 interface AnalysisHUDProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  analysis: any;
+  analysis: AnalysisResult | null | undefined;
   currentTime: number;
   duration: number;
   compact?: boolean;
@@ -88,7 +88,7 @@ export function AnalysisHUD({ analysis, currentTime, duration, compact, onSectio
     const sectionDuration = duration / sections.length;
     const index = Math.min(Math.floor(dt / sectionDuration), sections.length - 1);
     const section = sections[index];
-    const name = typeof section === "string" ? section : section?.label ?? section?.name ?? "";
+    const name = typeof section === "string" ? section : section?.label ?? "";
     return { name, index, total: sections.length };
   }, [analysis?.summary?.sections, duration, dt]);
 

@@ -32,7 +32,19 @@ export function ChatMessage({ role, content }: ChatMessageProps) {
       >
         {role === "assistant" ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown>{content}</ReactMarkdown>
+            <ReactMarkdown
+              disallowedElements={["script", "iframe", "object", "embed", "style", "link", "meta", "form"]}
+              unwrapDisallowed
+              urlTransform={(url) => {
+                const lower = url.toLowerCase().trim();
+                if (lower.startsWith("javascript:") || lower.startsWith("data:") || lower.startsWith("vbscript:")) {
+                  return "";
+                }
+                return url;
+              }}
+            >
+              {content}
+            </ReactMarkdown>
           </div>
         ) : (
           <p>{content}</p>

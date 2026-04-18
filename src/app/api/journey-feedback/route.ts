@@ -3,7 +3,11 @@ import { promises as fs } from "fs";
 import path from "path";
 import { createClient } from "@/lib/supabase/server";
 
-const FEEDBACK_FILE = path.join(process.cwd(), "journey-feedback.jsonl");
+// Legacy .jsonl file kept for GET so historical entries aren't lost.
+// All new writes go to the journey_feedback Supabase table.
+const LEGACY_FEEDBACK_FILE = path.join(process.cwd(), "journey-feedback.jsonl");
+
+type FeedbackEntry = Record<string, unknown> & { journeyId?: string | null };
 
 export async function POST(request: Request) {
   try {
@@ -12,11 +16,27 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    // Support both single entry and batch array
-    const entries = Array.isArray(body) ? body : [body];
-    const lines = entries.map((e) => JSON.stringify(e) + "\n").join("");
-    await fs.appendFile(FEEDBACK_FILE, lines, "utf-8");
-    return NextResponse.json({ ok: true, count: entries.length });
+    const entries: FeedbackEntry[] = Array.isArray(body) ? body : [body];
+
+    if (entries.length === 0 || entries.length > 100) {
+      return NextResponse.json({ error: "Invalid batch size" }, { status: 400 });
+    }
+
+    const rows = entries
+      .filter((e) => e && typeof e === "object")
+      .map((entry) => ({
+        user_id: user.id,
+        journey_id: typeof entry.journeyId === "string" ? entry.journeyId : null,
+        payload: entry,
+      }));
+
+    const { error } = await supabase.from("journey_feedback").insert(rows);
+    if (error) {
+      console.error("[Journey Feedback] DB insert failed:", error.message);
+      return NextResponse.json({ error: "Failed to save" }, { status: 500 });
+    }
+
+    return NextResponse.json({ ok: true, count: rows.length });
   } catch (err) {
     console.error("[Journey Feedback] Write error:", err);
     return NextResponse.json({ error: "Failed to save" }, { status: 500 });
@@ -24,16 +44,32 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase().trim();
+  if (!adminEmail || user.email?.toLowerCase().trim() !== adminEmail) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { data: dbRows } = await supabase
+    .from("journey_feedback")
+    .select("payload, created_at, journey_id")
+    .order("created_at", { ascending: true });
+
+  let legacy: unknown[] = [];
   try {
-    const raw = await fs.readFile(FEEDBACK_FILE, "utf-8");
-    const entries = raw
+    const raw = await fs.readFile(LEGACY_FEEDBACK_FILE, "utf-8");
+    legacy = raw
       .trim()
       .split("\n")
       .filter(Boolean)
       .map((line) => JSON.parse(line));
-    return NextResponse.json(entries);
   } catch {
-    // File doesn't exist yet — return empty
-    return NextResponse.json([]);
+    // No legacy file — fine.
   }
+
+  const fromDb = (dbRows ?? []).map((r) => r.payload);
+  return NextResponse.json([...legacy, ...fromDb]);
 }

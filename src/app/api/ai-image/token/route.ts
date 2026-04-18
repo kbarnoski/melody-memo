@@ -1,33 +1,43 @@
 /**
  * Proxy endpoint for client-side fal.ai access.
  *
- * The fal SDK sends requests here (via proxyUrl config) with
- * the real fal.ai URL in the `x-fal-target-url` header.
- * We forward them with our API key attached server-side.
+ * GET returns { token } so the fal SDK can open a realtime WebSocket
+ * (which requires client-side credentials). Gated to authenticated
+ * users only — previously the token was world-readable.
  *
- * For GET requests (token fetch), returns the API key directly.
+ * POST forwards standard HTTP calls with the key attached server-side
+ * (fal SDK `proxyUrl` mode).
  */
 
+import { createClient } from "@/lib/supabase/server";
+
 export async function GET() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   if (!process.env.FAL_KEY) {
     return Response.json({ error: "Missing FAL_KEY" }, { status: 501 });
   }
-  // Return token for WebSocket auth
   return Response.json({ token: process.env.FAL_KEY });
 }
 
 export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
   if (!process.env.FAL_KEY) {
     return Response.json({ error: "Missing FAL_KEY" }, { status: 501 });
   }
 
   try {
-    // The fal SDK proxy sends the real URL in x-fal-target-url header
     const targetUrl = request.headers.get("x-fal-target-url");
 
     if (!targetUrl) {
-      // No target URL — just return the API key as token
-      return Response.json({ token: process.env.FAL_KEY });
+      return Response.json({ error: "Missing x-fal-target-url" }, { status: 400 });
     }
 
     // Read the request body

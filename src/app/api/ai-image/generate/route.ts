@@ -1,4 +1,6 @@
 import { fal } from "@fal-ai/client";
+import { createClient } from "@/lib/supabase/server";
+import { logger } from "@/lib/logger";
 
 const MODEL_ID = "fal-ai/flux/schnell";
 
@@ -17,6 +19,12 @@ export async function POST(request: Request) {
       { error: "AI image generation not configured" },
       { status: 501 }
     );
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   fal.config({ credentials: process.env.FAL_KEY });
@@ -41,7 +49,7 @@ export async function POST(request: Request) {
       enable_safety_checker: false,
     };
 
-    console.log("[AI Generate] Requesting frame:", fullPrompt.substring(0, 80));
+    logger.debug("ai-generate", "requesting frame", fullPrompt.substring(0, 80));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = await fal.subscribe(MODEL_ID, { input } as any);
@@ -53,7 +61,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "No image generated" }, { status: 500 });
     }
 
-    console.log("[AI Generate] Frame generated successfully");
+    logger.debug("ai-generate", "frame generated");
 
     return Response.json({
       image: imageUrl,

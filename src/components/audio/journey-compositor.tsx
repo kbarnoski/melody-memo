@@ -331,22 +331,32 @@ export function JourneyCompositor({
               backgroundColor: `rgba(255, 255, 255, ${flashOpacity})`,
             }}
           />
-          {/* Dark particle angel — full opacity during hold, linear fade over 1s */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 5,
-              pointerEvents: "none",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08),
-              filter: `blur(${(1 - (impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08))) * 1.5}px)`,
-            }}
-          >
-            <FlashAngel variant={(bassHitCountRef.current % 2) as 0 | 1} />
-          </div>
+          {/* Angel flash — opacity + blur live on the <img> itself so the
+              parent div isn't an isolated stacking context; otherwise the
+              mix-blend-mode: screen can't composite through to the shader
+              backdrop and the image renders as a solid black rectangle. */}
+          {(() => {
+            const flashImpulse = impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08);
+            return (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 5,
+                  pointerEvents: "none",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <FlashAngel
+                  variant={(bassHitCountRef.current % 2) as 0 | 1}
+                  opacity={flashImpulse}
+                  blurPx={(1 - flashImpulse) * 1.5}
+                />
+              </div>
+            );
+          })()}
           {/* Subsonic shockwave ring expanding outward beneath the flash */}
           {(() => {
             const ringT = Math.min(1, flashElapsed / 1.4);

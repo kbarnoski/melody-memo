@@ -5,14 +5,24 @@ import { getGhostFlashUrl } from "@/lib/journeys/ghost-flash-images";
 
 interface FlashAngelProps {
   variant: number;
+  /** 0-1 fade opacity of the angel. Applied on the img directly (not the
+   *  parent) so that ancestors don't create a stacking context that would
+   *  isolate the screen blend mode. */
+  opacity: number;
+  /** Blur radius in px — same reasoning as opacity. */
+  blurPx: number;
 }
 
 /**
  * Ghost bass-hit flash overlay — the only moment in the Ghost journey where
  * the figure's face is shown directly. Consumes images from the Ghost
  * flash-image pool when available, falls back to the static PNG otherwise.
+ *
+ * The mix-blend-mode: screen trick only works if no ancestor between this
+ * img and the backdrop creates an isolated stacking context, so opacity +
+ * filter have to live on the img itself.
  */
-export const FlashAngel = memo(function FlashAngel({ variant }: FlashAngelProps) {
+export const FlashAngel = memo(function FlashAngel({ variant, opacity, blurPx }: FlashAngelProps) {
   const [src, setSrc] = useState<string>("/images/flash-angel-1.png");
 
   useEffect(() => {
@@ -21,7 +31,6 @@ export const FlashAngel = memo(function FlashAngel({ variant }: FlashAngelProps)
       setSrc(cached);
       return;
     }
-    // If images aren't ready yet, retry a couple times as the pool populates
     let cancelled = false;
     let tries = 0;
     const id = setInterval(() => {
@@ -52,9 +61,8 @@ export const FlashAngel = memo(function FlashAngel({ variant }: FlashAngelProps)
         maxWidth: "100%",
         maxHeight: "100%",
         objectFit: "contain",
-        // Screen blend makes pure-black pixels transparent, so only the bright
-        // figure (rim-lit against the dark background in the flash prompt)
-        // emerges through the flash. The dark background silently drops out.
+        opacity,
+        filter: blurPx > 0 ? `blur(${blurPx}px)` : undefined,
         mixBlendMode: "screen",
       }}
     />

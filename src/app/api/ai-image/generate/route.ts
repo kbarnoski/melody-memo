@@ -8,9 +8,13 @@ const MODEL_ID = "fal-ai/flux/schnell";
 // dreamlike-but-lifelike — we want rich imaginative scenes rendered with
 // photographic materials and lighting, not illustration. The NOT clauses catch
 // the most common failure modes where the base prompt drifts toward art styles.
+// The sphere clause fixes a recurring issue where moons, planets, and floating
+// earths rendered skewed, squashed, or elliptical — all celestial bodies must
+// read as correct perfect spheres.
 const STYLE_SUFFIX =
   "photorealistic cinematic photograph, real photographic materials and lighting, " +
   "surreal dreamlike but lifelike, luminous, transcendent, ethereal, " +
+  "every celestial body (moon planet earth sun) rendered as a perfect round sphere, not skewed, not elongated, not elliptical, not squashed, pristine circular silhouette, " +
   "NOT illustration, NOT cartoon, NOT painting, NOT anime, NOT concept art, NOT 3d render";
 
 export async function POST(request: Request) {
@@ -41,12 +45,18 @@ export async function POST(request: Request) {
     const imgHeight = Math.min(height ?? 768, 1024);
     const fullPrompt = `${prompt}, ${STYLE_SUFFIX}`;
 
+    // Random seed per request — without it fal.ai returns the same image for
+    // identical prompts, which made Ghost's opening frame identical on every
+    // replay. Max 32-bit unsigned int (fal schema).
+    const seed = Math.floor(Math.random() * 4294967295);
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const input: Record<string, any> = {
       prompt: fullPrompt,
       num_inference_steps: 4,
       image_size: { width: imgWidth, height: imgHeight },
       enable_safety_checker: false,
+      seed,
     };
 
     logger.debug("ai-generate", "requesting frame", fullPrompt.substring(0, 80));

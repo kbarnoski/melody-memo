@@ -1376,19 +1376,18 @@ export const JOURNEYS: Journey[] = [
     phaseLabels: { threshold: "Apparition", expansion: "Haunting", transcendence: "Possession", illumination: "Recognition", return: "Release", integration: "Grace" },
     phases: defaultPhases("cosmos", {
 
-      // ── Apparition (0:00–0:27) ──
-      // Opening Theme A: CM/G pedal with Fm6 alternation.
-      // Gentle, bittersweet C major. The ghost is barely perceptible.
-      // ANCIENT CHAMBER: moonlit stone room, cosmic window, roots in the floor, long dress, particles.
-      // Lower shader opacity so shaders breathe through the dark areas.
+      // ── Apparition: chamber by the window ──
+      // Stone room, cosmic window, moonlight, tree roots in the floor.
+      // Kept intentionally tight — long prompts dilute fal.ai's focus
+      // and all phases started bleeding into the same imagery.
       threshold: {
         start: 0.0,
         end: 0.14,
         shaderOpacity: 0.75,
-        aiPrompt: "photorealistic cinematic three-quarter back view, one white-haired angel woman glowing with ethereal spiritual radiance standing in contrapposto pose with her weight shifted onto one hip one arm loose at her side the other arm raised to gently touch her own white spiral hair her body hovering just above the stone floor of an ancient dark stone chamber, her very long pure white hair cascading past her waist in intricate Leonardo da Vinci fibonacci spiral geometric fractal curls, wearing a long flowing white dress, two LARGE transparent glowing white wings of pure light and mist clearly visible extending from her back, surrounded by an INTENSELY DENSE cloud of swirling white particles filling the entire frame like a luminous spiritual haze of stars, two transparent spirit-echo duplicates of herself drifting behind her, tall arched window opening onto cosmic void with scattered stars, diagonal shaft of moonlight, worn stone floor with ancient tree roots in the cracks, deep dark shadows, face hidden behind her white spiral hair, mysterious ethereal",
+        aiPrompt: "photorealistic cinematic three-quarter back view. ancient dark stone chamber at night. tall arched stone window opening onto cosmic void scattered with faint stars. diagonal shaft of silver moonlight across worn stone floor cracked with ancient tree roots. one white-haired angel woman standing by the window, face hidden behind very long pure white Leonardo da Vinci fibonacci spiral fractal curls cascading past her waist, wearing a long flowing white dress, two large transparent glowing white wings of pure light and mist extending from her back, dense swirling white particles around her body like a luminous spiritual haze. mysterious ethereal, deep shadows, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "deep subsonic pressure ripple passing through the chamber, the windowpanes vibrating, the moonlight shaft shuddering, the ghost's fibonacci hair rippling with the invisible force, particles and wisps scattering outward in the luminous air",
-          lowAmplitude: "the moonlight dimmed to the faintest silver glow, the chamber barely visible, the ghost figures almost merged with the shadows, only the luminous hair threads and wisps faintly visible",
+          highBass: "subsonic pressure ripple shuddering the windowpanes, fibonacci hair rippling, white particles scattering",
+          lowAmplitude: "moonlight dimmed to faint silver, the chamber almost merged with shadow, only the luminous spiral hair faintly visible",
         },
         guidancePhrases: ["something moves in the dark...", "do you feel it...", "it has always been here..."],
         poetryMood: "mystical",
@@ -1396,101 +1395,102 @@ export const JOURNEYS: Journey[] = [
         aiOverlayPrompt: "translucent spectral candle flame with trailing luminous smoke wisps, ghostly silver-white glow, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
       },
 
-      // ── Haunting (0:27–1:08) ──
-      // FOLLOWING ROOTS DOWN INTO THE TUNNEL. She HOVERS past massive ancient
-      // roots as she moves through the passage. The tunnel stretches ahead
-      // with hints of something waiting in its depths.
+      // ── Haunting: the portal opens and she descends into the root tunnel ──
+      // Distinct anchor concepts — arched portal glowing teal, passing through
+      // into a tunnel of massive tree roots — keep fal's attention on
+      // "portal" rather than letting it fall back into generic tunnel shots.
       expansion: {
         start: 0.14,
-        end: 0.35,
+        end: 0.30,
         shaderOpacity: 0.65,
-        aiPrompt: "photorealistic cinematic VARIED perspective shots — sometimes a rear tracking shot following her as she HOVERS forward through an ancient underground tunnel with massive gnarled tree roots spiraling across the walls and ceiling, sometimes a low-angle view from beneath looking up as her feet hover above the cracked stone floor, sometimes a profile shot as she drifts horizontally past root-framed archways, sometimes a deep wide-angle showing the tunnel stretching far ahead with faint bioluminescent veins running through the roots, one white-haired angel woman glowing with ethereal spiritual radiance HOVERING just above the ground with her arms trailing gracefully and her body leaning slightly forward into motion, her very long pure white fibonacci spiral hair cascading past her waist and flowing behind her in the draft of her movement, wearing a long flowing white dress, two LARGE transparent glowing white wings of pure light and mist extending from her back, surrounded by an INTENSELY DENSE cloud of swirling white particles filling the entire frame like a luminous spiritual haze, two transparent spirit-echo duplicates drifting behind her, massive ancient tree roots everywhere — threading through walls ceiling and floor, cascading from above, intertwining like a cathedral of living wood, pale bioluminescent teal lichen glowing on the root bark, first glimpses of reflective water pooled in the tunnel cracks catching her reflection, deep heavy black void beyond the roots, face hidden behind her white spiral hair, mysterious ethereal motion",
+        aiPrompt: "photorealistic cinematic rear tracking shot. ancient stone chamber wall opening into a tall arched stone portal glowing with pale bioluminescent teal light. beyond the portal, an endless underground tunnel lined with massive gnarled spiraling tree roots threading across walls and ceiling like a cathedral of living wood. one white-haired angel woman hovering through the portal into the root tunnel, arms trailing, face hidden behind long fibonacci spiral white hair cascading past her waist, wearing a long flowing white dress, two large transparent glowing white wings of pure light and mist extending behind her, dense swirling white particles trailing from her body, pale bioluminescent teal lichen glowing on the root bark, deep indigo shadows beyond. mysterious ethereal passage, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "subsonic shockwave reverberating through the stone and roots, the organic growth trembling, the void below rippling, every luminous hair spiral pulsing with the deep frequency, particles and spores exploding outward from the portal edge",
-          highTreble: "bioluminescent lichen flaring brighter, luminous threads of fibonacci hair glowing at their tips, fine particles of light scattering upward from the depths",
+          highBass: "subsonic shockwave reverberating through roots, portal light flaring, white particles exploding outward",
+          highTreble: "bioluminescent lichen flaring brighter, fibonacci hair spirals glowing at their tips",
         },
-        guidancePhrases: ["it's closer now...", "the dark has shape...", "listen between the notes..."],
+        guidancePhrases: ["the portal opens...", "she is stepping through...", "listen between the notes..."],
         poetryMood: "hypnotic",
         voice: "ash",
         aiOverlayPrompt: "cluster of pale bioluminescent spores drifting with organic luminescent tendrils, cold blue-green glow, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
       },
 
-      // ── Possession (1:08–1:40) ──
-      // DEEP UNDERGROUND TUNNEL with WATER, WHITE LILIES, REFLECTIONS, ROOTS,
-      // and the first glimpse of LIGHT AT THE END OF THE TUNNEL. Wildly varied
-      // perspectives — no two consecutive frames should look alike.
+      // ── Possession: still water, white water lilies, reflection, light at end ──
+      // Overhead is the hero composition — the reflection is the visual
+      // signature of this phase. The distant warm pinpoint of light at
+      // the far end of the tunnel sets up the next phase's emergence.
       transcendence: {
-        start: 0.35,
+        start: 0.30,
         end: 0.55,
         shaderOpacity: 0.72,
-        aiPrompt: "photorealistic cinematic VARIED dynamic camera angles per frame deep inside an ancient underground tunnel through the center of the earth, PERSPECTIVE VARIES RADICALLY: sometimes overhead looking straight down at her floating serenely on her back in a SHALLOW POOL OF STILL DARK WATER with WHITE WATER LILIES floating around her and her white hair fanned out like a halo and her PERFECT REFLECTION visible in the mirror-water below, sometimes low angle from below water-level looking up past the lily pads at her hovering above the surface, sometimes a side tracking shot as she hovers horizontally through the tunnel with ancient massive tree roots filling the walls and ceiling, sometimes a close rear three-quarter view of her drifting forward, sometimes a WIDE DEEP PERSPECTIVE looking down the endless length of the tunnel showing a DISTANT PINPOINT OF WARM LIGHT at the far end that she's moving toward, sometimes a macro close-up of a single white lily blooming in ripples on the black water with her reflection in the petal, sometimes an extreme close-up of her face partially submerged with eyes closed peaceful and white hair spread across the water, one ethereal white-haired angel woman glowing with spiritual radiance HOVERING just above or within the water depending on the shot, in dynamic poses that vary — arms spread wide like a cross, arms raised overhead toward the distant light, kneeling in the water with arms outstretched, laying on her back with hair flowing, reaching one hand forward toward the distant light at end of tunnel, her very long pure white fibonacci spiral hair cascading past her waist, wearing a long flowing white dress, two LARGE transparent glowing white wings of pure light and mist extending from her back, surrounded by dense swirling white particles, massive ancient tree roots everywhere threading through walls ceiling and floor interlaced with her hair, many delicate white water lilies with bright yellow centers floating across the pool and growing along the root-crevices, deep indigo and bioluminescent teal glow, a subtle warm amber glow from the distant tunnel exit",
+        aiPrompt: "photorealistic cinematic overhead top-down view. deep underground tunnel with a shallow pool of still dark mirror-water flooding the floor. many delicate white water lilies with bright yellow centers floating sparsely across the black water surface. massive ancient gnarled tree roots on walls and ceiling framing the pool. one white-haired angel woman floating horizontally just above the water surface with arms spread wide like a cross, face hidden behind very long pure white fibonacci spiral fractal hair cascading past her waist and fanning across the water surface like a halo with her perfect reflection visible in the mirror-water below, wearing a long flowing white dress trailing across the lilies, two large transparent glowing white wings of pure light and mist fully extended. a distant warm golden pinpoint of light visible at the far end of the tunnel behind her. dense swirling white particles, pale bioluminescent teal glow on the roots, deep indigo water. ethereal mirror stillness, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "massive subsonic pulse reverberating through every tunnel wall simultaneously, the stone vibrating, the bioluminescent growth flaring bright, every hair strand pulsing visibly, particles exploding outward from every surface, the underground labyrinth shuddering with the deep frequency",
-          highAmplitude: "every patch of bioluminescence blazing with sudden cold light, all the tunnels illuminated at once revealing the full impossible depth of the underground network, the dark angels' trailing particles flaring bright",
+          highBass: "subsonic pulse rippling the mirror-water, lily pads trembling, fibonacci hair pulsing visibly, white particles exploding outward",
+          highAmplitude: "every patch of bioluminescent teal blazing, the distant tunnel-end light swelling brighter, reflection shimmering",
         },
-        guidancePhrases: ["she is everywhere...", "the boundary has dissolved...", "they were always here..."],
+        guidancePhrases: ["the water knows her...", "she is her own reflection...", "the light at the end is waiting..."],
         poetryMood: "intense",
         voice: "ash",
-        aiOverlayPrompt: "fragment of ancient stone with bioluminescent lichen rotating slowly, wet surface with trailing fungal threads, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
+        aiOverlayPrompt: "single white water lily with bright yellow center floating on still dark water with concentric ripples, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
       },
 
-      // ── Recognition (1:40–2:44) ──
-      // THE GREAT TREE + FIRST TRUE GOLDEN LIGHT emerging. The distant warmth
-      // from the tunnel exit has now become an actual cosmic dawn rising
-      // through the tree. Her hair begins to catch gold at the tips.
+      // ── Recognition: emerge into cosmos, tree on floating earth, small flowers ──
+      // She breaks out of the tunnel into cosmic space. The tree stands on
+      // a floating island, small white flowers scattered sparsely on the
+      // bare branches (NOT overblown). She approaches — she hasn't merged
+      // yet; that's phase Release.
       illumination: {
         start: 0.55,
-        end: 0.78,
+        end: 0.72,
         shaderOpacity: 0.72,
-        aiPrompt: "photorealistic cinematic VARIED extreme wide cosmic shots — sometimes showing the COLOSSAL infinite tree filling almost the entire frame with its branches extending across galaxies backlit by a distant GOLDEN COSMIC SUNRISE, sometimes a mid-distance view showing the full towering tree bathed in warm golden light from behind as she floats toward it, sometimes a closer shot of her woven into the trunk with golden light streaming through the branches, sometimes a silhouette shot where she and the tree are backlit against a massive golden nebula, sometimes looking up from below as golden shafts cascade down through the branches around her, an IMMENSE ancient gnarled bare tree INFINITELY MASSIVE in cosmic scale impossibly towering in the vast cosmic void, empty bare branches reaching outward across distant galaxies, anchored on a floating island of dark earth and jagged raw luminous white crystal clusters suspended in deep cosmos filled with stars nebulae and galaxies, DISTANT WARM GOLDEN SUNRISE glow radiating from behind the tree tinting everything with cosmic dawn, one white-haired angel woman glowing with ethereal spiritual radiance HOVERING toward the colossal tree — sometimes seen close with her head slightly turned revealing a SINGLE mysterious eye through her white spiral hair, sometimes tiny against the infinite tree, her very long pure white fibonacci spiral hair cascading past her waist with the TIPS catching warm golden light, wearing a long flowing white dress that picks up amber highlights, two LARGE transparent glowing white wings of pure light and mist extending from her back lit with golden rim light, surrounded by INTENSELY DENSE swirling white and gold particles like spiritual haze mixed with embers, two transparent spirit-echo duplicates drifting behind her, face hidden behind her white spiral hair, mysterious ethereal cosmic dawn",
+        aiPrompt: "photorealistic cinematic wide cosmic view. one immense ancient gnarled bare tree anchored on a floating island of dark earth suspended in infinite cosmos filled with distant stars nebulae and spiral galaxies, delicate small white flowers scattered sparsely across the bare branches with plenty of empty branch between them (not overblown not covered). distant warm golden cosmic sunrise glow behind the tree rimming the branches with amber rim light. one white-haired angel woman hovering toward the tree with her back to the camera, arms slightly raised, face hidden behind very long pure white fibonacci spiral fractal hair cascading past her waist with the tips beginning to catch warm gold, wearing a long flowing white dress with faint amber highlights, two large transparent glowing white wings of pure light and mist extending behind her lit with golden rim light, surrounded by dense swirling white and gold particles like spiritual haze mixed with embers. mysterious ethereal cosmic dawn, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "deep bass reverberation shaking the ancient tree, every root-thread pulsing simultaneously, the hair network flaring bright, particles exploding outward from the intersections, the floating earth trembling, the cosmos rippling with the subsonic force",
-          lowAmplitude: "the spirits barely visible, only the faintest luminous traces of their hair threading between tree and stars, profound stillness suspended between worlds",
+          highBass: "deep resonance shaking the ancient tree, every branch pulsing, small white flowers trembling, particles exploding outward",
+          lowAmplitude: "the angel barely visible, only the faintest luminous hair threads suspended between tree and stars",
         },
-        guidancePhrases: ["there is light inside the dark...", "the ghost was never lost...", "recognition..."],
+        guidancePhrases: ["there is light inside the dark...", "the tree has been waiting...", "recognition..."],
         poetryMood: "mystical",
         voice: "ash",
-        aiOverlayPrompt: "ancient gnarled branch with trailing luminous root filaments, bark photorealistic, tips dissolving into golden particles, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
+        aiOverlayPrompt: "ancient gnarled branch with a few delicate small white flowers and trailing luminous root filaments, bark photorealistic, tips dissolving into golden particles, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
       },
 
-      // ── Release (2:44–3:24) ──
-      // FULL GOLDEN LIGHT PHASE — the angel has emerged from the tunnel and
-      // the tree, now soaring freely through infinite cosmos bathed in
-      // volumetric golden sunrays. Every surface is gold. Her hair has fully
-      // transitioned from white to luminous gold at the ends. This is the
-      // "angel soaring in infinite cosmos all golden and particles" beat.
+      // ── Release: merging with the tree trunk and branches ──
+      // This is the merge moment. Her body dissolves INTO the wood —
+      // translucent, wood-grain showing through skin, hair spiraling
+      // seamlessly into branches. Golden light streams through everything.
       return: {
-        start: 0.78,
-        end: 0.825,
+        start: 0.72,
+        end: 0.84,
         bloomIntensity: 0.55,
         halation: 0.14,
         vignette: 0.18,
         palette: { primary: "#1a0e05", secondary: "#2a1c10", accent: "#e8b868", glow: "#ffd890" },
-        aiPrompt: "photorealistic cinematic VARIED cosmic shots drenched in WARM GOLDEN LIGHT — sometimes an extreme wide view of infinite cosmos filled with volumetric golden sunrays cutting through deep space with her tiny figure soaring through the middle, sometimes a three-quarter tracking shot of her flying horizontally through golden stardust clouds with arms outstretched, sometimes a close view of her face turned upward with eyes closed peaceful and golden light washing across her features, sometimes from below looking up as she ascends through a golden nebula, sometimes a far wide showing her as a bright silhouette in a cathedral of cosmic light, one ethereal white-haired angel woman SOARING freely through infinite golden cosmos with arms spread wide or raised overhead in transcendent flight, her very long pure white fibonacci spiral hair now catching rich gold at the tips and through its length cascading behind her as she flies, wearing a long flowing white dress with amber highlights rippling across the fabric as she moves through the light, two LARGE transparent glowing white wings of pure light and mist fully extended trailing golden particle streams, surrounded by an INTENSELY DENSE cloud of warm GOLDEN and white particles filling the entire frame like sparks from a divine fire, two transparent spirit-echo duplicates of herself soaring alongside her, rich deep indigo cosmos pierced by volumetric amber sunrays everywhere, distant spiral galaxies and star clusters visible, no tree, no tunnel, no underground — pure infinite cosmic gold, face mostly hidden behind her golden-lit white hair, mysterious ethereal transcendent flight",
+        aiPrompt: "photorealistic cinematic front view. one white-haired angel woman merging and dissolving into the trunk and branches of a massive ancient gnarled tree suspended in cosmic space, her body becoming translucent with the wood grain showing through her skin and dress, her very long pure white fibonacci spiral fractal hair flowing seamlessly into the branches and intertwining with the tree's reaching arms, wearing a long flowing white dress fading into bark texture, two large transparent glowing white wings of pure light and mist spread wide and themselves becoming branch-shapes. warm golden light streaming through every branch and through her translucent body in radiant shafts, small white flowers scattered sparsely across the merged branches. deep indigo cosmos behind pierced by volumetric amber sunrays. dense swirling white and gold particles. ethereal transcendent union, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "subsonic vibration passing through the ascending column, every hair thread pulsing outward, the golden particles scattering in a warm shockwave, the spirits brightening with each bass reverberation",
+          highBass: "subsonic pulse surging through the merged branches, every hair-thread and wood fiber pulsing with gold, particles scattering outward",
+          lowAmplitude: "the merge softening to a whisper, the angel barely distinguishable from the tree, only faint gold threads visible",
         },
-        guidancePhrases: ["it's rising...", "the dark is thinning...", "feel the warmth returning..."],
+        guidancePhrases: ["she is becoming the tree...", "release...", "she was always part of this..."],
         poetryMood: "flowing",
         voice: "ash",
-        aiOverlayPrompt: "spiral of warm golden particles and luminous hair strands in da Vinci fibonacci curl, embers trailing upward, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
+        aiOverlayPrompt: "spiral of warm golden particles and luminous hair strands weaving into tree branches in da Vinci fibonacci curl, isolated single element on pure black background, photorealistic, cinematic lighting, no text no signatures no watermarks no letters no writing",
       },
 
-      // ── Grace (3:24–3:39) ──
-      // GOLDEN TRANSCENDENCE finale — angel soaring in infinite cosmos, fully
-      // golden, dissolving into particles. She is free. The ghost is free.
+      // ── Grace: released into golden cosmos, soaring freely ──
+      // No tree, no tunnel, no roots — pure freedom. She has been released
+      // through the tree into the cosmos and is now soaring with arms up,
+      // hair fully suffused with gold, particles everywhere.
       integration: {
-        start: 0.825,
+        start: 0.84,
         end: 1.0,
         bloomIntensity: 0.75,
         halation: 0.18,
         chromaticAberration: 0.0,
         vignette: 0.10,
         palette: { primary: "#1a1408", secondary: "#2a2010", accent: "#f0c060", glow: "#ffe0a0" },
-        aiPrompt: "photorealistic cinematic VARIED sublime cosmic shots — sometimes a wide view looking straight up at her soaring overhead across an infinite golden cosmos, sometimes a distant wide of her as a radiant silhouette flying through volumetric gold rays piercing deep space filled with stars nebulae and spiral galaxies, sometimes a mid-distance tracking shot of her flying freely through clouds of golden particles with her wings fully extended, sometimes a close three-quarter view of her face turned upward with eyes closed in ecstasy and golden light washing across her features, one ethereal white-haired angel woman SOARING through the infinite golden cosmos in a transcendent ascending pose with BOTH ARMS FULLY OUTSTRETCHED UPWARD her head tilted back her body angled upward rising into infinity, her very long pure white fibonacci spiral hair now fully suffused with luminous gold cascading past her waist and trailing in the cosmic current, wearing a long flowing white dress with swirling liquid starlight patterns rippling across the fabric, two LARGE transparent wings of pure light and mist fully spread behind her trailing dense golden particle streams, surrounded by an OVERWHELMING cloud of swirling golden and white particles filling the entire frame like embers from a divine fire, two transparent spirit-echo duplicates of herself soaring alongside her, distant stars nebulae and spiral galaxies visible through the golden haze, volumetric warm amber sunrays everywhere, face mostly hidden behind her golden-lit hair, transcendent ethereal nirvana, no tree, no tunnel, no roots — pure infinite cosmic gold",
+        aiPrompt: "photorealistic cinematic wide cosmic view. one white-haired angel woman soaring freely through infinite golden cosmos with both arms fully outstretched upward, head tilted back, body angled upward rising into infinity, face hidden behind very long pure white fibonacci spiral fractal hair now fully suffused with luminous gold cascading behind her in the cosmic current, wearing a long flowing white dress with swirling liquid amber starlight patterns rippling across the fabric, two large transparent glowing white wings of pure light and mist fully spread behind her trailing dense golden particle streams. deep indigo cosmos pierced by volumetric amber sunrays everywhere, distant stars nebulae and spiral galaxies visible through a warm golden haze. dense swirling white and gold particles filling the entire frame like embers from a divine fire. no tree no tunnel no roots, pure infinite cosmic gold, transcendent ethereal flight, freedom, nirvana, no text no watermarks",
         aiPromptModifiers: {
-          highBass: "the golden light pulsing with deep resonant warmth, each bass note sending a visible wave of gold radiance outward, the angelic figure and all the distant spirits glowing brighter with each pulse, particles scattering in golden shockwaves",
-          lowAmplitude: "profound sacred silence, the gold light soft and steady, the angelic figure at perfect peace, weightless in golden cosmic stillness",
+          highBass: "gold light pulsing with deep resonant warmth, visible waves of radiance outward, particles scattering in golden shockwaves",
+          lowAmplitude: "profound sacred silence, the gold light soft and steady, the angel at perfect peace in golden cosmic stillness",
         },
         guidancePhrases: ["there was always light...", "the ghost is free..."],
         poetryMood: "transcendent",

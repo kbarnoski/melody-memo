@@ -107,6 +107,217 @@ interface VisualizerClientProps {
   initialPath?: any;
 }
 
+// Pointer-fine + hover-hover environments are desktops. The CSS media
+// query is a tighter signal than userAgent sniffing — a Windows tablet in
+// touch mode reads as coarse even if the UA says "Windows".
+function isDesktopEnvironment(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return (
+    window.matchMedia("(pointer: fine)").matches &&
+    window.matchMedia("(hover: hover)").matches
+  );
+}
+
+function GestureStartScreen({
+  journeyName,
+  journeySubtitle,
+  creatorName,
+  musicArtist,
+  photographyCredit,
+  dedication,
+  pathName,
+  pathAccent,
+  pathStepIdx,
+  pathStepTotal,
+  onBegin,
+}: {
+  journeyName: string;
+  journeySubtitle: string | null;
+  creatorName: string | null;
+  musicArtist: string | null;
+  photographyCredit: string | null;
+  dedication: string | null;
+  pathName?: string;
+  pathAccent: string;
+  pathStepIdx: number;
+  pathStepTotal: number;
+  onBegin: () => void;
+}) {
+  const eyebrow =
+    pathName && pathStepIdx >= 0 && pathStepTotal > 0
+      ? `${pathName} · ${pathStepIdx + 1} of ${pathStepTotal}`
+      : "Journey";
+  const eyebrowColor = pathName ? pathAccent : "rgba(255, 255, 255, 0.3)";
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      aria-label="Tap to begin journey"
+      className="h-dvh w-screen overflow-hidden bg-black relative flex items-center justify-center"
+      style={{ cursor: "pointer" }}
+      onClick={onBegin}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onBegin();
+        }
+      }}
+    >
+      <style>{`@keyframes gestureFadeIn { from { opacity: 0 } to { opacity: 1 } }`}</style>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 32,
+          animation: "gestureFadeIn 1s ease-out both",
+          textAlign: "center",
+          padding: "0 24px",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontSize: "0.6rem",
+              fontFamily: "var(--font-geist-mono)",
+              color: eyebrowColor,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              marginBottom: 14,
+            }}
+          >
+            {eyebrow}
+          </div>
+          <div
+            style={{
+              fontSize: "clamp(2.6rem, 7vw, 4rem)",
+              fontFamily: "'Cormorant Garamond', Georgia, serif",
+              fontWeight: 300,
+              letterSpacing: "0.04em",
+              color: "#fff",
+              lineHeight: 1.2,
+            }}
+          >
+            {journeyName}
+          </div>
+          {journeySubtitle && (
+            <div
+              style={{
+                fontSize: "clamp(0.9rem, 2vw, 1.1rem)",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontWeight: 300,
+                fontStyle: "italic",
+                color: "rgba(255, 255, 255, 0.45)",
+                marginTop: 8,
+              }}
+            >
+              {journeySubtitle}
+            </div>
+          )}
+          {creatorName && (
+            <div
+              style={{
+                fontSize: "0.9rem",
+                fontFamily: "var(--font-geist-mono)",
+                color: "rgba(255, 255, 255, 0.85)",
+                letterSpacing: "0.04em",
+                marginTop: 12,
+              }}
+            >
+              by {creatorName}
+            </div>
+          )}
+          {musicArtist && (
+            <div
+              style={{
+                fontSize: "0.9rem",
+                fontFamily: "var(--font-geist-mono)",
+                color: "rgba(255, 255, 255, 0.85)",
+                letterSpacing: "0.04em",
+                marginTop: 4,
+              }}
+            >
+              Music by {musicArtist}
+            </div>
+          )}
+          {photographyCredit && (
+            <div
+              style={{
+                fontSize: "0.9rem",
+                fontFamily: "var(--font-geist-mono)",
+                color: "rgba(255, 255, 255, 0.85)",
+                letterSpacing: "0.04em",
+                marginTop: 4,
+              }}
+            >
+              Photography by {photographyCredit}
+            </div>
+          )}
+          {dedication && (
+            <div
+              style={{
+                fontSize: "1rem",
+                fontFamily: "'Cormorant Garamond', Georgia, serif",
+                fontStyle: "italic",
+                color: "rgba(255, 255, 255, 0.75)",
+                letterSpacing: "0.04em",
+                marginTop: 10,
+              }}
+            >
+              {dedication}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          aria-label="Start journey"
+          onClick={(e) => {
+            e.stopPropagation();
+            onBegin();
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            background: "rgba(255, 255, 255, 0.1)",
+            border: "1px solid rgba(255, 255, 255, 0.2)",
+            color: "rgba(255, 255, 255, 0.9)",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)";
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </button>
+
+        <div
+          style={{
+            fontSize: "0.65rem",
+            fontFamily: "var(--font-geist-mono)",
+            color: "rgba(255, 255, 255, 0.2)",
+          }}
+        >
+          Tap anywhere to begin
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VisualizerClient({
   recording,
   analysis: initialAnalysis,
@@ -638,12 +849,27 @@ export function VisualizerClient({
       });
     }
 
-    // On mobile, a page refresh loses the user gesture context so
-    // AudioContext.resume() and audio.play() silently fail. Instead of
-    // auto-starting (which would play shaders without sound), flag that
-    // we need a tap first. The tap handler below starts everything in
-    // sync: audio + journey engine + AI imagery.
-    setNeedsGesture(true);
+    // On desktop, programmatic AudioContext.resume() still works after
+    // the selector-card click that navigated us here, so we can skip the
+    // gesture overlay and drop the viewer straight into the journey. On
+    // mobile, a page refresh loses the user gesture context so
+    // AudioContext.resume() and audio.play() silently fail — keep the
+    // tap-to-begin screen there.
+    if (isDesktopEnvironment()) {
+      ensureResumed();
+      if (recording) {
+        play({
+          id: recording.id,
+          title: recording.title ?? "Untitled",
+          audioUrl: recording.audio_url,
+          artist: recording.artist ?? undefined,
+        });
+      }
+      useAudioStore.getState().setAiImageEnabled(true);
+      useAudioStore.getState().startCustomJourney(journey);
+    } else {
+      setNeedsGesture(true);
+    }
 
     // Prefetch the path's dedicated screen so closing the journey feels
     // instant — the page is already cached by the time the user taps X.
@@ -1179,13 +1405,33 @@ export function VisualizerClient({
 
   if (!analyser || !dataArray) return null;
 
-  // Gesture gate for path-launched journeys (refresh on mobile).
-  // Renders a minimal tap-to-begin overlay so audio + visuals start
-  // together from the user's tap — no desync, no silent shaders.
+  // Gesture gate for path-launched journeys.
+  // - Desktop (fine pointer + hover): skip the overlay entirely; mount effect
+  //   below starts the journey immediately. Desktops allow programmatic
+  //   AudioContext.resume() on first user click of the selector card, and by
+  //   the time we reach this route the gesture is still in scope.
+  // - Mobile: show a rich info screen (journey name, subtitle, credits,
+  //   path step counter, dedication) with a play button — matches the
+  //   public /journey/[token] start screen so viewers see who made what
+  //   before they tap in.
   if (needsGesture && initialCustomJourney) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const r = initialCustomJourney as Record<string, any>;
     const journeyName = (r.name as string) ?? "Journey";
+    const journeySubtitle = (r.subtitle as string) ?? null;
+    const creatorName = (r.creator_name as string) ?? null;
+    const photographyCredit = (r.photography_credit as string) ?? null;
+    const dedication = (r.dedication as string) ?? null;
+    const musicArtist = recording?.artist ?? null;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const p = (initialPath ?? null) as Record<string, any> | null;
+    const pathName = p?.name as string | undefined;
+    const pathAccent = (p?.accent_color as string) ?? "#d0a070";
+    const pathJourneyIds = (p?.journey_ids ?? []) as string[];
+    const pathStepIdx = pathJourneyIds.indexOf(r.id as string);
+    const pathStepTotal = pathJourneyIds.length;
+
     const handleGestureBegin = () => {
       setNeedsGesture(false);
       ensureResumed();
@@ -1212,17 +1458,15 @@ export function VisualizerClient({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any;
 
-      if (initialPath) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const p = initialPath as Record<string, any>;
+      if (p) {
         useAudioStore.getState().setActivePath({
           id: p.id as string,
           name: (p.name as string) ?? "Untitled Path",
           subtitle: (p.subtitle as string) ?? null,
           shareToken: (p.share_token as string) ?? null,
-          journeyIds: (p.journey_ids ?? []) as string[],
+          journeyIds: pathJourneyIds,
           culminationJourneyId: (p.culmination_journey_id as string) ?? null,
-          accent: (p.accent_color as string) ?? "#d0a070",
+          accent: pathAccent,
           glow: (p.glow_color as string) ?? "#e0b080",
         });
       }
@@ -1240,61 +1484,19 @@ export function VisualizerClient({
       useAudioStore.getState().startCustomJourney(journey);
     };
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        aria-label="Tap to begin journey"
-        className="h-dvh w-screen bg-black flex items-center justify-center"
-        style={{ cursor: "pointer" }}
-        onClick={handleGestureBegin}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleGestureBegin();
-          }
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", animation: "journeyEndFadeIn 0.8s ease-out both" }}>
-          <span
-            style={{
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "0.65rem",
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
-              color: "rgba(255,255,255,0.35)",
-            }}
-          >
-            {journeyName}
-          </span>
-          <button
-            type="button"
-            aria-label="Start journey"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "64px",
-              height: "64px",
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.08)",
-              border: "1px solid rgba(255,255,255,0.18)",
-              color: "rgba(255,255,255,0.9)",
-              cursor: "pointer",
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-          </button>
-          <span
-            style={{
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "0.6rem",
-              color: "rgba(255,255,255,0.2)",
-            }}
-          >
-            Tap anywhere to begin
-          </span>
-        </div>
-      </div>
+      <GestureStartScreen
+        journeyName={journeyName}
+        journeySubtitle={journeySubtitle}
+        creatorName={creatorName}
+        musicArtist={musicArtist}
+        photographyCredit={photographyCredit}
+        dedication={dedication}
+        pathName={pathName}
+        pathAccent={pathAccent}
+        pathStepIdx={pathStepIdx}
+        pathStepTotal={pathStepTotal}
+        onBegin={handleGestureBegin}
+      />
     );
   }
 

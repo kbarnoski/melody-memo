@@ -269,14 +269,15 @@ export function AiImageLayer({
         if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
     } else {
-      // Same-journey phase transition: gentle handoff.
-      // DON'T cancel in-flight requests — let them land and be discarded by prompt check.
-      // DON'T clear image cache — reusable across phases.
-      // DON'T reset lastGenTimeRef — prevents rushed generation burst.
-      // Just note the prompt change time for debounce.
+      // Same-journey phase transition.
+      // Cancel in-flight requests so old-phase imagery (generated under the
+      // previous prompt) doesn't land after the new phase has started —
+      // this was causing Ghost to keep showing tunnel imagery deep into the
+      // tree/golden phases. Keep the image cache since identical prompts
+      // across replays can still be reused. Old on-screen layers fade
+      // naturally via tier-based eviction; only pending requests die.
+      getRealtimeImageService().cancelInFlight();
       promptChangeTimeRef.current = performance.now();
-      // Old images stay visible and fade naturally via getTierProfile().maxAiLayers eviction
-      // when new images arrive — no flash, no rush.
     }
   }, [prompt, journeyId]);
   useEffect(() => { denoisingRef.current = denoisingStrength; }, [denoisingStrength]);

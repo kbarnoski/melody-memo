@@ -17,10 +17,48 @@ function gitShortSha(): string {
 const BUILD_COMMIT = gitShortSha();
 const BUILD_TIME = new Date().toISOString();
 
+// CSP for the app. Needs 'unsafe-eval' + 'wasm-unsafe-eval' because
+// @tensorflow/tfjs + @spotify/basic-pitch compile WASM at runtime. Also
+// needs 'unsafe-inline' for Next.js runtime scripts and Tailwind inline
+// styles. connect-src is wide open (https:/wss:) so Supabase, fal.ai,
+// storage CDNs, and WebSockets all work without enumeration.
+const CSP_DIRECTIVES = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https:",
+  "media-src 'self' blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https: wss: blob:",
+  "worker-src 'self' blob:",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+
+const SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  { key: "Content-Security-Policy", value: CSP_DIRECTIVES },
+];
+
 const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_BUILD_COMMIT: BUILD_COMMIT,
     NEXT_PUBLIC_BUILD_TIME: BUILD_TIME,
+  },
+  async headers() {
+    return [
+      {
+        // All routes — Next.js applies these at the Vercel edge before the
+        // CDN cache, which middleware can't reach for prerendered pages.
+        source: "/:path*",
+        headers: SECURITY_HEADERS,
+      },
+    ];
   },
   async redirects() {
     return [

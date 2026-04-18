@@ -59,36 +59,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Security headers — defense-in-depth against XSS, clickjacking, sniffing
-  supabaseResponse.headers.set("X-Content-Type-Options", "nosniff");
-  supabaseResponse.headers.set("X-Frame-Options", "DENY");
-  supabaseResponse.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  supabaseResponse.headers.set("Permissions-Policy", "camera=(), microphone=(self), geolocation=()");
-  supabaseResponse.headers.set(
-    "Strict-Transport-Security",
-    "max-age=63072000; includeSubDomains; preload"
-  );
-  // CSP: self + Supabase + fal.ai WebSocket + inline styles (Tailwind) + data/blob images.
-  // 'unsafe-eval' + 'wasm-unsafe-eval' required by @tensorflow/tfjs (basic-pitch
-  // pitch detection compiles WASM at runtime — Chrome separates wasm from
-  // generic eval since 2023). 'unsafe-inline' needed by Next.js runtime.
-  supabaseResponse.headers.set(
-    "Content-Security-Policy",
-    [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob:",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https:",
-      "media-src 'self' blob: https:",
-      "font-src 'self' data:",
-      "connect-src 'self' https: wss: blob:",
-      "worker-src 'self' blob:",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "object-src 'none'",
-    ].join("; ")
-  );
-
+  // Security headers now live in next.config.ts `headers()` so they're
+  // applied at the Vercel edge before CDN caching — middleware-set headers
+  // get dropped on prerendered pages served from cache.
   return supabaseResponse;
 }
 

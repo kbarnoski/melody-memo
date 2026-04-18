@@ -634,6 +634,17 @@ export function VisualizerCore({
     if (cb) { cb(); tertiaryNextReadyCbRef.current = null; }
   }, []);
 
+  // Clear all crossfade timeouts on unmount to prevent stale callbacks
+  // firing after the component is gone. Individual effects clear their
+  // own timeouts when deps change, but unmount can happen mid-crossfade.
+  useEffect(() => {
+    return () => {
+      clearTimeout(primaryReadyTimeoutRef.current);
+      clearTimeout(dualReadyTimeoutRef.current);
+      clearTimeout(tertiaryNextReadyTimeoutRef.current);
+    };
+  }, []);
+
   // Primary shader A/B crossfade — triggered when actualPrimaryMode changes
   // (from mode change, dimmed→undimmed transition, or journey shader switch)
   useEffect(() => {

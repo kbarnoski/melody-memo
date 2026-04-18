@@ -13,6 +13,7 @@ import { JourneyFeedback, resetPerfMonitor, flushFeedbackEntries, buildSnapshot,
 import { getTierProfile, getDeviceTier } from "@/lib/audio/device-tier";
 import { AdminPanel } from "./admin-panel";
 import { useAudioStore } from "@/lib/audio/audio-store";
+import { useShallow } from "zustand/react/shallow";
 import { MODES_AI, AI_MODE_PROMPTS } from "@/lib/shaders";
 import { getAudioEngine, getAnalyserNode, getNativeAnalyser, ensureResumed, type AnalyserLike } from "@/lib/audio/audio-engine";
 import { useInstallationMode } from "@/lib/audio/use-installation-mode";
@@ -55,6 +56,38 @@ function getSpeechRecognition(): SpeechRecognitionType | null {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
 }
+
+// ─── Shared style constants ───
+// Extracted from inline styles that appeared 17+ times. Module-level so
+// they're allocated once and never trigger re-renders.
+const MONO_LABEL: React.CSSProperties = {
+  fontFamily: "var(--font-geist-mono)",
+  fontSize: "0.9rem",
+  color: "rgba(255, 255, 255, 0.85)",
+  letterSpacing: "0.04em",
+  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+};
+const MONO_LABEL_DIM: React.CSSProperties = {
+  ...MONO_LABEL,
+  color: "rgba(255, 255, 255, 0.4)",
+  fontSize: "0.6rem",
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+};
+const SERIF_TITLE: React.CSSProperties = {
+  fontFamily: "'Cormorant Garamond', Georgia, serif",
+  fontWeight: 300,
+  letterSpacing: "0.04em",
+  color: "#fff",
+  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+};
+const OVERLAY_BG: React.CSSProperties = {
+  position: "absolute",
+  inset: "-40%",
+  background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+  filter: "blur(40px)",
+  pointerEvents: "none",
+};
 
 // ─── Component ───
 
@@ -102,23 +135,34 @@ export function VisualizerClient({
   const isAdmin = isAdminProp || clientAdmin;
 
   // Global audio store
-  const currentTrack = useAudioStore((s) => s.currentTrack);
-  const isPlaying = useAudioStore((s) => s.isPlaying);
-  const currentTime = useAudioStore((s) => s.currentTime);
-  const duration = useAudioStore((s) => s.duration);
-  const storeAnalysis = useAudioStore((s) => s.analysis);
+  // Batch data selectors with useShallow so the component only re-renders
+  // when one of these specific fields changes — not on every store mutation.
+  const { currentTrack, isPlaying, currentTime, duration, storeAnalysis } = useAudioStore(
+    useShallow((s) => ({
+      currentTrack: s.currentTrack,
+      isPlaying: s.isPlaying,
+      currentTime: s.currentTime,
+      duration: s.duration,
+      storeAnalysis: s.analysis,
+    }))
+  );
+  // Actions are stable references — safe as individual selectors
   const play = useAudioStore((s) => s.play);
   const togglePlayPause = useAudioStore((s) => s.togglePlayPause);
   const setAnalysis = useAudioStore((s) => s.setAnalysis);
   const seek = useAudioStore((s) => s.seek);
 
-  const installationMode = useAudioStore((s) => s.installationMode);
-  const activeJourney = useAudioStore((s) => s.activeJourney);
-  const activeRealm = useAudioStore((s) => s.activeRealm);
-  const activeTheme = useAudioStore((s) => s.activeTheme);
+  const { installationMode, activeJourney, activeRealm, activeTheme, aiImageEnabled, storeCueMarkers } = useAudioStore(
+    useShallow((s) => ({
+      installationMode: s.installationMode,
+      activeJourney: s.activeJourney,
+      activeRealm: s.activeRealm,
+      activeTheme: s.activeTheme,
+      aiImageEnabled: s.aiImageEnabled,
+      storeCueMarkers: s.cueMarkers,
+    }))
+  );
   const startJourney = useAudioStore((s) => s.startJourney);
-  const aiImageEnabled = useAudioStore((s) => s.aiImageEnabled);
-  const storeCueMarkers = useAudioStore((s) => s.cueMarkers);
 
   // Local analyser state (for VisualizerCore)
   const [analyser, setAnalyser] = useState<AnalyserLike | null>(null);

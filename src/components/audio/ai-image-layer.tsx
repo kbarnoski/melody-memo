@@ -262,6 +262,12 @@ export function AiImageLayer({
       // is empty so this is a no-op; on switches it removes any leftover
       // imagery from the previous journey instead of letting it fade for 2.5s.
       layersRef.current = [];
+      // Also clear the canvas so old layer pixels don't persist in GPU memory
+      const canvas = canvasRef.current;
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     } else {
       // Same-journey phase transition: gentle handoff.
       // DON'T cancel in-flight requests — let them land and be discarded by prompt check.

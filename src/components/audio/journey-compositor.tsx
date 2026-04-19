@@ -331,11 +331,14 @@ export function JourneyCompositor({
               backgroundColor: `rgba(255, 255, 255, ${flashOpacity})`,
             }}
           />
-          {/* Angel flash — single image per session, transparency via
-              luminance chroma-key so the figure floats cleanly above the
-              shader without a rectangular black frame. */}
+          {/* Angel flash — two-beat micro-story:
+                Flash #1 → dark possessed angel (variant 0)
+                Flash #2+ → white angel returned (variant 1)
+              Transparency via luminance chroma-key so the figure floats
+              cleanly above the shader without a rectangular black frame. */}
           {(() => {
             const flashImpulse = impulse > 0 ? impulse : Math.max(0, (approach - 0.92) / 0.08);
+            const flashVariant: 0 | 1 = bassHitCountRef.current <= 1 ? 0 : 1;
             return (
               <div
                 style={{
@@ -349,6 +352,7 @@ export function JourneyCompositor({
                 }}
               >
                 <FlashAngel
+                  variant={flashVariant}
                   opacity={flashImpulse}
                   blurPx={(1 - flashImpulse) * 1.5}
                 />

@@ -8,6 +8,9 @@ interface FlashAngelProps {
   opacity: number;
   /** Blur radius in px, applied via CSS filter. */
   blurPx: number;
+  /** Which variant to show. 0 = dark possessed angel (flash #1 only),
+   *  1 = white angel (flash #2 and all subsequent flashes). */
+  variant: 0 | 1;
 }
 
 /**
@@ -22,12 +25,12 @@ interface FlashAngelProps {
  * by ancestor stacking contexts AND couldn't handle fal.ai's JPEG near-black
  * (RGB 5,5,5) artifacts.
  */
-export const FlashAngel = memo(function FlashAngel({ opacity, blurPx }: FlashAngelProps) {
+export const FlashAngel = memo(function FlashAngel({ opacity, blurPx, variant }: FlashAngelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [src, setSrc] = useState<string>("/images/flash-angel-1.png");
 
   useEffect(() => {
-    const cached = getGhostFlashUrl();
+    const cached = getGhostFlashUrl(variant);
     if (cached) {
       setSrc(cached);
       return;
@@ -37,7 +40,7 @@ export const FlashAngel = memo(function FlashAngel({ opacity, blurPx }: FlashAng
     const id = setInterval(() => {
       if (cancelled) return;
       tries++;
-      const url = getGhostFlashUrl();
+      const url = getGhostFlashUrl(variant);
       if (url) {
         setSrc(url);
         clearInterval(id);
@@ -49,7 +52,7 @@ export const FlashAngel = memo(function FlashAngel({ opacity, blurPx }: FlashAng
       cancelled = true;
       clearInterval(id);
     };
-  }, []);
+  }, [variant]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

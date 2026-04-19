@@ -3,6 +3,8 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { getGhostAngelTheme } from "@/lib/journeys/ghost-flash-images";
+import { GHOST_ANGEL_WHITE, GHOST_ANGEL_BLACK, GHOST_ANGEL_MARKER } from "@/lib/journeys/journeys";
 import { createSeededRandom } from "@/lib/journeys/seeded-random";
 import { getTierProfile } from "@/lib/audio/device-tier";
 
@@ -435,10 +437,20 @@ export function AiImageLayer({
       ? createSeededRandom(promptSeedRef.current + genCountRef.current)
       : Math.random;
 
+    // Ghost-only: swap the <<GHOST_ANGEL>> marker for either the white or
+    // the possessed-black wardrobe variant depending on the current flash
+    // count. Applied on every gen before any other prompt decoration.
+    let basePrompt = currentPrompt;
+    if (activeJourney?.id === "ghost" && basePrompt.includes(GHOST_ANGEL_MARKER)) {
+      const theme = getGhostAngelTheme();
+      const descriptor = theme === "black" ? GHOST_ANGEL_BLACK : GHOST_ANGEL_WHITE;
+      basePrompt = basePrompt.split(GHOST_ANGEL_MARKER).join(descriptor);
+    }
+
     let variedPrompt: string;
     if (strictCamera) {
       // Base prompt already dictates the camera — don't layer random perspectives on top.
-      variedPrompt = `${currentPrompt}, no snowflakes`;
+      variedPrompt = `${basePrompt}, no snowflakes`;
     } else {
       const phase = getJourneyEngine().getCurrentPhase();
       const perspectives = CINEMATIC_PERSPECTIVES[phase ?? "threshold"] ?? CINEMATIC_PERSPECTIVES.threshold;
@@ -461,7 +473,7 @@ export function AiImageLayer({
       const interp = interpretations[Math.floor(rng() * interpretations.length)];
       const mood = moods[Math.floor(rng() * moods.length)];
 
-      variedPrompt = `${currentPrompt}, ${pov}, ${interp}, ${mood}, no snowflakes`;
+      variedPrompt = `${basePrompt}, ${pov}, ${interp}, ${mood}, no snowflakes`;
     }
 
     // Capture current prompt to discard stale responses after a prompt change

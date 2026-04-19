@@ -5,6 +5,7 @@ import { AiImageLayer } from "./ai-image-layer";
 import { AiOverlayElements } from "./ai-overlay-elements";
 import { PostProcessingLayer } from "./post-processing-layer";
 import { FlashAngel } from "./flash-angel";
+import { incrementGhostFlashCount } from "@/lib/journeys/ghost-flash-images";
 import type { JourneyFrame } from "@/lib/journeys/types";
 import { getEffectScale, getBloomScale } from "@/lib/journeys/adaptive-engine";
 import { getTierProfile } from "@/lib/audio/device-tier";
@@ -153,6 +154,11 @@ export function JourneyCompositor({
     bassHitCountRef.current += 1;
     bassHitStartRef.current = performance.now();
     inBassHitRef.current = true;
+    // Drive the Ghost angel-theme state (white ↔ black) off the same hit.
+    // ai-image-layer reads this via getGhostAngelTheme() when substituting
+    // the <<GHOST_ANGEL>> marker, so the main journey imagery swaps from
+    // white → possessed black after flash #1, then back to white after #2.
+    incrementGhostFlashCount();
   }
   if (impulse <= 0.1 || evtType !== "bass_hit") {
     inBassHitRef.current = false;

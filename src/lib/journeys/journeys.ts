@@ -510,26 +510,37 @@ export function defaultPhases(
   });
 }
 
-// Ghost angel descriptor — reused verbatim in every Ghost phase prompt so
-// fal.ai locks onto the same character across every generated frame. The
-// journey's visual identity lives here; edit with care.
-//   • SNOW WHITE hair, NEVER blonde / yellow / gold — rendered as fibonacci
-//     spiral braids cascading down her BACK and flowing seamlessly into the
-//     dress so hair and fabric read as one continuous ribbon
-//   • ALWAYS TWO translucent mist wings (never one, never missing a wing,
-//     NEVER feathered — pure translucent light-and-mist, not bird plumage)
-//   • Long floor-length translucent white dress of woven mist and light,
-//     somewhat see-through so the particle field reads through the fabric
-//   • Dense swirling white particles on her body, wings, and dress, also
-//     streaming from her as she moves
-const GHOST_ANGEL =
-  "one ethereal angel woman, " +
-  "very long pure SNOW WHITE hair (NEVER blonde, NEVER yellow, NEVER gold) " +
-  "woven into intricate fibonacci spiral da Vinci fractal braids cascading down her back and flowing seamlessly into her dress so hair and dress read as one continuous translucent white ribbon, " +
-  "wearing a long floor-length flowing translucent white dress of woven mist and light, somewhat see-through like her wings, the dress rippling with dense swirling white particles inside and around the fabric, " +
-  "ALWAYS TWO LARGE transparent translucent white wings of pure light and mist extending symmetrically from her back (BOTH LEFT and RIGHT wings fully visible, never missing a wing, never one-winged, wings are mist and light NEVER FEATHERED NOT bird feathers NOT plumage, purely translucent mist), " +
-  "dense swirling white particles filling the air around her body and streaming from her dress and wings, " +
-  "eyes closed peaceful serene expression";
+// Ghost angel — two wardrobe variants used verbatim in every Ghost phase
+// prompt via the <<GHOST_ANGEL>> marker. ai-image-layer substitutes the
+// correct variant at gen time based on the bass-flash count:
+//   count 0      → white angel (pre-possession)
+//   count === 1  → black possessed angel (after flash #1 costume change)
+//   count >= 2   → white angel again (after flash #2 returns her)
+// The character stays identical between variants — same body, same pose,
+// same pale skin, same fibonacci-spiral braided hair woven into the dress.
+// Only the hair / dress / wing COLOR changes.
+const GHOST_ANGEL_BASE =
+  "ONE AND ONLY ONE ethereal angel woman (never two, never multiple figures, never any companion figures anywhere in the scene, only one single angel in the entire frame), " +
+  "pale luminous skin, eyes closed peaceful serene expression, " +
+  "her hair woven into intricate fibonacci spiral da Vinci fractal BRAIDS cascading down her back, each braid wrapped and trailed with dense swirling particles spiraling along its length, the braids flowing seamlessly into her dress so hair and dress read as one continuous translucent ribbon, " +
+  "wearing a long floor-length flowing translucent dress of woven mist and light, somewhat see-through, rippling with dense swirling particles, " +
+  "ALWAYS TWO LARGE translucent iridescent rainbow-shimmering wings of pure light and particle mist extending symmetrically from her back (BOTH LEFT and RIGHT wings fully visible and symmetrical, NEVER missing a wing, NEVER one-winged, wings are ethereal translucent particle mist with a faint iridescent rainbow sheen, NEVER FEATHERED, NEVER bird feathers, NEVER plumage, NEVER bulky — thin wisps of light and particles, not mass), " +
+  "dense swirling particles filling the air around her body and streaming from her dress and wings";
+
+export const GHOST_ANGEL_WHITE =
+  GHOST_ANGEL_BASE +
+  ", wardrobe: SNOW WHITE hair (NEVER blonde, NEVER yellow, NEVER gold), SNOW WHITE translucent dress, SNOW WHITE iridescent wings, WHITE particles";
+
+export const GHOST_ANGEL_BLACK =
+  GHOST_ANGEL_BASE +
+  ", wardrobe: the angel is under a dark spell and possessed. JET BLACK hair, JET BLACK translucent shadow-mist dress, JET BLACK iridescent oil-slick wings, BLACK particles. same identity same body same pose same pale skin — only the wardrobe has changed to pure black shadow";
+
+/** Marker substituted with the current angel variant at gen time. */
+export const GHOST_ANGEL_MARKER = "<<GHOST_ANGEL>>";
+
+// Legacy alias — all existing Ghost phase prompts use GHOST_ANGEL in their
+// template strings, which now evaluates to the marker.
+const GHOST_ANGEL = GHOST_ANGEL_MARKER;
 
 export const JOURNEYS: Journey[] = [
   {
@@ -1410,9 +1421,11 @@ export const JOURNEYS: Journey[] = [
         end: 0.14,
         shaderOpacity: 0.75,
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be three-quarter back view, or side profile silhouette against the window, or low angle looking up at the tall window framing her, or extreme close-up of her hands resting on the windowsill, or wide establishing shot with her small against the vast chamber, or overhead top-down view. ancient dark stone chamber at night. tall arched stone window opening onto cosmic void scattered with faint stars. diagonal shaft of silver moonlight across worn stone floor cracked with ancient tree roots, delicate pure white flowers with all-white petals and all-white centers (NO yellow) scattered sparsely across the stone floor and at her feet. " +
+          "photorealistic cinematic view. " +
+          "VARIED camera per frame, MUST differ between shots — rotate between extreme wide with her small against the vast chamber, close-up of her hands on the windowsill, low angle looking up the tall window framing her, side profile silhouette against the window, overhead looking down at her figure, three-quarter back view. " +
+          "ancient dark stone chamber at night with a tall arched stone window opening onto cosmic void scattered with faint stars, diagonal shaft of silver moonlight across a worn stone floor cracked with ancient tree roots. " +
           GHOST_ANGEL +
-          " standing by the window. mysterious ethereal, deep shadows, no text no watermarks",
+          " standing alone by the window. mysterious ethereal, deep shadows, no text no watermarks",
         aiPromptModifiers: {
           highBass: "subsonic pressure ripple shuddering the windowpanes, fibonacci hair rippling, white particles scattering",
           lowAmplitude: "moonlight dimmed to faint silver, the chamber almost merged with shadow, only the luminous spiral hair faintly visible",
@@ -1432,11 +1445,14 @@ export const JOURNEYS: Journey[] = [
         end: 0.30,
         shaderOpacity: 0.65,
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be rear one-point tracking shot, or three-quarter side as she passes root walls, or low angle from below as her feet hover past, or overhead view looking down at her gliding, or close up of her face through her hair, or extreme wide with her tiny against the tunnel's depth. strong sense of forward motion. " +
+          "photorealistic cinematic view. strong sense of forward motion, she is TRAVELING through a natural deep-earth passageway (NEVER a man-made tunnel, NEVER carved masonry, NEVER stone corridor, NEVER brick, NEVER architectural construction — purely an organic cavernous passage through the living earth). " +
+          "VARIED camera per frame, MUST differ between shots — rotate between rear one-point tracking, three-quarter side as she passes root walls, low angle from below as her feet hover past, overhead looking down at her gliding, close up of her face through her braids, extreme wide with her small against the passage's vast depth. " +
+          "the passage is SPACIOUS with a high arched organic ceiling of gnarled tree roots far above her head (ceiling is tall, NEVER close to her head, NEVER cramped, plenty of open air around her), massive ancient gnarled spiraling tree roots forming the walls and high ceiling like a cathedral of living wood, pale bioluminescent teal lichen glowing on the root bark. " +
           GHOST_ANGEL +
-          " hovering FORWARD deep into an endless underground tunnel lined with massive gnarled spiraling tree roots threading across walls and ceiling like a cathedral of living wood, her dress and hair streaming behind her in the draft of her movement, " +
-          "delicate pure white flowers with all-white petals and all-white centers (NO yellow, NO color) blooming across the tunnel floor and along the root crevices as she passes, flowers growing in her wake, " +
-          "a distant organic living portal visible small behind her made entirely of intertwining ancient tree roots woven into a natural archway with more pure white flowers blooming along the root edges and a warm golden pulling light glowing at its center, receding into the distance (purely organic root growth, NO man-made stone, NO carved masonry). pale bioluminescent teal lichen glowing on the root bark, the tunnel stretching far ahead into deep indigo shadows. mysterious ethereal traveling passage, no text no watermarks",
+          " hovering FORWARD deep into the earth passage alone, her dress and braids streaming behind her in the draft of her movement. " +
+          "delicate pure white flowers with all-white petals and all-white centers (NO yellow, NO color) blooming across the earth floor and along the root crevices as she passes, flowers growing in her wake. " +
+          "a distant organic living portal visible small behind her, made entirely of intertwining ancient tree roots woven into a natural archway with more pure white flowers blooming along the root edges and a warm golden pulling light glowing at its center, receding into the distance (purely organic root growth, NO man-made stone, NO masonry). " +
+          "the passage stretches far ahead into deep indigo shadows. mysterious ethereal traveling passage, no text no watermarks",
         aiPromptModifiers: {
           highBass: "subsonic shockwave reverberating through roots, portal light flaring, white particles exploding outward",
           highTreble: "bioluminescent lichen flaring brighter, fibonacci hair spirals glowing at their tips",
@@ -1456,11 +1472,13 @@ export const JOURNEYS: Journey[] = [
         end: 0.55,
         shaderOpacity: 0.72,
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be overhead top-down, or low angle from water level looking up past lily pads at her hovering, or side tracking shot as she drifts horizontally, or close up of her reflection shimmering in the mirror-water, or extreme wide looking down tunnel length showing her tiny with the warm pinpoint of light at the very far end, or macro close-up of a single white lily with her reflected in the petals. slow forward motion. " +
+          "photorealistic cinematic view. she has arrived at a MAGNIFICENT NATURAL CAVERN in the deep earth where a vast shallow pool of still dark mirror-water fills the floor. this is an OPEN natural cavern (NEVER man-made, NEVER carved stone, NEVER a cramped tunnel) with a high vaulted ceiling of gnarled tree roots far above her and plenty of open space around her body. " +
+          "VARIED camera per frame, MUST differ between shots — rotate between overhead top-down of her floating on the water with her reflection below, low angle from water-level looking up past lily pads at her hovering, side tracking as she drifts horizontally, macro close-up of a single white lily with her reflected in the petals, extreme wide of the whole cavern with her tiny above the lily pool, a WIDE DEEP perspective looking out along the passage continuing onward showing a DISTANT WARM GOLDEN LIGHT glowing at the far end, three-quarter view of her hovering above the reflection. " +
           GHOST_ANGEL +
-          " hovering FORWARD just above a shallow pool of still dark mirror-water flooding the floor of a deep underground tunnel at the middle of the earth, her body horizontal with arms spread wide as she drifts through the space, her white spiral braided hair trailing across the water surface like a halo, her PERFECT REFLECTION clearly visible in the mirror-water beneath her matching her pose exactly. delicate pure white water lilies with all-white petals and all-white centers (NO yellow, NO color) floating abundantly across the black water surface scattering and rippling as she passes. " +
-          "a DISTANT WARM GOLDEN LIGHT AT THE END OF THE TUNNEL clearly visible ahead of her direction of travel, growing slowly brighter as she moves toward it. " +
-          "massive ancient gnarled tree roots framing the pool on walls and ceiling. pale bioluminescent teal glow on the roots, deep indigo water. ethereal traveling over mirror stillness, no text no watermarks",
+          " hovering FORWARD above the shallow pool of still dark mirror-water, her body horizontal with arms spread wide as she drifts through the space, her braided hair trailing across the water surface like a halo, her PERFECT REFLECTION clearly visible in the mirror-water beneath her matching her pose exactly (she is alone, just one angel and one reflection). " +
+          "abundant delicate pure white water lilies with all-white petals and all-white centers (NO yellow, NO color) floating across the black water surface scattering and rippling as she passes. " +
+          "the natural earth passage continues onward past the cavern and a DISTANT WARM GOLDEN LIGHT AT THE END OF THE PASSAGE is clearly visible ahead of her direction of travel, growing brighter as she moves toward it. " +
+          "pale bioluminescent teal glow on the roots, deep indigo water. ethereal traveling over mirror stillness, no text no watermarks",
         aiPromptModifiers: {
           highBass: "subsonic pulse rippling the mirror-water, lily pads trembling, fibonacci hair pulsing visibly, white particles exploding outward",
           highAmplitude: "every patch of bioluminescent teal blazing, the distant tunnel-end light swelling brighter, reflection shimmering",
@@ -1481,11 +1499,12 @@ export const JOURNEYS: Journey[] = [
         end: 0.72,
         shaderOpacity: 0.72,
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be extreme wide of the massive tree filling frame with her tiny approaching, or mid-distance with her flying toward, or close-up of her face from the side as she approaches with the tree glowing ahead, or low-angle from below looking up at golden shafts through the branches, or silhouette shot of her and the tree against cosmic sunrise, or three-quarter behind her as she sees the tree ahead. " +
+          "photorealistic cinematic view. she has just emerged from the deep-earth passage out into open infinite cosmos and now sees an immense ancient gnarled BARE tree ahead of her — the tree has NO flowers yet, its branches are entirely bare and empty, blossoms come later when she touches it. " +
+          "VARIED camera per frame, MUST differ between shots — rotate between extreme wide of the massive tree filling the frame with her tiny approaching, mid-distance with her flying toward, close-up of her braids streaming behind her with the tree glowing ahead, low-angle from below looking up at the tree against the cosmos, silhouette shot of her and the tree against the distant cosmic sunrise, three-quarter behind her framing the tree ahead, a wide establishing shot showing the floating crystal island with the entire universe sky behind. " +
+          "the tree is anchored on a floating chunk of dark earth cradled by a cluster of jagged raw luminous WHITE CRYSTAL outcroppings (dark earth sitting on a white crystal island) suspended in infinite cosmos filled with countless stars, vast nebulae, and distant spiral galaxies — the ENTIRE UNIVERSE SKY visible behind the tree as a backdrop. " +
           GHOST_ANGEL +
-          " flying FORWARD through open INFINITE SPACE cosmos APPROACHING one immense ancient gnarled bare tree anchored on a perfectly round spherical floating island of dark earth suspended in infinite cosmos filled with distant stars nebulae and spiral galaxies, the tree growing larger in her view as she flies closer, her body angled forward in flight with arms slightly raised, her white spiral braids and dress streaming behind her in the cosmic draft. " +
-          "delicate pure white flowers with all-white petals and all-white centers (NO yellow, NO color) actively BLOOMING across the tree's bare branches, new flowers opening visibly across every branch as she approaches, with plenty of empty branch still between them (not overblown, not fully covered — fresh bloom in progress). " +
-          "distant warm golden cosmic sunrise glow behind the tree rimming the branches with amber rim light. mysterious ethereal cosmic dawn, traveling approach, no text no watermarks",
+          " hovering FORWARD through open cosmos APPROACHING the tree alone, her body angled forward with arms slightly raised, her braids and dress streaming behind her in the cosmic draft. " +
+          "the tree's branches are bare — NO flowers yet, NO blossoms yet, the branches are empty waiting for her touch. distant warm golden cosmic sunrise glow behind the tree rimming the branches with amber rim light. mysterious ethereal cosmic dawn, traveling approach, no text no watermarks",
         aiPromptModifiers: {
           highBass: "deep resonance shaking the ancient tree, every branch pulsing, small white flowers trembling, particles exploding outward",
           lowAmplitude: "the angel barely visible, only the faintest luminous hair threads suspended between tree and stars",
@@ -1508,9 +1527,10 @@ export const JOURNEYS: Journey[] = [
         vignette: 0.18,
         palette: { primary: "#1a0e05", secondary: "#2a1c10", accent: "#e8b868", glow: "#ffd890" },
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be front view of the merge, or close up of her dissolving into bark, or extreme wide with her small in the vast tree trunk, or side view as she melts into a branch, or overhead view of her body becoming tree, or low angle at the tree base looking up with her woven into the branches. " +
+          "photorealistic cinematic view. she has ARRIVED at the tree. she reaches out and TOUCHES the tree trunk — and delicate pure white flowers with all-white petals and all-white centers (NO yellow, NO color) BURST INTO BLOOM ACROSS EVERY BRANCH from the moment of her touch, waves of blossoms opening outward across the tree, the bare branches now alive with white bloom. then her body begins to merge and dissolve into the trunk and branches. " +
+          "VARIED camera per frame, MUST differ between shots — rotate between close-up of her hand touching the trunk with the first blossoms erupting, mid-distance showing the bloom wave spreading across branches, extreme wide of her tiny against the now-blooming tree, front view of her body dissolving into the trunk, side view as she melts into a branch, low angle at the tree base looking up with her woven into the blooming branches. " +
           GHOST_ANGEL +
-          " merging and dissolving into the trunk and branches of a massive ancient gnarled tree suspended in infinite cosmic space, her body becoming translucent with the wood grain showing through her translucent skin and dress, her white fibonacci spiral braided hair flowing seamlessly into the branches and intertwining with the tree's reaching arms, her translucent mist wings spread wide and themselves becoming branch-shapes of light. warm golden light streaming through every branch and through her translucent body in radiant shafts, pure white flowers with all-white petals and all-white centers (NO yellow, NO color) blooming across the merged branches. deep indigo cosmos behind pierced by volumetric amber sunrays. ethereal transcendent union, no text no watermarks",
+          " merging and dissolving into the ancient gnarled tree suspended on its white-crystal earth island in infinite cosmic space, her body becoming translucent with the wood grain showing through her skin and dress, her fibonacci spiral braided hair flowing seamlessly into the branches and intertwining with the tree's reaching arms, her iridescent particle-mist wings spread wide and themselves becoming branch-shapes of light. warm golden light streaming through every newly blooming branch and through her translucent body in radiant shafts. deep indigo cosmos behind pierced by volumetric amber sunrays, the entire universe sky still visible as the backdrop. ethereal transcendent union, no text no watermarks",
         aiPromptModifiers: {
           highBass: "subsonic pulse surging through the merged branches, every hair-thread and wood fiber pulsing with gold, particles scattering outward",
           lowAmplitude: "the merge softening to a whisper, the angel barely distinguishable from the tree, only faint gold threads visible",
@@ -1534,9 +1554,11 @@ export const JOURNEYS: Journey[] = [
         vignette: 0.10,
         palette: { primary: "#1a1408", secondary: "#2a2010", accent: "#f0c060", glow: "#ffe0a0" },
         aiPrompt:
-          "photorealistic cinematic view with VARIED camera per frame — might be wide looking up at her soaring overhead, or distant wide silhouette against golden cosmos, or mid-distance tracking as she flies, or close three-quarter of her uplifted posture, or below looking up as she ascends, or extreme wide with her as a tiny radiant figure in infinite gold. " +
+          "photorealistic cinematic view. she has been released from the tree into infinite golden cosmos and now soars freely through the universe. " +
+          "VARIED camera per frame, MUST differ between shots — rotate between wide looking up at her soaring overhead, distant wide silhouette against the golden cosmos, mid-distance tracking as she flies, close three-quarter of her uplifted posture, below looking up as she ascends, extreme wide with her tiny radiant figure in infinite gold. " +
           GHOST_ANGEL +
-          " SOARING FREELY FORWARD through infinite golden cosmos in full flight motion with both arms fully outstretched upward, head tilted back, body angled upward rising into infinity, strong sense of forward motion, her white spiral braided hair (still SNOW WHITE, never turning blonde or gold) streaming behind her in the cosmic current as she flies, her translucent white dress flowing backward in flight, her two translucent mist wings fully spread behind her trailing dense golden particle streams. deep indigo cosmos pierced by volumetric amber sunrays everywhere, distant stars nebulae and spiral galaxies visible through a warm golden haze. dense swirling white and gold particles filling the entire frame like embers from a divine fire streaming past her. no tree, no tunnel, no roots, pure infinite cosmic gold, transcendent ethereal flight, freedom, nirvana, no text no watermarks",
+          " SOARING FREELY FORWARD through infinite golden cosmos in full flight motion with both arms fully outstretched upward, head tilted back, body angled upward rising into infinity, strong sense of forward motion. her braided hair streams behind her in the cosmic current, her translucent dress flows backward in flight, her iridescent particle-mist wings spread wide trail dense golden particle streams. " +
+          "deep indigo cosmos pierced by volumetric amber sunrays everywhere, distant stars nebulae and spiral galaxies visible through a warm golden haze. dense swirling particles filling the entire frame like embers from a divine fire streaming past her. NO tree, NO tunnel, NO roots — pure infinite cosmic gold, transcendent ethereal flight, freedom, nirvana, no text no watermarks",
         aiPromptModifiers: {
           highBass: "gold light pulsing with deep resonant warmth, visible waves of radiance outward, particles scattering in golden shockwaves",
           lowAmplitude: "profound sacred silence, the gold light soft and steady, the angel at perfect peace in golden cosmic stillness",

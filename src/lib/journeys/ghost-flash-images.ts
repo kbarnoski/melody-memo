@@ -15,24 +15,27 @@
  * If generation fails or is slow, `FlashAngel` falls back to its static PNG.
  */
 
-const DARK_FLASH_PROMPT =
-  "studio isolation shot photorealistic cinematic front view portrait of one possessed angel woman under a dark spell, perfectly isolated against absolute void, " +
+// Shared portrait base — same identity, same pose, same skin, same camera
+// in both flashes. The only thing that changes between variants is the
+// wardrobe color (hair + dress + wings). Flash #1 shows the white figure
+// COSTUME-CHANGED to full black; flash #2 returns to white.
+const FLASH_PORTRAIT_BASE =
+  "studio isolation shot photorealistic cinematic front view portrait of ONE ethereal angel woman (one single figure, no other people, no duplicates) perfectly isolated against absolute void, " +
   "the background is SOLID RGB 0 0 0 PURE MATHEMATICAL BLACK with zero luminosity, zero color, zero gradient, zero haze, zero particles in the background, zero stars — the figure is the ONLY element visible, " +
   "her face calmly visible with EYES CLOSED peaceful serene expression, BOTH ARMS RAISED high above her head reaching upward in a transcendent gesture, " +
-  "very long pure JET BLACK hair woven into intricate fibonacci spiral braids cascading down her back and flowing seamlessly into her dress so hair and dress read as one continuous dark ribbon, " +
-  "wearing a long floor-length flowing translucent JET BLACK dress of woven shadow and dark mist, somewhat see-through, rippling with dense swirling BLACK particles inside the fabric, " +
-  "ALWAYS TWO LARGE transparent translucent JET BLACK wings of pure shadow and dark mist extending symmetrically from her back (BOTH LEFT and RIGHT wings fully visible and symmetrical, NEVER missing a wing, NEVER one-winged, wings made of translucent dark mist NEVER FEATHERED NOT bird feathers NOT plumage), " +
-  "pale luminous skin that is the only brightness against the deep shadow wardrobe, strong rim light from above outlining her edges against the void, dark particles ON HER BODY and WINGS and DRESS only (never in the surrounding darkness), dramatic chiaroscuro, " +
-  "the figure reads as possessed under a spell — entirely black wardrobe, entirely black hair, but same identity same pose same serene expression as the white version, photographic product-shot isolation, not illustration, not concept art";
+  "pale luminous skin (skin stays pale in both variants), " +
+  "hair woven into intricate fibonacci spiral da Vinci fractal braids cascading down her back, each braid wrapped and trailed with dense swirling particles spiraling along its length, the braids flowing seamlessly into her dress so hair and dress read as one continuous ribbon, " +
+  "wearing a long floor-length flowing translucent dress of woven mist and light, somewhat see-through, rippling with dense swirling particles, " +
+  "ALWAYS TWO LARGE translucent iridescent rainbow-shimmering wings of pure light and particle mist extending symmetrically from her back (BOTH LEFT and RIGHT wings fully visible and symmetrical, NEVER missing a wing, NEVER one-winged, wings are ethereal translucent particle mist with a faint iridescent sheen, NEVER FEATHERED, NEVER bird feathers, NEVER plumage, NEVER bulky — thin wisps of light and particles, not mass), " +
+  "strong rim light from above outlining her edges against the void, dramatic chiaroscuro, photographic product-shot isolation, not illustration, not concept art";
+
+const DARK_FLASH_PROMPT =
+  FLASH_PORTRAIT_BASE +
+  ", wardrobe theme: possessed under a dark spell. hair is JET BLACK, dress is JET BLACK translucent shadow-mist, wings are JET BLACK translucent particle mist with a deep iridescent oil-slick sheen, particles wrapped in her braids and streaming from her dress and wings are BLACK. skin remains pale luminous. same identity same pose same serene expression as the white version — only the costume has changed to black";
 
 const WHITE_FLASH_PROMPT =
-  "studio isolation shot photorealistic cinematic front view portrait of one ethereal angel woman perfectly isolated against absolute void, " +
-  "the background is SOLID RGB 0 0 0 PURE MATHEMATICAL BLACK with zero luminosity, zero color, zero gradient, zero haze, zero particles in the background, zero stars, zero atmosphere — the figure is the ONLY element visible. " +
-  "her face calmly visible with EYES CLOSED peaceful serene expression, BOTH ARMS RAISED high above her head reaching upward in a transcendent gesture, " +
-  "very long pure SNOW WHITE hair (NEVER blonde, NEVER yellow, NEVER gold) woven into intricate fibonacci spiral da Vinci fractal braids cascading down her back and flowing seamlessly into the dress so hair and dress read as one continuous translucent white ribbon, " +
-  "wearing a long floor-length flowing translucent white dress of woven mist and light, somewhat see-through, rippling with dense swirling white particles, " +
-  "ALWAYS TWO LARGE transparent translucent white wings of pure light and mist extending symmetrically from her back (BOTH LEFT and RIGHT wings fully visible and symmetrical, NEVER missing a wing, NEVER one-winged, wings made of translucent mist and light NEVER FEATHERED NOT bird feathers NOT plumage), " +
-  "pale luminous skin catching soft rim light, dense swirling white particles ON HER BODY and WINGS and DRESS (never in the surrounding darkness), strong rim light from above outlining her edges against the void, dramatic chiaroscuro, photographic product-shot isolation, not illustration, not concept art";
+  FLASH_PORTRAIT_BASE +
+  ", wardrobe theme: returned to light. hair is pure SNOW WHITE (NEVER blonde, NEVER yellow, NEVER gold), dress is SNOW WHITE translucent mist-and-light, wings are SNOW WHITE translucent iridescent particle mist, particles wrapped in her braids and streaming from her dress and wings are WHITE. skin pale luminous";
 
 // Index 0 = dark possessed (shown on flash #1)
 // Index 1 = white returned (shown on flash #2+)
@@ -43,6 +46,25 @@ let preparePromise: Promise<void> | null = null;
 let currentJourneyId: string | null = null;
 let abortController: AbortController | null = null;
 
+// Bass-flash counter for Ghost. Drives BOTH the flash variant shown AND
+// the main journey angel theme:
+//   count 0        → main journey angel is WHITE (before any flash)
+//   count === 1    → flash #1 shows BLACK / possessed angel;
+//                    main journey angel is now BLACK (costume change)
+//   count >= 2     → flash #2 shows WHITE angel returning;
+//                    main journey angel is now WHITE again for the remainder
+let ghostFlashCount = 0;
+export function incrementGhostFlashCount(): number {
+  ghostFlashCount += 1;
+  return ghostFlashCount;
+}
+export function getGhostFlashCount(): number {
+  return ghostFlashCount;
+}
+export function getGhostAngelTheme(): "white" | "black" {
+  return ghostFlashCount === 1 ? "black" : "white";
+}
+
 export function prepareGhostFlashImages(journeyId: string): Promise<void> {
   if (currentJourneyId !== journeyId) {
     abortController?.abort();
@@ -50,6 +72,7 @@ export function prepareGhostFlashImages(journeyId: string): Promise<void> {
     flashUrls[0] = null;
     flashUrls[1] = null;
     preparePromise = null;
+    ghostFlashCount = 0;
   }
   if (preparePromise) return preparePromise;
 
@@ -99,4 +122,5 @@ export function clearGhostFlashImages() {
   preparePromise = null;
   flashUrls[0] = null;
   flashUrls[1] = null;
+  ghostFlashCount = 0;
 }

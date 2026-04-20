@@ -62,19 +62,16 @@ interface ImageLayer {
   purge?: boolean;
 }
 
-// Pacing: one fresh image every ~7s with a 2s crossfade. Each image lives
-// about 7s total (2s in + 3s peak + 2s out) and the next arrives right as
-// it begins its fade-out, so the viewer always sees a smooth handoff. No
-// stalled "slideshow" feeling, no back-to-back churn.
+// Pacing — user's explicit target: 2s fade in, 5s visible at peak, 2s
+// fade out, new image arriving ~every 5s. That puts each image's
+// lifecycle at 9s total with a 2s overlap at crossfade. No slideshow,
+// no wait.
 const DISSOLVE_DURATION = 2000;
 const FADEOUT_DURATION = 2000;
 const PURGE_FADEOUT_DURATION = 1500; // snappy clear when a new journey begins
-const MIN_PEAK_DURATION = 3000;
-// Base generation cadence — actual interval is multiplied by the device tier
-// (high: 1×, medium: 1.6×, low: 3×) so weaker hardware gets fewer expensive
-// network round-trips and the main thread has room to breathe.
-const GEN_INTERVAL_MIN_BASE = 6000;
-const GEN_INTERVAL_MAX_BASE = 8000;
+const MIN_PEAK_DURATION = 5000;
+const GEN_INTERVAL_MIN_BASE = 4500;
+const GEN_INTERVAL_MAX_BASE = 5500;
 const POETRY_GEN_DELAY = 1500; // 1.5s after new poetry line — react faster
 const PROMPT_DEBOUNCE = 1500; // 1.5s debounce on prompt changes
 const KEN_BURNS_DURATION = 50; // seconds — full motion cycle

@@ -28,6 +28,12 @@ export interface JourneyPhase {
   shaderOpacity: number;
   /** Base prompt for AI image generation */
   aiPrompt: string;
+  /** Optional sequence of prompts the journey engine rotates through
+   *  as phase progress advances. When provided, the engine emits
+   *  aiPromptSequence[floor(phaseProgress * N)] instead of aiPrompt.
+   *  Use for phases that tell a multi-moment story (e.g. arriving at
+   *  the pool → finding wings → putting on wings → hovering). */
+  aiPromptSequence?: string[];
   /** Audio-reactive prompt modifiers */
   aiPromptModifiers: {
     highBass?: string;

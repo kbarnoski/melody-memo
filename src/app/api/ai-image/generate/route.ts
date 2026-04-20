@@ -68,47 +68,76 @@ export async function POST(request: Request) {
 
     // Choose model — PuLID when we have a face reference, flux/dev otherwise.
     const usePulid = typeof referenceImageUrl === "string" && referenceImageUrl.length > 0;
-    const modelId = usePulid ? MODEL_FLUX_PULID : MODEL_FLUX_DEV;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const input: Record<string, any> = usePulid
-      ? {
-          prompt: fullPrompt,
-          negative_prompt: fullNegative,
-          reference_image_url: referenceImageUrl,
-          image_size: { width: imgWidth, height: imgHeight },
-          num_inference_steps: 20,
-          guidance_scale: 4,
-          true_cfg: 1.0,
-          id_weight: 0.9,
-          seed,
-          enable_safety_checker: false,
-        }
-      : {
-          prompt: fullPrompt,
-          negative_prompt: fullNegative,
-          image_size: { width: imgWidth, height: imgHeight },
-          num_inference_steps: 28,
-          guidance_scale: 3.5,
-          seed,
-          enable_safety_checker: false,
-        };
+    const devInput = {
+      prompt: fullPrompt,
+      negative_prompt: fullNegative,
+      image_size: { width: imgWidth, height: imgHeight },
+      num_inference_steps: 28,
+      guidance_scale: 3.5,
+      seed,
+      enable_safety_checker: false,
+    };
+
+    // PuLID parameters tuned for SCENE + identity lock:
+    //   id_weight: 0.6 — moderate face lock. 0.9 (prior) was too strong
+    //     and collapsed every generation into a reference-style portrait,
+    //     ignoring the scene prompt.
+    //   true_cfg: 4.0 — strong classifier-free guidance so the scene
+    //     prompt actually drives composition. 1.0 (prior) let the face
+    //     reference override the scene entirely.
+    //   guidance_scale: 4 — balanced prompt adherence.
+    const pulidInput = {
+      prompt: fullPrompt,
+      negative_prompt: fullNegative,
+      reference_image_url: referenceImageUrl,
+      image_size: { width: imgWidth, height: imgHeight },
+      num_inference_steps: 20,
+      guidance_scale: 4,
+      true_cfg: 4.0,
+      id_weight: 0.6,
+      seed,
+      enable_safety_checker: false,
+    };
+
+    let modelId = usePulid ? MODEL_FLUX_PULID : MODEL_FLUX_DEV;
+    let input: Record<string, unknown> = usePulid ? pulidInput : devInput;
+    let imageUrl: string | null = null;
+    let usedPulid = usePulid;
+
+    async function runModel(id: string, payload: Record<string, unknown>): Promise<string | null> {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const result = await fal.subscribe(id, { input: payload } as any);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (result.data as any)?.images?.[0]?.url ?? null;
+      } catch (err) {
+        console.warn(`[AI Generate] ${id} threw:`, err);
+        return null;
+      }
+    }
 
     logger.debug("ai-generate", `model=${modelId} len=${fullPrompt.length}`, fullPrompt.substring(0, 80));
+    imageUrl = await runModel(modelId, input);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result = await fal.subscribe(modelId, { input } as any);
+    // PuLID fallback — if the reference-locked call fails (timeout, bad
+    // reference URL, fal throttling), retry on plain flux/dev. Better to
+    // lose identity lock for one frame than to show nothing.
+    if (!imageUrl && usePulid) {
+      logger.debug("ai-generate", "pulid failed — falling back to flux/dev");
+      modelId = MODEL_FLUX_DEV;
+      input = devInput;
+      usedPulid = false;
+      imageUrl = await runModel(modelId, input);
+    }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const imageUrl = (result.data as any)?.images?.[0]?.url;
     if (!imageUrl) {
-      console.warn(`[AI Generate] No image from ${modelId}:`, JSON.stringify(result.data).substring(0, 200));
       return Response.json({ error: "No image generated" }, { status: 500 });
     }
 
     return Response.json({
       image: imageUrl,
-      cost: usePulid ? COST_FLUX_PULID : COST_FLUX_DEV,
+      cost: usedPulid ? COST_FLUX_PULID : COST_FLUX_DEV,
       model: modelId,
     });
   } catch (error) {

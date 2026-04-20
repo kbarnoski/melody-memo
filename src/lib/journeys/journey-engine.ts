@@ -95,6 +95,9 @@ class JourneyEngine {
   private static readonly MAX_RECENT_THEMES = 5;
   /** Cached AI prompt — stable within a phase, only recomputed on phase change */
   private phaseAiPrompt = "";
+  /** Index into the current phase's aiPromptSequence (if present).
+   *  Recomputed per-frame; prompt rebuilt only when the index changes. */
+  private phaseSequenceIdx = -1;
   /** Phase transition grace — carry old AI prompt across boundary for smooth handoff */
   private phaseGraceEnd = 0; // progress at which grace period expires
   private graceAiPrompt = ""; // AI prompt to hold during grace
@@ -416,7 +419,21 @@ class JourneyEngine {
       }
 
       // Build and cache AI prompt for the NEW phase (once per phase, not per frame)
+      this.phaseSequenceIdx = -1;
       this.phaseAiPrompt = this.buildPhaseAiPrompt(currentPhase, phaseIndex);
+    }
+
+    // Sequence support: if the current phase defines aiPromptSequence,
+    // pick the element matching the current phase progress and rebuild
+    // the cached prompt whenever the index changes. This gives storytelling
+    // within a phase — each sequence entry is a distinct scene moment.
+    if (currentPhase.aiPromptSequence && currentPhase.aiPromptSequence.length > 0) {
+      const n = currentPhase.aiPromptSequence.length;
+      const idx = Math.min(Math.floor(phaseProgress * n), n - 1);
+      if (idx !== this.phaseSequenceIdx) {
+        this.phaseSequenceIdx = idx;
+        this.phaseAiPrompt = this.buildPhaseAiPrompt(currentPhase, phaseIndex);
+      }
     }
 
     // Bridge prompt: when approaching a phase boundary (crossfade zone),
@@ -664,13 +681,20 @@ class JourneyEngine {
     }
   }
 
-  /** Build a stable AI prompt for a phase (called once per phase change) */
+  /** Build a stable AI prompt for a phase. Called on phase change AND
+   *  whenever the sequence index advances (if the phase has aiPromptSequence). */
   private buildPhaseAiPrompt(phase: JourneyPhase, phaseIndex: number): string {
     if (!this.journey) return phase.aiPrompt;
 
+    // If a sequence is defined, pick the prompt for the current index.
+    // Fall back to the legacy single prompt if no sequence or index invalid.
+    const basePrompt = phase.aiPromptSequence && this.phaseSequenceIdx >= 0
+      ? phase.aiPromptSequence[this.phaseSequenceIdx] ?? phase.aiPrompt
+      : phase.aiPrompt;
+
     // Check theme first (custom journeys), then fall back to realm (built-in journeys)
     const vocab = this.journey.theme?.visualVocabulary ?? getRealm(this.journey.realmId)?.visualVocabulary;
-    let prompt = phase.aiPrompt;
+    let prompt = basePrompt;
 
     if (vocab) {
       // Use the session random function for deterministic vocab selection

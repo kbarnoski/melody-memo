@@ -337,12 +337,21 @@ dark-to-white snap.
 - **Total image lifecycle:** 9s.
 - **New image arrival interval:** ~5s (so next image starts fading
   in as previous begins fading out).
-- **Max concurrent layers on screen:** 4 on high tier, 3 on medium.
-  Enough for smooth cross-dissolve, not so many that the shader
-  backdrop gets smothered.
+- **Max concurrent layers on screen:** 6 on high tier, 4 on medium,
+  2 on low. Rich cross-dissolve — the "moving layers of images"
+  feel — while the phase shaderOpacity (0.65-0.75) keeps the shader
+  backdrop bleeding through.
 - **Generation concurrency:** 4 on high tier, 3 on medium, 1 on
   low. Enough in-flight gens that slow model calls don't stall the
   pipeline.
+- **Connection-aware downgrade.** The browser's
+  navigator.connection API is consulted on every gen/layer
+  decision. On slow networks (2g/3g, downlink < 1.5 Mbps, or
+  save-data mode), the active profile is downgraded:
+    - maxAiLayers − 2 (floor 1)
+    - maxConcurrentAiGens − 1 (floor 1)
+    - gen interval × 1.5
+  Live connection changes mid-session are picked up immediately.
 
 ---
 

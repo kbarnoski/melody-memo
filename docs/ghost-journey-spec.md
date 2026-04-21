@@ -504,6 +504,13 @@ dark-to-white snap.
     - Age progression: young → peak-adult by the bloomed tree
     - Between flashes: dress + wings black, hair stays WHITE
     - Never sexy — spiritual, ethereal, pure
+- **v3.1 — MATURE IMAGERY BASELINE.** 2026-04-20. User declared:
+  "mark this point in time with this version as a mature point as
+  far as the imaging. it's perfect." Tagged in git as
+  `ghost-imagery-baseline-v1` at commit `4d56a4e`. This is the
+  reference point — if future changes regress Ghost imagery, roll
+  prompt / pacing / overlay / wing / hair / POV behavior back to
+  this tag's state.
 - **v3:** 2026-04-20. User's refined story-arc directives:
     - Phase 1 scene is specifically a grand medieval stone castle
       with natural light; angel appears as a CHILD with spiritual

@@ -20,18 +20,22 @@ watching close-ups of her.
 
 - **Scene-first, angel-small.** Every prompt leads with the space —
   the chamber, the passage, the cavern, the cosmos. The angel is
-  mentioned as an element within it, often small or distant.
-- **Ratio roughly 4:1 wide-to-close.** Of every ~10 frames in a
-  phase, 8 should be wide / environmental / distant / mid, 2 may be
-  closer pivot moments.
-- **Close-ups only at story pivots.** Hand on the windowsill, hand
-  reaching into the water, wings attaching to her shoulder blades,
-  hand touching the dead tree. Otherwise we stay back.
-- **No back-of-head / hair-dominated shots** except at designated
-  beats where the hair *is* the point.
-- **Perspective variety is mandatory.** Every phase rotates through
-  at least: extreme wide, wide, mid, three-quarter back, low angle,
-  overhead, silhouette. Never repeat the same camera twice in a row.
+  mentioned as an element within it, always small or distant.
+- **Stay far away from her.** In phases 1–4 the camera is always
+  wide / mid / distant / silhouette. **No close-up shots** —
+  not of her, not of anything near her. The viewer experiences
+  the space, not the figure.
+- **Close-ups only appear once she merges with the tree (phase 5).**
+  And those close-ups are of the tree, her hand on the trunk, or the
+  bloom progression — never of her face.
+- **Never show her face directly.** She is mysterious. Her face is
+  always obscured — by her long flowing spiral hair, turned away
+  from camera, in silhouette, or hidden in shadow. Back view,
+  three-quarter back, side silhouette, extreme wide. Never a
+  face-forward or full-face shot anywhere in the journey.
+- **Perspective variety across the wide range.** Every phase rotates
+  through extreme wide, wide, mid, three-quarter back, low angle,
+  overhead, silhouette. No repeats in a row.
 
 ---
 
@@ -42,13 +46,23 @@ watching close-ups of her.
 - **One and only one angel per frame.** Never two. Never companions.
   Never crowds, onlookers, distant bystanders, background silhouettes.
 - **Pale luminous skin.**
-- **Hair** woven into intricate fibonacci spiral da Vinci fractal
-  **braids** cascading down her back. Each braid is wrapped and
-  trailed with swirling particles spiraling along its length. The
-  braids flow seamlessly into her dress so hair and dress read as
-  one continuous translucent ribbon.
+- **Face always obscured.** Her face is never directly visible —
+  hidden behind her long spiral hair, turned away from camera, in
+  silhouette, or in shadow. **NO front/face-forward shots.** NO
+  three-quarter face shots that show both eyes. Mystery preserved.
+- **Eyes closed** throughout the entire journey (peaceful, serene,
+  mysterious). Even when we can see part of her face, her eyes are
+  closed.
+- **Hair** — very long, free-flowing, NOT braided. Long fibonacci
+  spiral strands in a Leonardo da Vinci fractal pattern cascading
+  far past her waist all the way down to the ground, AND trailing
+  upward/outward in the air like flowing streamers and ribbons. The
+  hair moves with the space — floating, spiraling, reaching. Wrapped
+  with dense swirling white particles that spiral along every strand.
 - **Dress** — long floor-length flowing translucent dress of woven
   mist and light. Somewhat see-through. Rippling with particles.
+  Hair + dress read as one continuous translucent ribbon reaching
+  from her head down past her feet.
 - **Wings** — always TWO, attached anatomically to her upper BACK
   at the shoulder blades, symmetrical left and right.
     - Translucent flowing wisps of light and mist, like smoke or silk.
@@ -58,30 +72,29 @@ watching close-ups of her.
     - **NEVER** bulky, **NEVER** opaque.
     - Thin, flowing, ethereal — pure light-and-particle mist.
 - **Dense swirling particles** around her body, streaming from her
-  dress and wings.
+  hair, dress, and wings.
 
 ### 3b. White variant (default — pre-flash-1, post-flash-2)
 
-- **Hair:** SNOW WHITE (never blonde, yellow, or gold).
+- **Hair:** SNOW WHITE (never blonde, yellow, or gold). Long spiral
+  fibonacci flow (see 3a).
 - **Dress:** SNOW WHITE.
 - **Wings:** SNOW WHITE.
 - **Particles:** WHITE.
-- **Eyes:** closed, peaceful, serene.
 
 ### 3c. Dark variant (post-flash-1, pre-flash-2)
 
-Same body, same pose, same pale skin, same braids, same wing
-placement — only the wardrobe and eyes change.
+Same body, same pose, same pale skin, same long spiral hair, same
+wing placement — only the wardrobe changes. Face still obscured
+(hair / turned away / silhouette) — we do NOT see the black eyes in
+main journey imagery, only in the flash portrait itself.
 
-- **Hair:** JET BLACK.
+- **Hair:** JET BLACK. Same long spiral flow.
 - **Dress:** JET BLACK translucent shadow-mist.
-- **Wings:** JET BLACK translucent shadow-mist (same flowing
-  not-segmented rules).
+- **Wings:** JET BLACK translucent shadow-mist wisps.
 - **Particles:** BLACK.
-- **Eyes:** WIDE OPEN with pure JET BLACK orbs — no whites, no
-  pupils, no iris. Solid void-black eyes, mysterious possessed stare.
-- **Character reads as:** dark devil angel under a spell. Same face
-  as white variant.
+- **Character reads as:** dark devil angel under a spell. Same body
+  as white variant, face still hidden.
 
 ### 3d. Wingless state (early journey, before the pool)
 
@@ -101,22 +114,22 @@ window opens onto cosmic void scattered with faint stars. Diagonal
 shaft of silver moonlight across a worn stone floor cracked with
 ancient tree roots. Vast. Quiet. Deep shadows.
 
-**Angel state.** White, **wingless**.
+**Angel state.** White, **wingless**, face obscured. Always small
+and distant in the frame.
 
-**Beats (rotated per frame as phase progresses):**
+**Beats (all wide / mid / distant — no close-ups):**
 1. Extreme wide establishing — angel tiny against the vast chamber
    in the distance, moonlight cutting across the stone floor.
 2. Low angle looking up at the tall arched window framing her small
    silhouette against the cosmic void.
-3. Side profile silhouette — moonlight rimming her braids as she
-   stands by the window.
+3. Side profile silhouette — moonlight rimming her long spiral hair
+   as she stands by the window.
 4. Overhead top-down of the chamber, her small on the stone floor,
-   roots cracking through the stone around her.
+   her hair cascading around her, roots cracking the stone.
 5. Three-quarter back view from across the room — her standing
-   alone, the window far ahead.
-6. Close-up pivot (only 1 of 6): her hand resting on the stone
-   windowsill, ancient tree roots visible in the stone, one braid
-   strand draped across her wrist.
+   alone, the window far ahead, long spiral hair cascading down.
+6. Distant shot through an interior archway — her small in the next
+   room, moonlight pouring around her.
 
 ### Phase 2 — Haunting (portal + deep-earth passage)
 
@@ -137,24 +150,24 @@ with stalactite roots dripping from ceilings.
 **NEVER** a man-made tunnel. **NEVER** brick. **NEVER** carved
 masonry. **NEVER** architectural construction.
 
-**Angel state.** White, **wingless**.
+**Angel state.** White, **wingless**, face obscured. Always small
+and distant.
 
-**Beats:**
-1. Wide shot of her hovering through the organic root portal,
+**Beats (all wide / mid / distant):**
+1. Wide shot of her small hovering through the organic root portal,
    warm golden pulling light glowing behind her from the chamber
    she just left.
-2. Rear one-point tracking, her small and forward-hovering deep
-   into the vast natural root passage, ceiling far above her.
+2. Rear one-point tracking deep into the vast natural root passage,
+   her small in the middle distance, ceiling far above her.
 3. Extreme wide of her tiny at the center of a colossal cathedral
    cavern of gnarled root columns.
 4. Side view at a junction where multiple organic root passages
-   branch away into infinite darkness, her moving past.
-5. Low worm's-eye view looking up as she hovers past, organic root
-   stalactites dripping from the vast cavern ceiling.
-6. Close-up pivot (only 1 of 6): pure white flowers with all-white
-   petals and all-white centers springing from the earth floor in
-   her wake, her small and distant in the background.
-7. Forward-looking shot from behind her deep into the passage,
+   branch away into infinite darkness, her small and moving past.
+5. Low worm's-eye view looking up through root stalactites, her
+   small and hovering past overhead, long spiral hair trailing.
+6. Wide shot of a vast cavern floor with pure white flowers
+   blooming in a trail behind her, her small and continuing ahead.
+7. Forward-looking wide shot from behind her deep into the passage,
    stretching far ahead with a distant warm golden pinpoint of
    light at the very far end.
 
@@ -171,31 +184,33 @@ yellow. **NEVER** colored.
 
 **Angel state.** Arrives **wingless**, **finds** a pair of
 translucent wings floating on the water between the lilies, **puts
-them on**, is now **winged**. Still white.
+them on**, is now **winged**. Still white. Face obscured throughout.
+Stay far away — wide / mid only.
 
-**Beats (this phase tells the wings-find story in order):**
-1. Wide of her hovering at the edge of the vast infinite lily pool
-   for the first time, the cavern stretching impossibly far.
-2. Mid-distance: her looking down into the water at a pair of
-   glowing translucent white angel wings floating on the surface
-   between the lilies.
-3. Close-up pivot: her hands lifting the wings up out of the dark
-   mirror-water, droplets falling from the shimmering translucent
-   wisps.
-4. Close-up pivot: the moment the wings attach anatomically to her
-   upper back at the shoulder blades, a burst of pure white light
-   and swirling particles exploding outward.
-5. Overhead top-down — her newly winged, hovering horizontally just
-   above the infinite pool with her body spread wide like a star,
-   her perfect reflection clearly visible in the mirror-water
-   beneath her.
-6. Low angle from water level past the white water lilies, her
-   hovering above.
-7. Three-quarter of her winged and hovering above the pool, turning
-   to face a distant warm golden light glowing at the far end of
-   the cavern passage.
-8. Rear tracking, her hovering forward across the infinite pool
-   toward the distant golden light, lilies rippling in her wake.
+**Beats (this phase tells the wings-find story in order, all at
+distance):**
+1. Wide of her small hovering at the edge of the vast infinite lily
+   pool for the first time, the cavern stretching impossibly far.
+2. Mid-wide: her small leaning down looking at a pair of glowing
+   translucent white angel wings floating on the surface between
+   the lilies.
+3. Mid-wide: her lifting the wings up out of the mirror-water, her
+   long spiral hair cascading forward as she bends, droplets falling
+   from the shimmering translucent wisps.
+4. Wide of the wings-attaching moment — small silhouette of her in
+   the center of the cavern with a burst of pure white light and
+   swirling particles exploding outward from her shoulders.
+5. Extreme high overhead shot of the whole pool — her newly winged
+   and small, hovering horizontally just above the water, her perfect
+   reflection clearly visible in the mirror-water below.
+6. Wide low angle from water level past the white water lilies, her
+   hovering above in the middle distance.
+7. Wide three-quarter of her winged and hovering above the pool,
+   turning to face a distant warm golden light glowing at the far
+   end of the cavern passage.
+8. Rear tracking wide shot, her small hovering forward across the
+   infinite pool toward the distant golden light, lilies rippling
+   in her wake.
 
 ### Phase 4 — Recognition (emerging to the dead tree)
 
@@ -233,24 +248,32 @@ dark dead branches with faint amber.
 **Setting.** She arrives at the dead tree on its spherical planet,
 universe sky behind. She reaches out and **touches** the trunk.
 Flowers **begin to bloom outward from the point of her touch** —
-growing from her light and love. Progression over the phase:
+growing from her light and love. **This is the first phase where
+closer shots are allowed** (per spec Section 2). Close-ups are on
+the tree / her hand on the trunk / the bloom progression — never
+on her face.
 
-1. **Stage 1 (earliest):** Her hand on the dark dead trunk, only
-   the first 2-3 tiny pure white flowers just emerging from the
-   bark at her fingertips. All other branches bare and dead.
-2. **Stage 2 (early spread):** Halo of ~20 white flowers around her
-   hand, every other branch still bare.
-3. **Stage 3 (mid spread):** Roughly half the branches partially
-   blooming, wave of bloom visibly expanding outward, half still
+Progression over the phase:
+
+1. **Stage 1 (earliest):** Close pivot — her hand on the dark dead
+   trunk, only the first 2-3 tiny pure white flowers just emerging
+   from the bark at her fingertips. All other branches bare and
+   dead. No face in shot.
+2. **Stage 2 (early spread):** Mid shot — halo of ~20 white flowers
+   around her hand pressed to the trunk, every other branch still
    bare.
-4. **Stage 4 (full bloom):** Every branch completely covered in
-   pure white flowers, the previously dead tree now fully alive
+3. **Stage 3 (mid spread):** Mid-wide — roughly half the branches
+   partially blooming, wave of bloom visibly expanding outward,
+   half still bare.
+4. **Stage 4 (full bloom):** Wide — every branch completely covered
+   in pure white flowers, the previously dead tree now fully alive
    with white blossom.
-5. **Stage 5 (merge begins):** Her body starting to become
-   translucent, wood grain showing through her skin and dress.
+5. **Stage 5 (merge begins):** Her body becoming translucent, wood
+   grain showing through her skin and dress. Long spiral hair
+   starting to flow into the branches.
 6. **Stage 6 (merge complete):** She has fully dissolved into the
-   blooming tree — her braids now branches, her wings now branch-
-   shapes of light.
+   blooming tree — her long spiral hair now branches, her wings now
+   branch-shapes of light. Wide / mid shot of the integrated tree.
 
 **Flowers rule.** All-white petals, all-white centers. **NO** yellow.
 **NO** color.
@@ -270,22 +293,23 @@ embers from a divine fire.
 
 **Angel state.** White, **winged**, **soaring freely**. Both arms
 outstretched upward, head tilted back, body angled upward rising
-into infinity.
+into infinity. Face still not shown directly — even when we can
+see her head, it's from behind or in silhouette.
 
-**Beats:**
+**Beats (wide / distant — no face shots):**
 1. Wide of her rising upward from the blooming tree-planet now far
-   below her, wings spread, golden cosmos ahead.
-2. Low angle looking up at her ascending with arms outstretched and
-   head tilted back.
-3. Three-quarter tracking of her soaring horizontally through
-   infinite golden cosmos.
+   below her, wings spread, long spiral hair streaming, golden
+   cosmos ahead.
+2. Low angle looking up at her ascending from behind / below, arms
+   outstretched and head tilted back, silhouette against cosmos.
+3. Three-quarter back tracking of her soaring horizontally through
+   infinite golden cosmos, face turned away.
 4. Extreme wide silhouette of her tiny and radiant against a vast
    golden-nebula cosmos.
 5. Distant figure shot — her flying through volumetric amber
    sunrays, small against the scale of the universe.
-6. Close pivot (only 1 of 6): her face with eyes closed in ecstatic
-   peaceful expression, head tilted back, golden light washing
-   across her.
+6. Wide rear shot of her soaring further into golden cosmos, long
+   spiral hair trailing far behind with particles, wings streaming.
 
 ---
 
@@ -344,10 +368,23 @@ dark-to-white snap.
 - **Generation concurrency:** 4 on high tier, 3 on medium, 1 on
   low. Enough in-flight gens that slow model calls don't stall the
   pipeline.
-- **Connection-aware downgrade.** The browser's
+- **Device-aware strategy.** `detect()` in device-tier.ts puts any
+  mobile user-agent (iPhone/iPad/iPod/Android) directly into the
+  **low** tier. This is the mobile profile:
+    - maxAiLayers 2, maxConcurrentAiGens 1
+    - aiImageIntervalMultiplier 2.5× (new image every ~13s) — slower
+      than desktop high/medium but not starved
+    - enableDualShader false, enableBassFlash false
+    - bloomScale 0.4, particleScale 0.4, cloneScale 0.3
+  Desktop Apple Silicon lands in **high** (6 layers, 4 concurrent,
+  1× interval). Desktop non-Apple-Silicon, Intel Macs, most Windows
+  machines land in **medium** (4 layers, 3 concurrent, 1.6×
+  interval) unless the URL `?tier=high` override is passed.
+- **Connection-aware downgrade on top.** The browser's
   navigator.connection API is consulted on every gen/layer
   decision. On slow networks (2g/3g, downlink < 1.5 Mbps, or
-  save-data mode), the active profile is downgraded:
+  save-data mode), the active profile is downgraded regardless
+  of device tier:
     - maxAiLayers − 2 (floor 1)
     - maxConcurrentAiGens − 1 (floor 1)
     - gen interval × 1.5
@@ -359,8 +396,11 @@ dark-to-white snap.
 
 - No other people, figures, crowds, onlookers, bystanders,
   silhouettes, companions — **ever**. Only the one angel.
-- No close-up face portraits outside the designated pivot moments.
-- No back-of-head / hair-dominated shots outside designated beats.
+- **No close-up face shots anywhere in the journey. Ever.** Face
+  always obscured (hair / turned away / silhouette / shadow).
+- No close-up shots of any kind in phases 1-4. Close shots are
+  allowed only from phase 5 onward, and only on the tree / her
+  hand on the trunk / the bloom progression — never her face.
 - No butterfly wings, no membrane wings, no segmented/insect wings,
   no panels, no filigree.
 - No bird feathers, no bird wings, no plumage, no bulky wings.
@@ -404,6 +444,14 @@ dark-to-white snap.
 
 ## 9. Approval log
 
-- **v0 drafted:** 2026-04-20 by Claude, pulled from conversation
-  history. Awaiting user edit / approval before any prompts are
-  changed to reference this spec.
+- **v0 drafted:** 2026-04-20 by Claude. User approved and
+  implemented.
+- **v1:** 2026-04-20. User directives:
+    - Stop all close-ups in phases 1-4
+    - Face never shown directly anywhere in journey (mysterious)
+    - Eyes closed throughout (removed the phase-6 face-close pivot)
+    - Hair: long flowing fibonacci spirals (NOT braids) cascading
+      to the ground and trailing in the air with particles
+    - Close-ups allowed only phase 5+ (and only on the tree/hand/
+      bloom, never her face)
+    - Documented mobile/desktop strategy explicitly in Section 6

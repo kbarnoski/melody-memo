@@ -233,7 +233,11 @@ const PROFILES: Record<DeviceTier, TierProfile> = {
     enableBassFlash: true,
   },
   low: {
-    aiImageIntervalMultiplier: 4.0, // ~32s between gens
+    // Mobile profile — detect() sends iPhone/iPad/Android here. The
+    // 4× multiplier was starving phones of new imagery (~32s gaps),
+    // making the journey feel stalled on touch devices. 2.5× gives
+    // ~13s gaps — slower than desktop but consistently refreshing.
+    aiImageIntervalMultiplier: 2.5,
     maxAiLayers: 2,                  // 2 overlapping images max
     maxConcurrentAiGens: 1,
     enableDualShader: false,

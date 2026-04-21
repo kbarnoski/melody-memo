@@ -162,8 +162,10 @@ export function JourneyPhaseIndicator({
           </span>
         )}
 
-        {/* Guidance phrase */}
-        {displayPhrase && (
+        {/* Guidance phrase — hidden per user directive (2026-04-20):
+            titling felt too busy, keeping only the phase name for now.
+            Kept in state (displayPhrase) so we can restore easily. */}
+        {false && displayPhrase && (
           <p
             style={{
               position: "relative",

@@ -1687,7 +1687,15 @@ export function VisualizerClient({
             animation: "journeyIntroAnim 6s ease-in-out forwards",
           }}
         >
-          <div className="flex flex-col items-center gap-5" style={{ position: "relative", padding: "4rem 6rem", maxWidth: "90vw" }}>
+          {/* Intro overlay — simplified 2026-04-20 per user directive:
+              the prior stack of 4-6 lines (Journey Started / name /
+              creator / music / photography / dedication) felt too busy.
+              Now it's 3 blocks with generous vertical spacing:
+                1. Journey name (hero)
+                2. Credits — creator + music + photography joined with
+                   bullet separators on ONE line
+                3. Dedication (italic, optional) */}
+          <div className="flex flex-col items-center" style={{ position: "relative", padding: "4rem 6rem", maxWidth: "90vw", gap: "2.25rem" }}>
             <div
               style={{
                 position: "absolute",
@@ -1702,82 +1710,49 @@ export function VisualizerClient({
                 position: "relative",
                 fontFamily: "'Cormorant Garamond', Georgia, serif",
                 fontWeight: 300,
-                fontSize: "clamp(2rem, 5vw, 3.5rem)",
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "#fff",
-                textShadow: "0 2px 12px rgba(0,0,0,0.9)",
-              }}
-            >
-              Journey Started
-            </span>
-            <span
-              style={{
-                position: "relative",
-                fontFamily: "'Cormorant Garamond', Georgia, serif",
-                fontStyle: "italic",
-                fontWeight: 300,
-                fontSize: "clamp(1.4rem, 3.5vw, 2.2rem)",
+                fontSize: "clamp(2.4rem, 6vw, 4rem)",
                 letterSpacing: "0.04em",
                 color: "#fff",
-                textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-                marginTop: "-0.5rem",
+                textShadow: "0 2px 12px rgba(0,0,0,0.9)",
+                textAlign: "center",
+                lineHeight: 1.1,
               }}
             >
               {activeJourney.name}
             </span>
-            <span
-              style={{
-                position: "relative",
-                fontFamily: "var(--font-geist-mono)",
-                fontSize: "0.9rem",
-                color: "rgba(255, 255, 255, 0.85)",
-                letterSpacing: "0.04em",
-                textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-                marginTop: "0.25rem",
-              }}
-            >
-              by {activeJourney.creatorName || "Karel Barnoski"}
-            </span>
-            {(currentTrack?.artist || recording?.artist) && (
-              <span
-                style={{
-                  position: "relative",
-                  fontFamily: "var(--font-geist-mono)",
-                  fontSize: "0.9rem",
-                  color: "rgba(255, 255, 255, 0.85)",
-                  letterSpacing: "0.04em",
-                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-                }}
-              >
-                Music by {currentTrack?.artist || recording?.artist}
-              </span>
-            )}
-            {activeJourney.photographyCredit && (
-              <span
-                style={{
-                  position: "relative",
-                  fontFamily: "var(--font-geist-mono)",
-                  fontSize: "0.9rem",
-                  color: "rgba(255, 255, 255, 0.85)",
-                  letterSpacing: "0.04em",
-                  textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-                }}
-              >
-                Photography by {activeJourney.photographyCredit}
-              </span>
-            )}
+            {(() => {
+              const musicArtist = currentTrack?.artist || recording?.artist;
+              const creditParts: string[] = [`by ${activeJourney.creatorName || "Karel Barnoski"}`];
+              if (musicArtist) creditParts.push(`Music by ${musicArtist}`);
+              if (activeJourney.photographyCredit) creditParts.push(`Photography by ${activeJourney.photographyCredit}`);
+              return (
+                <span
+                  style={{
+                    position: "relative",
+                    fontFamily: "var(--font-geist-mono)",
+                    fontSize: "0.85rem",
+                    color: "rgba(255, 255, 255, 0.75)",
+                    letterSpacing: "0.06em",
+                    textShadow: "0 1px 8px rgba(0,0,0,0.8)",
+                    textAlign: "center",
+                  }}
+                >
+                  {creditParts.join("  ·  ")}
+                </span>
+              );
+            })()}
             {activeJourney.dedication && (
               <span
                 style={{
                   position: "relative",
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontStyle: "italic",
-                  fontSize: "1rem",
-                  color: "rgba(255, 255, 255, 0.75)",
+                  fontSize: "clamp(0.95rem, 1.6vw, 1.15rem)",
+                  color: "rgba(255, 255, 255, 0.7)",
                   letterSpacing: "0.04em",
                   textShadow: "0 1px 8px rgba(0,0,0,0.8)",
-                  marginTop: "0.5rem",
+                  textAlign: "center",
+                  maxWidth: "32em",
                 }}
               >
                 {activeJourney.dedication}

@@ -245,7 +245,13 @@ const PROFILES: Record<DeviceTier, TierProfile> = {
     particleScale: 0.4,
     cloneScale: 0.3,
     enableAiImagery: true, // still on but slow + thin
-    enableBassFlash: false,
+    // Bass flash is LIGHT: two pre-generated images (loaded once at journey
+    // start) + a CSS-animated overlay. The expensive part is the fal.ai
+    // generation, which is one-shot. Mobile users explicitly asked to see
+    // the Ghost flashes, so we enable them on low tier. If jank shows up
+    // on older phones the shockwave ring in journey-compositor can be
+    // gated separately; keep the angel flash.
+    enableBassFlash: true,
   },
 };
 

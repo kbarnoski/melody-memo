@@ -86,6 +86,27 @@ export async function ensureResumed(): Promise<void> {
   }
 }
 
+// iOS Safari: HTMLAudioElement.play() only works if first called inside a
+// user gesture. After that one priming call the element is "unlocked" for
+// the rest of the session — subsequent src changes and play() calls work
+// even from async callbacks. Without this, journey taps that await Supabase
+// before calling play() silently fail on mobile (gesture context lost).
+// Must be called synchronously from the tap handler, before any await.
+let audioElementUnlocked = false;
+export function primeAudioElement(): void {
+  if (audioElementUnlocked) return;
+  const engine = getAudioEngine();
+  const el = engine.audioElement;
+  // Tiny silent WAV — plays instantly, no network.
+  if (!el.src) {
+    el.src =
+      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAKhWAAACABAAZGF0YQAAAAA=";
+  }
+  const p = el.play();
+  if (p && typeof p.catch === "function") p.catch(() => {});
+  audioElementUnlocked = true;
+}
+
 /**
  * Start a silent ambient oscillator connected to the analyser.
  * Used when no track is playing so shaders still receive data.

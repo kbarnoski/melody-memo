@@ -9,7 +9,7 @@ import { JOURNEYS, getJourney } from "@/lib/journeys/journeys";
 import { PHASE_ORDER } from "@/lib/journeys/phase-interpolation";
 import { getAiImageService } from "@/lib/journeys/ai-image-service";
 import { useAudioStore } from "@/lib/audio/audio-store";
-import { ensureResumed } from "@/lib/audio/audio-engine";
+import { ensureResumed, primeAudioElement } from "@/lib/audio/audio-engine";
 import { createClient } from "@/lib/supabase/client";
 import { ShareSheet } from "@/components/ui/share-sheet";
 import type { Journey } from "@/lib/journeys/types";
@@ -377,10 +377,14 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
   if (!open) return null;
 
   const selectJourney = async (journey: Journey, withAi: boolean) => {
-    // Unlock AudioContext in user gesture context — must happen before any await.
-    // Mobile browsers require resume() within a tap/click handler; once async work
-    // starts, the gesture context is lost and play() silently fails.
+    // Unlock AudioContext AND the HTMLAudioElement in the user gesture context —
+    // must happen before any await. iOS Safari's autoplay policy blocks both
+    // separately: AudioContext needs resume() and the audio element needs a
+    // gesture-scoped .play() once before subsequent play() calls (from async
+    // callbacks) will work. Without primeAudioElement, journey taps that
+    // await Supabase silently fail on mobile even though they work on desktop.
     ensureResumed();
+    primeAudioElement();
 
     selectTokenRef.current += 1;
     const myToken = selectTokenRef.current;

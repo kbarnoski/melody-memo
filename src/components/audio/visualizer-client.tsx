@@ -1527,7 +1527,7 @@ export function VisualizerClient({
 
   return (
     <div
-      className="relative h-full w-full overflow-hidden"
+      className="relative h-dvh w-screen overflow-hidden"
       style={{ backgroundColor: "#000" }}
       onMouseMove={resetControlsTimer}
     >

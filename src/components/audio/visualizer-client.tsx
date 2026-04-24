@@ -1140,6 +1140,27 @@ export function VisualizerClient({
       setTimeout(() => {
         useAudioStore.getState().startCustomJourney(journey);
       }, 60);
+
+      // Fire-and-forget enrichment for legacy journeys that were created
+      // before the builder produced multi-variant aiPromptSequences. The
+      // first playback after this call still uses the single prompt per
+      // phase (slideshow-y), but the next one picks up the enriched
+      // sequences from the DB and reads rich and cinematic like Ghost.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const phasesAny = journey.phases as any[];
+      const alreadyEnriched =
+        Array.isArray(phasesAny) &&
+        phasesAny.length > 0 &&
+        phasesAny.every(
+          (p) => Array.isArray(p?.aiPromptSequence) && p.aiPromptSequence.length >= 4,
+        );
+      if (!alreadyEnriched) {
+        fetch("/api/journeys/backfill-sequences", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ journeyId: journey.id }),
+        }).catch(() => {});
+      }
     } catch (err) {
       console.warn("[path] startCustomById failed:", err);
     }

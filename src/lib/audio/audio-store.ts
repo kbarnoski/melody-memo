@@ -7,6 +7,7 @@ import { getJourney } from "@/lib/journeys/journeys";
 import { getCulminationJourney } from "@/lib/journeys/culmination-journeys";
 import { getRealm } from "@/lib/journeys/realms";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
+import { applyBuiltInEnrichment } from "@/lib/journeys/built-in-enrichments";
 import { getRealtimeImageService } from "@/lib/journeys/realtime-image-service";
 import { MODE_META, MODES_3D } from "@/lib/shaders";
 
@@ -369,8 +370,13 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
   },
 
   startJourney: (journeyId) => {
-    const journey = getJourney(journeyId) ?? getCulminationJourney(journeyId);
-    if (!journey) return;
+    const rawJourney = getJourney(journeyId) ?? getCulminationJourney(journeyId);
+    if (!rawJourney) return;
+    // Overlay server-cached aiPromptSequence from built_in_enrichments
+    // (populated by admin bulk backfill). Non-admin users get the same
+    // enriched imagery because the table is read-all. No-op for Ghost
+    // and any built-in that already ships with hand-authored sequences.
+    const journey = applyBuiltInEnrichment(rawJourney);
     const realm = getRealm(journey.realmId);
     const engine = getJourneyEngine();
     const { duration } = get();

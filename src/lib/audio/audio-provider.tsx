@@ -19,6 +19,7 @@ import {
   registerMediaSessionHandlers,
 } from "@/lib/media-session";
 import { syncAdminFeedbackFromDb } from "@/lib/journeys/adaptive-engine";
+import { loadBuiltInEnrichments } from "@/lib/journeys/built-in-enrichments";
 
 /**
  * AudioProvider bridges the Zustand store to the audio engine singleton.
@@ -60,6 +61,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   // non-admin users silently no-op. Runs once per session.
   useEffect(() => {
     syncAdminFeedbackFromDb().catch(() => {});
+  }, []);
+
+  // Built-in journey enrichments — pull the per-journey aiPromptSequence
+  // cache (populated by the admin bulk-backfill endpoint) so every user
+  // gets Ghost-level multi-variant imagery on built-in journeys. Runs
+  // once per session; startJourney overlays the cached sequences before
+  // handing the journey to the engine.
+  useEffect(() => {
+    loadBuiltInEnrichments().catch(() => {});
   }, []);
 
   // ─── Native audio setup (desktop mode) ───

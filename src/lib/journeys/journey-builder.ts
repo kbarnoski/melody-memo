@@ -13,7 +13,19 @@ const PHASE_IDS: JourneyPhaseId[] = [
 ];
 
 const phaseSchema = z.object({
-  aiPrompt: z.string().describe("Visual scene prompt for this phase, 10-20 words"),
+  aiPrompt: z.string().describe("Single fallback visual scene prompt for this phase, 12-20 words"),
+  aiPromptSequence: z
+    .array(z.string())
+    .min(6)
+    .max(7)
+    .describe(
+      "6-7 distinct visual-scene prompt VARIANTS for this phase, each 15-30 words. " +
+        "Each variant should show a different moment, camera angle, or detail within the same phase so " +
+        "the AI image pipeline generates a rich multi-layer collage rather than the same image on repeat. " +
+        "Vary: camera framing (wide establishing / overhead / low-angle / three-quarter / silhouette / " +
+        "close-up environmental detail), distance, time-of-day micro-shifts, and focal subject. " +
+        "This is the SAME pattern Ghost uses — it's what makes the imagery feel alive instead of a slideshow.",
+    ),
   poetryMood: z.string().describe("One-word mood (e.g. contemplative, ecstatic, melancholic)"),
   guidancePhrases: z.array(z.string()).max(3).describe("2-3 short whispered guidance phrases"),
 });
@@ -153,8 +165,19 @@ Generate exactly 6 phases in order:
 5. Return — gentle descent
 6. Integration — peaceful resolution
 
-Each phase needs a visual scene prompt, mood word, and 2-3 whispered guidance phrases. Make it personal to the user's story.`,
-    temperature: 0.7,
+For EACH phase produce:
+- aiPrompt: a single fallback scene prompt (12-20 words).
+- aiPromptSequence: SIX-TO-SEVEN distinct prompt VARIANTS (15-30 words each). These are what the renderer
+  actually uses — it cycles through them across the phase so many different images stack and crossfade.
+  Each variant must show a different moment, camera angle, or focal subject within the same phase so the
+  imagery reads as a rich cinematic collage. Vary camera framing every entry (extreme wide establishing /
+  overhead aerial / low-angle worm's-eye / three-quarter tracking / silhouette / environmental close-up /
+  rear tracking). Never repeat the same framing twice in a phase's sequence.
+- poetryMood: one word.
+- guidancePhrases: 2-3 short whispered phrases.
+
+Make everything deeply personal to the user's story.`,
+    temperature: 0.8,
   });
 
   // Validate AI output
@@ -182,6 +205,7 @@ Each phase needs a visual scene prompt, mood word, and 2-3 whispered guidance ph
       id,
       shaderModes: shuffled.slice(0, shaderBudget),
       aiPrompt: aiPhase.aiPrompt,
+      aiPromptSequence: aiPhase.aiPromptSequence,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       poetryMood: aiPhase.poetryMood as any,
       guidancePhrases: aiPhase.guidancePhrases,

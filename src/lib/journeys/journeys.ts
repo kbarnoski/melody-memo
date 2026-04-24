@@ -707,6 +707,7 @@ export const JOURNEYS: Journey[] = [
       "Darkness cracks open. Heat rises from below, shapeless and absolute. You descend through pressure and isolation until something breaks — then silence, then air.",
     realmId: "hell",
     aiEnabled: true,
+    blockedShaders: ["rain"],
     phaseLabels: { threshold: "Entrance", expansion: "Descent", transcendence: "Furnace", illumination: "Embers", return: "Ascent", integration: "Aftermath" },
     phases: defaultPhases("hell", {
 
@@ -1269,6 +1270,7 @@ export const JOURNEYS: Journey[] = [
     realmId: "winter",
     aiEnabled: true,
     completionOffset: 3,
+    blockedShaders: ["rain"],
     phaseLabels: { threshold: "Chill", expansion: "Falling", transcendence: "Whiteout", illumination: "Silence", return: "Warmth", integration: "Stillness" },
     phases: defaultPhases("winter", {
       threshold: {

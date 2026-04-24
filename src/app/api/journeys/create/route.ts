@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { buildJourneyFromStory } from "@/lib/journeys/journey-builder";
 import type { AnalysisResult } from "@/lib/audio/types";
+import type { Journey } from "@/lib/journeys/types";
 
 export async function POST(request: Request) {
   try {
@@ -19,32 +20,64 @@ export async function POST(request: Request) {
       .single();
     const creatorName = profile?.display_name ?? null;
 
-    const { storyText, realmId, recordingId, name, audioReactive, localImageUrls } = await request.json();
+    const {
+      storyText,
+      realmId,
+      recordingId,
+      name,
+      audioReactive,
+      localImageUrls,
+      draft,
+    } = await request.json();
     const safeLocalImageUrls: string[] | null =
       Array.isArray(localImageUrls) && localImageUrls.length > 0
         ? localImageUrls.filter((u: unknown): u is string => typeof u === "string" && u.length > 0)
         : null;
 
-    if (!storyText) {
-      return Response.json({ error: "Missing storyText" }, { status: 400 });
-    }
+    // Two-path flow:
+    //   (a) legacy / auto-generate: client sends storyText only → AI builds
+    //       the journey here and we save it in the same request.
+    //   (b) describe → refine → save: client sends a pre-built draft
+    //       (returned earlier from /api/journeys/draft, possibly edited
+    //       by the user) → we skip the AI call and just persist.
+    let journey: Journey;
 
-    // Fetch analysis if a recording is specified
-    let analysis: AnalysisResult | null = null;
-    if (recordingId) {
-      const { data: analysisRow } = await supabase
-        .from("analyses")
-        .select("*")
-        .eq("recording_id", recordingId)
-        .eq("status", "completed")
-        .single();
-      if (analysisRow) {
-        analysis = analysisRow as AnalysisResult;
+    if (draft && typeof draft === "object") {
+      // Minimal shape validation — the draft came from our own /draft
+      // endpoint, so we trust its structure but sanity-check the fields
+      // we're about to commit.
+      if (
+        typeof draft.name !== "string" ||
+        typeof draft.subtitle !== "string" ||
+        typeof draft.description !== "string" ||
+        !Array.isArray(draft.phases) ||
+        draft.phases.length !== 6
+      ) {
+        return Response.json({ error: "Invalid draft shape" }, { status: 400 });
       }
+      journey = draft as Journey;
+    } else {
+      if (!storyText) {
+        return Response.json({ error: "Missing storyText" }, { status: 400 });
+      }
+      let analysis: AnalysisResult | null = null;
+      if (recordingId) {
+        const { data: analysisRow } = await supabase
+          .from("analyses")
+          .select("*")
+          .eq("recording_id", recordingId)
+          .eq("status", "completed")
+          .single();
+        if (analysisRow) {
+          analysis = analysisRow as AnalysisResult;
+        }
+      }
+      journey = await buildJourneyFromStory(
+        storyText,
+        realmId || undefined,
+        analysis,
+      );
     }
-
-    // Build journey from story using AI — realmId is optional now
-    const journey = await buildJourneyFromStory(storyText, realmId || undefined, analysis);
 
     // Store in database
     const { data, error } = await supabase.from("journeys").insert({
@@ -53,7 +86,7 @@ export async function POST(request: Request) {
       name: name || journey.name,
       subtitle: journey.subtitle,
       description: journey.description,
-      story_text: storyText,
+      story_text: storyText ?? null,
       realm_id: journey.realmId,
       phases: JSON.parse(JSON.stringify(journey.phases)),
       theme: journey.theme ? JSON.parse(JSON.stringify(journey.theme)) : null,

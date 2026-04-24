@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Music, Image as ImageIcon, Upload } from "lucide-react";
+import { Loader2, Music, Image as ImageIcon, Upload, ChevronDown, ChevronRight, Sparkles, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { getMp4CreationDate } from "@/lib/audio/mp4-creation-date";
 import { detectAudioCodec } from "@/lib/audio/detect-codec";
-import type { Journey } from "@/lib/journeys/types";
+import type { Journey, JourneyPhase } from "@/lib/journeys/types";
 
 interface CreateJourneyFormProps {
   recordingId?: string;
@@ -15,16 +15,20 @@ interface CreateJourneyFormProps {
   cancelLabel?: string;
 }
 
+type Step = "describe" | "refine";
+
 export function CreateJourneyForm({
   recordingId,
   onCreated,
   onCancel,
   cancelLabel = "Cancel",
 }: CreateJourneyFormProps) {
+  const [step, setStep] = useState<Step>("describe");
   const [journeyName, setJourneyName] = useState("");
   const [storyText, setStoryText] = useState("");
   const [audioReactive, setAudioReactive] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [statusText, setStatusText] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const [recordings, setRecordings] = useState<{ id: string; title: string }[]>([]);
@@ -34,6 +38,14 @@ export function CreateJourneyForm({
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioArtist, setAudioArtist] = useState("");
   const [audioTitle, setAudioTitle] = useState("");
+
+  // Draft: the AI-generated journey the user is refining.
+  const [draft, setDraft] = useState<Journey | null>(null);
+  // Resolved recording id from any track upload — captured at generate time
+  // and re-used on save so we don't re-upload on refine→save.
+  const [resolvedRecordingId, setResolvedRecordingId] = useState<string | null>(null);
+  // Which phase cards are expanded in the refine step.
+  const [expandedPhases, setExpandedPhases] = useState<Set<number>>(new Set([0]));
 
   useEffect(() => {
     const fetchRecordings = async () => {
@@ -55,16 +67,16 @@ export function CreateJourneyForm({
   }, []);
 
   useEffect(() => {
-    if (!creating) {
+    if (!generating) {
       setStatusText("");
       return;
     }
     const messages = [
-      "Reading your story...",
+      "Reading your description...",
       "Imagining the visual world...",
       "Choosing shaders & palette...",
       "Composing phases...",
-      "Building the journey...",
+      "Building the draft...",
       "Almost there...",
     ];
     let i = 0;
@@ -74,16 +86,18 @@ export function CreateJourneyForm({
       setStatusText(messages[i]);
     }, 8000);
     return () => clearInterval(interval);
-  }, [creating]);
+  }, [generating]);
 
-  const handleCreate = async () => {
+  // Step 1: upload any new track + photos, then call /api/journeys/draft
+  // and display the result for refinement. Does NOT persist the journey.
+  const handleGenerateDraft = async () => {
     if (!storyText.trim()) return;
     if (audioFile && !audioArtist.trim()) {
       toast.error("Artist name is required for uploaded tracks");
       return;
     }
 
-    setCreating(true);
+    setGenerating(true);
     abortRef.current = new AbortController();
 
     try {
@@ -100,9 +114,7 @@ export function CreateJourneyForm({
             contentType: audioFile.type || "audio/mp4",
             upsert: false,
           });
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
+        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 
         let duration: number | null = null;
         try {
@@ -150,6 +162,7 @@ export function CreateJourneyForm({
         }
         effectiveRecordingId = insertedRow.id;
       }
+      setResolvedRecordingId(effectiveRecordingId);
 
       let finalImageUrls: string[] | null = uploadedImageUrls;
       if (localImageFiles.length > 0 && !finalImageUrls) {
@@ -167,9 +180,7 @@ export function CreateJourneyForm({
               contentType: file.type || "image/jpeg",
               upsert: false,
             });
-          if (uploadError) {
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
+          if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
           const { data: publicData } = supabase.storage
             .from("journey-images")
             .getPublicUrl(path);
@@ -179,42 +190,68 @@ export function CreateJourneyForm({
         setUploadedImageUrls(urls);
       }
 
-      const res = await fetch("/api/journeys/create", {
+      setStatusText("Generating draft...");
+      const res = await fetch("/api/journeys/draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           storyText: storyText.trim(),
           recordingId: effectiveRecordingId,
-          name: journeyName.trim() || undefined,
-          audioReactive,
-          localImageUrls: finalImageUrls ?? undefined,
         }),
         signal: abortRef.current.signal,
       });
-
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate draft");
 
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to create journey");
-      }
+      setDraft(data.journey as Journey);
+      setStep("refine");
+      setExpandedPhases(new Set([0]));
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(msg);
+    } finally {
+      setGenerating(false);
+      abortRef.current = null;
+    }
+  };
+
+  // Step 2: commit the (possibly edited) draft to the DB.
+  const handleSaveDraft = async () => {
+    if (!draft) return;
+    setSaving(true);
+    abortRef.current = new AbortController();
+    try {
+      // Override draft.name if the user typed one into the describe step.
+      const payloadDraft: Journey = {
+        ...draft,
+        name: journeyName.trim() || draft.name,
+      };
+      const res = await fetch("/api/journeys/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          draft: payloadDraft,
+          recordingId: resolvedRecordingId,
+          storyText: storyText.trim(),
+          audioReactive,
+          localImageUrls: uploadedImageUrls ?? undefined,
+          name: payloadDraft.name,
+        }),
+        signal: abortRef.current.signal,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save journey");
 
       toast.success(`Journey "${data.journey.name}" created`);
-      setStoryText("");
-      setJourneyName("");
-      setAudioReactive(false);
-      setLocalImageFiles([]);
-      setUploadedImageUrls(null);
-      setAudioFile(null);
-      setAudioArtist("");
-      setAudioTitle("");
       const fullJourney: Journey = {
         ...data.journey,
         id: data.dbRecord.id,
         storyText: storyText.trim(),
-        recordingId: effectiveRecordingId,
+        recordingId: resolvedRecordingId,
         userId: data.dbRecord.user_id,
         audioReactive,
-        ...(finalImageUrls && finalImageUrls.length > 0 ? { localImageUrls: finalImageUrls } : {}),
+        ...(uploadedImageUrls && uploadedImageUrls.length > 0 ? { localImageUrls: uploadedImageUrls } : {}),
       };
       onCreated?.(fullJourney);
     } catch (err) {
@@ -222,21 +259,333 @@ export function CreateJourneyForm({
       const msg = err instanceof Error ? err.message : "Unknown error";
       toast.error(msg);
     } finally {
-      setCreating(false);
+      setSaving(false);
       abortRef.current = null;
     }
   };
 
+  const handleRegenerate = async () => {
+    setDraft(null);
+    await handleGenerateDraft();
+  };
+
   const handleCancel = () => {
-    if (creating && abortRef.current) {
+    if ((generating || saving) && abortRef.current) {
       abortRef.current.abort();
     }
-    setCreating(false);
+    setGenerating(false);
+    setSaving(false);
     onCancel?.();
+  };
+
+  const updateDraftField = <K extends keyof Journey>(key: K, value: Journey[K]) => {
+    setDraft((d) => (d ? { ...d, [key]: value } : d));
+  };
+
+  const updatePhaseField = <K extends keyof JourneyPhase>(
+    phaseIdx: number,
+    key: K,
+    value: JourneyPhase[K],
+  ) => {
+    setDraft((d) => {
+      if (!d) return d;
+      const phases = [...d.phases];
+      phases[phaseIdx] = { ...phases[phaseIdx], [key]: value };
+      return { ...d, phases };
+    });
+  };
+
+  const togglePhase = (idx: number) => {
+    setExpandedPhases((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
   };
 
   const accent = "#8b5cf6";
 
+  // ─────────── RENDER: REFINE STEP ───────────
+  if (step === "refine" && draft) {
+    return (
+      <div className="w-full">
+        <button
+          type="button"
+          onClick={() => setStep("describe")}
+          disabled={saving}
+          className="flex items-center gap-1.5 text-white/40 hover:text-white/60 mb-4 transition-colors disabled:opacity-50"
+          style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Back to description
+        </button>
+
+        <div
+          className="mb-5 px-3 py-2 rounded-lg flex items-center gap-2"
+          style={{
+            fontSize: "0.7rem",
+            fontFamily: "var(--font-geist-mono)",
+            backgroundColor: `${accent}12`,
+            border: `1px solid ${accent}30`,
+            color: "rgba(255,255,255,0.7)",
+          }}
+        >
+          <Sparkles className="h-3 w-3" style={{ color: accent }} />
+          Draft generated. Tune anything below, then save.
+        </div>
+
+        {/* Name */}
+        <div className="mb-4">
+          <label
+            className="block text-white/40 mb-1.5"
+            style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            Name
+          </label>
+          <input
+            type="text"
+            value={draft.name}
+            onChange={(e) => updateDraftField("name", e.target.value)}
+            disabled={saving}
+            className="w-full rounded-lg px-3 py-2 text-white/80 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+            style={{
+              fontSize: "0.85rem",
+              fontFamily: "var(--font-geist-sans)",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          />
+        </div>
+
+        {/* Subtitle */}
+        <div className="mb-4">
+          <label
+            className="block text-white/40 mb-1.5"
+            style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            Subtitle
+          </label>
+          <input
+            type="text"
+            value={draft.subtitle}
+            onChange={(e) => updateDraftField("subtitle", e.target.value)}
+            disabled={saving}
+            className="w-full rounded-lg px-3 py-2 text-white/80 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+            style={{
+              fontSize: "0.85rem",
+              fontFamily: "var(--font-geist-sans)",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          />
+        </div>
+
+        {/* Description */}
+        <div className="mb-5">
+          <label
+            className="block text-white/40 mb-1.5"
+            style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            Description
+          </label>
+          <textarea
+            value={draft.description}
+            onChange={(e) => updateDraftField("description", e.target.value)}
+            rows={3}
+            disabled={saving}
+            className="w-full rounded-lg px-3 py-2 text-white/80 resize-none focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+            style={{
+              fontSize: "0.85rem",
+              fontFamily: "var(--font-geist-sans)",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              lineHeight: 1.5,
+            }}
+          />
+        </div>
+
+        {/* Phases */}
+        <div className="mb-5">
+          <div
+            className="text-white/40 mb-2"
+            style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+          >
+            Phases
+          </div>
+          <div className="space-y-1.5">
+            {draft.phases.map((phase, idx) => {
+              const isOpen = expandedPhases.has(idx);
+              return (
+                <div
+                  key={phase.id ?? idx}
+                  className="rounded-lg"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => togglePhase(idx)}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03] transition-colors rounded-lg"
+                  >
+                    {isOpen ? (
+                      <ChevronDown className="h-3 w-3 text-white/40 flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 text-white/40 flex-shrink-0" />
+                    )}
+                    <span
+                      className="text-white/60 flex-shrink-0"
+                      style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.04em", textTransform: "uppercase" }}
+                    >
+                      {idx + 1}. {phase.id}
+                    </span>
+                    <span
+                      className="text-white/30 truncate"
+                      style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-sans)" }}
+                    >
+                      · {phase.aiPrompt}
+                    </span>
+                  </button>
+                  {isOpen && (
+                    <div className="px-3 pb-3 space-y-3">
+                      <div>
+                        <label
+                          className="block text-white/40 mb-1"
+                          style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                        >
+                          Visual prompt
+                        </label>
+                        <textarea
+                          value={phase.aiPrompt ?? ""}
+                          onChange={(e) => updatePhaseField(idx, "aiPrompt", e.target.value)}
+                          rows={2}
+                          disabled={saving}
+                          className="w-full rounded-md px-2.5 py-1.5 text-white/80 resize-none focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+                          style={{
+                            fontSize: "0.8rem",
+                            fontFamily: "var(--font-geist-sans)",
+                            backgroundColor: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.06)",
+                            lineHeight: 1.5,
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-white/40 mb-1"
+                          style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                        >
+                          Mood
+                        </label>
+                        <input
+                          type="text"
+                          value={phase.poetryMood ?? ""}
+                          onChange={(e) => {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            updatePhaseField(idx, "poetryMood", e.target.value as any);
+                          }}
+                          disabled={saving}
+                          className="w-full rounded-md px-2.5 py-1.5 text-white/80 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+                          style={{
+                            fontSize: "0.8rem",
+                            fontFamily: "var(--font-geist-sans)",
+                            backgroundColor: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.06)",
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-white/40 mb-1"
+                          style={{ fontSize: "0.6rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
+                        >
+                          Guidance phrases (one per line)
+                        </label>
+                        <textarea
+                          value={(phase.guidancePhrases ?? []).join("\n")}
+                          onChange={(e) =>
+                            updatePhaseField(
+                              idx,
+                              "guidancePhrases",
+                              e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                            )
+                          }
+                          rows={3}
+                          disabled={saving}
+                          className="w-full rounded-md px-2.5 py-1.5 text-white/80 resize-none focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
+                          style={{
+                            fontSize: "0.8rem",
+                            fontFamily: "var(--font-geist-sans)",
+                            backgroundColor: "rgba(255,255,255,0.03)",
+                            border: "1px solid rgba(255,255,255,0.06)",
+                            lineHeight: 1.5,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleSaveDraft}
+          disabled={saving || generating}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white/90 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{
+            fontSize: "0.85rem",
+            fontFamily: "var(--font-geist-mono)",
+            backgroundColor: saving ? `${accent}15` : `${accent}25`,
+            border: `1px solid ${accent}${saving ? "20" : "50"}`,
+          }}
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Journey"
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleRegenerate}
+          disabled={saving || generating}
+          className="w-full mt-2 px-4 py-2 text-white/40 hover:text-white/60 transition-colors disabled:opacity-40"
+          style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+        >
+          {generating ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Regenerating...
+            </span>
+          ) : (
+            "Regenerate draft"
+          )}
+        </button>
+
+        {onCancel && (
+          <button
+            type="button"
+            onClick={handleCancel}
+            className="w-full mt-1 px-4 py-2 text-white/25 hover:text-white/40 transition-colors"
+            style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+          >
+            {cancelLabel}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // ─────────── RENDER: DESCRIBE STEP ───────────
   return (
     <div className="w-full">
       {/* Journey name */}
@@ -256,7 +605,7 @@ export function CreateJourneyForm({
           placeholder="Leave blank to auto-generate"
           value={journeyName}
           onChange={(e) => setJourneyName(e.target.value)}
-          disabled={creating}
+          disabled={generating}
           className="w-full rounded-xl px-4 py-2.5 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
           style={{
             fontSize: "0.9rem",
@@ -267,14 +616,14 @@ export function CreateJourneyForm({
         />
       </div>
 
-      {/* Story input */}
+      {/* Describe your journey */}
       <div className="mb-5">
         <label
           htmlFor="journey-story"
           className="block text-white/40 mb-2"
           style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)", letterSpacing: "0.05em", textTransform: "uppercase" }}
         >
-          Your story
+          Describe your journey
         </label>
         <textarea
           id="journey-story"
@@ -284,7 +633,7 @@ export function CreateJourneyForm({
           value={storyText}
           onChange={(e) => setStoryText(e.target.value)}
           rows={3}
-          disabled={creating}
+          disabled={generating}
           className="w-full rounded-xl px-4 py-3 text-white/80 placeholder:text-white/20 resize-none focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
           style={{
             fontSize: "0.9rem",
@@ -294,6 +643,9 @@ export function CreateJourneyForm({
             lineHeight: 1.6,
           }}
         />
+        <p className="mt-2 text-white/30" style={{ fontSize: "0.65rem", fontFamily: "var(--font-geist-mono)" }}>
+          A sentence or two — we&apos;ll draft the phases, palette, and visual prompts for you to tune.
+        </p>
       </div>
 
       {/* Song picker */}
@@ -309,8 +661,8 @@ export function CreateJourneyForm({
           <div className="max-h-32 overflow-y-auto scrollbar-thin pr-1 space-y-1">
             <button
               type="button"
-              onClick={() => !creating && setSelectedRecordingId(null)}
-              disabled={creating}
+              onClick={() => !generating && setSelectedRecordingId(null)}
+              disabled={generating}
               className={`w-full rounded-lg px-3 py-2 text-left transition-all ${
                 selectedRecordingId === null ? "text-white/90" : "text-white/40 hover:text-white/60 hover:bg-white/3"
               }`}
@@ -328,8 +680,8 @@ export function CreateJourneyForm({
               <button
                 key={rec.id}
                 type="button"
-                onClick={() => !creating && setSelectedRecordingId(rec.id)}
-                disabled={creating}
+                onClick={() => !generating && setSelectedRecordingId(rec.id)}
+                disabled={generating}
                 className={`w-full rounded-lg px-3 py-2 text-left transition-all truncate ${
                   selectedRecordingId === rec.id ? "text-white/90" : "text-white/40 hover:text-white/60 hover:bg-white/3"
                 }`}
@@ -364,7 +716,7 @@ export function CreateJourneyForm({
           aria-label="Upload audio track"
           type="file"
           accept="audio/*,.m4a,.mp3,.wav,.flac"
-          disabled={creating}
+          disabled={generating}
           onChange={(e) => {
             const file = e.target.files?.[0] ?? null;
             setAudioFile(file);
@@ -387,7 +739,7 @@ export function CreateJourneyForm({
               placeholder="Track title"
               value={audioTitle}
               onChange={(e) => setAudioTitle(e.target.value)}
-              disabled={creating}
+              disabled={generating}
               className="w-full rounded-lg px-3 py-2 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
               style={{
                 fontSize: "0.8rem",
@@ -405,7 +757,7 @@ export function CreateJourneyForm({
               placeholder="Artist (required)"
               value={audioArtist}
               onChange={(e) => setAudioArtist(e.target.value)}
-              disabled={creating}
+              disabled={generating}
               className="w-full rounded-lg px-3 py-2 text-white/80 placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-colors disabled:opacity-50"
               style={{
                 fontSize: "0.8rem",
@@ -438,7 +790,7 @@ export function CreateJourneyForm({
           type="file"
           accept="image/*"
           multiple
-          disabled={creating}
+          disabled={generating}
           onChange={(e) => {
             const files = Array.from(e.target.files ?? []);
             setLocalImageFiles(files);
@@ -458,8 +810,8 @@ export function CreateJourneyForm({
       <div className="mb-6">
         <button
           type="button"
-          onClick={() => !creating && setAudioReactive(!audioReactive)}
-          disabled={creating}
+          onClick={() => !generating && setAudioReactive(!audioReactive)}
+          disabled={generating}
           className="flex items-center gap-3 w-full rounded-xl px-4 py-3 transition-colors disabled:opacity-50"
           style={{
             backgroundColor: audioReactive ? `${accent}18` : "rgba(255,255,255,0.04)",
@@ -492,37 +844,40 @@ export function CreateJourneyForm({
         </button>
       </div>
 
-      {/* Create button */}
+      {/* Generate draft button */}
       <button
         type="button"
-        onClick={handleCreate}
-        disabled={creating || !storyText.trim()}
+        onClick={handleGenerateDraft}
+        disabled={generating || !storyText.trim()}
         className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-white/80 hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
           fontSize: "0.85rem",
           fontFamily: "var(--font-geist-mono)",
-          backgroundColor: creating ? `${accent}15` : `${accent}20`,
-          border: `1px solid ${accent}${creating ? "20" : "40"}`,
+          backgroundColor: generating ? `${accent}15` : `${accent}20`,
+          border: `1px solid ${accent}${generating ? "20" : "40"}`,
         }}
       >
-        {creating ? (
+        {generating ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
             <span>{statusText}</span>
           </>
         ) : (
-          "Create Journey"
+          <>
+            <Sparkles className="h-4 w-4" />
+            Generate draft
+          </>
         )}
       </button>
 
-      {(onCancel || creating) && (
+      {(onCancel || generating) && (
         <button
           type="button"
           onClick={handleCancel}
           className="w-full mt-2 px-4 py-2 text-white/30 hover:text-white/50 transition-colors"
           style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
         >
-          {creating ? "Cancel" : cancelLabel}
+          {generating ? "Cancel" : cancelLabel}
         </button>
       )}
     </div>

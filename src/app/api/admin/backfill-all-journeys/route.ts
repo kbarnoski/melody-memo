@@ -104,17 +104,25 @@ export async function POST(request: Request) {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Default 8 per call to stay under the 300s Vercel ceiling (each
-  // Claude call is ~4-8s, so 8 journeys ≈ 60-70s). Caller repeats until
-  // the summary shows no more enrichments happening.
-  let limit = 8;
+  // Default 3 per call. Single Claude generateObject calls with this
+  // schema can take 20-40s apiece, so 3 fits comfortably under the
+  // Vercel ceiling while still making meaningful progress per request.
+  // Caller repeats until everything is enriched.
+  let limit = 3;
   try {
     const body = await request.json().catch(() => ({}));
     const fromBody = body?.limit ?? body?.batch;
     if (typeof fromBody === "number" && fromBody > 0) {
-      limit = Math.min(fromBody, 40);
+      limit = Math.min(fromBody, 20);
     }
   } catch { /* ignore */ }
+
+  // Hard deadline — if we're approaching the 300s ceiling, stop picking
+  // up new work and return what we've done so the client sees a summary
+  // instead of a Vercel 504.
+  const startedAt = Date.now();
+  const DEADLINE_MS = 240_000; // 4 min; Vercel kills at 5 min.
+  const outOfTime = () => Date.now() - startedAt > DEADLINE_MS;
 
   const results = {
     customProcessed: 0,
@@ -141,6 +149,7 @@ export async function POST(request: Request) {
 
   for (const row of customs ?? []) {
     if (enrichedThisCall >= limit) break;
+    if (outOfTime()) break;
     results.customProcessed += 1;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -193,6 +202,7 @@ export async function POST(request: Request) {
 
   for (const journey of JOURNEYS) {
     if (enrichedThisCall >= limit) break;
+    if (outOfTime()) break;
     results.builtInProcessed += 1;
     try {
       if (journey.id === "ghost") {

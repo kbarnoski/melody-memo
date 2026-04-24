@@ -424,6 +424,13 @@ export function VisualizerClient({
       // Show intro BEFORE updating the ref
       if (journeyIntroTimerRef.current) clearTimeout(journeyIntroTimerRef.current);
       if (phaseReadyTimerRef.current) clearTimeout(phaseReadyTimerRef.current);
+      // Bump overlayRemountKey so the intro overlay and phase indicator
+      // mount under fresh React keys — guarantees the CSS animation
+      // restarts cleanly and no stale timer from a previous journey
+      // can fire against the new overlay. Without this, open → close →
+      // reopen could paint the intro on a DOM node whose animation had
+      // already completed, making the title appear "doubled" or stuck.
+      setOverlayRemountKey((k) => k + 1);
       setJourneyIntroVisible(true);
       setPhaseIndicatorReady(false);
       // Intro holds 6s, then 2s buffer before phase indicator

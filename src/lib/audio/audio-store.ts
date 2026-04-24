@@ -386,12 +386,24 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     // a flash where the store has a different shader than the engine
     const firstMode = engine.getCurrentShaderMode();
 
+    // Drive the audio element back to 0 directly. The audio-provider
+    // effect also seeks on store currentTime changes, but doing it here
+    // guarantees that open → close → reopen always starts at the
+    // beginning even if play() isn't called separately (e.g. the same
+    // track is already loaded from a prior session).
+    try {
+      if (typeof window !== "undefined") {
+        getAudioEngine().audioElement.currentTime = 0;
+      }
+    } catch { /* engine not ready yet; store change will drive seek */ }
+
     set({
       activeJourney: journey,
       activeRealm: realm ?? null,
       activeTheme: journey.theme ?? null,
       journeyPhase: null,
       journeyProgress: 0,
+      currentTime: 0,
       vizMode: firstMode,
       vizWhisper: false,
       vizModeSequence: null, // Journey engine handles mode switching
@@ -411,12 +423,20 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
     const { duration } = get();
     engine.start(journey, { trackDuration: duration > 0 ? duration : undefined });
     const firstMode = engine.getCurrentShaderMode();
+    // Same guarantee as startJourney: open/close/reopen always starts
+    // from the beginning regardless of whether play() gets called.
+    try {
+      if (typeof window !== "undefined") {
+        getAudioEngine().audioElement.currentTime = 0;
+      }
+    } catch { /* engine not ready yet */ }
     set({
       activeJourney: journey,
       activeRealm: realm ?? null,
       activeTheme: journey.theme ?? null,
       journeyPhase: null,
       journeyProgress: 0,
+      currentTime: 0,
       vizMode: firstMode,
       vizWhisper: false,
       storyData: null,

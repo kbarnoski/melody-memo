@@ -143,6 +143,7 @@ export type VisualizerMode =
   | "wave"
   | "seabed"
   | "cage"
+  | "attractor-flow"
   // AI Imagery
   | "dreamscape"
   | "visions"

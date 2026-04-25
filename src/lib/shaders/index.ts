@@ -596,6 +596,7 @@ export const MODE_META: ModeMeta[] = [
   { mode: "seabed", label: "Seabed", category: "3D Worlds" },
 
   { mode: "cage", label: "Cage", category: "3D Worlds" },
+  { mode: "attractor-flow", label: "Attractor Flow", category: "3D Worlds" },
   // Dark
   { mode: "umbra",    label: "Umbra",    category: "Dark" },
   { mode: "inferno",  label: "Inferno",  category: "Dark" },
@@ -732,6 +733,7 @@ export const MODES_3D: Set<string> = new Set([
   "cloud",
   "wave", "seabed",
   "cage",
+  "attractor-flow",
 ]);
 
 /** AI-only modes — no shader rendered, AI images are the sole visual */

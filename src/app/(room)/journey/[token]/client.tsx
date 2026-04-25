@@ -831,7 +831,7 @@ export function SharedJourneyClient({
       ) : <div style={{ position: "absolute", inset: 0, backgroundColor: "#000" }} />;
     }
     if (layerIs3D) {
-      return <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} />;
+      return <Visualizer3D analyser={analyser} dataArray={dataArray} mode={layerMode as Visualizer3DMode} onReady={onShaderReady} />;
     }
     return SHADERS[layerMode] ? (
       <ShaderVisualizer analyser={analyser} dataArray={dataArray} fragShader={SHADERS[layerMode]!} smoothMotion onReady={onShaderReady} />

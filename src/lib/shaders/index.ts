@@ -219,6 +219,35 @@ import { FRAG as HESYCHASM_FRAG } from "./hesychasm";
 import { FRAG as KAIROS_FRAG } from "./kairos";
 import { FRAG as LECTIO_FRAG } from "./lectio";
 import { FRAG as CREDO_FRAG } from "./credo";
+import {
+  R_MERCURY, R_TENDRILS, R_STARDUST, R_EMBERS,
+  R_KALEIDO, R_BLACKHOLE,
+  R_MOLTEN, R_SMOKERINGS,
+  R_GROWTH, R_SILK, R_DROPLETS,
+} from "./review-pack";
+// Pack #2 survivors only — deleted entries removed from import list.
+import {
+  R2_CURLSWARM, R2_SPIRALGAL, R2_MARBLE, R2_INTERFERENCE,
+  R2_FIBERS, R2_KELVIN,
+  R2_THERMAL, R2_MAGNETIC,
+  R2_CORAL,
+  R2_PHOTON,
+  R2_PIXIE,
+  R2_HEAVYSNOW, R2_INFRARED,
+  R2_PORTALRIM, R2_SPORE, R2_SUNSETCASCADE,
+} from "./review-pack-2";
+// Pack #3 survivors only — 67 deleted entries removed from import list.
+import {
+  R3_SPIRITTRAILS, R3_GHOSTRIBBONS, R3_SILKWIND, R3_DREAMTENDRILS,
+  R3_SHADOWFLOW, R3_LIGHTRIVERS, R3_AURORASTREAMS, R3_WAVEVEIL,
+  R3_MOLTENGLASS, R3_PLASMASTORM, R3_LIGHTNINGVEIL, R3_CORONASTREAMS,
+  R3_STELLARRIBBON, R3_MAGNETICWISPS, R3_ARCDISCHARGE, R3_BALLLIGHTNING,
+  R3_CORALPULSE, R3_FERNUNFURL,
+  R3_SEAWEEDSWAY, R3_UNDERWATERVINES, R3_SLEEPINGBLOOM, R3_PEELINGBARK,
+  R3_HEATSHIMMER, R3_MONSOONVEIL,
+  R3_FAIRYGLOW, R3_WISHTRAILS, R3_MEMORYFLOW, R3_AURORADREAM,
+  R3_RIPPLECASCADE, R3_PULSERINGSSOFT, R3_HEARTWARMTH, R3_SOFTORBIT, R3_INNERGLOW,
+} from "./review-pack-3";
 import type { VisualizerMode } from "@/lib/audio/vibe-detection";
 
 export const SHADERS: Partial<Record<VisualizerMode, string>> = {
@@ -436,12 +465,75 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   kairos: KAIROS_FRAG,
   lectio: LECTIO_FRAG,
   credo: CREDO_FRAG,
+  // ─── Review pack #1 survivors ───
+  "r-mercury": R_MERCURY,
+  "r-tendrils": R_TENDRILS,
+  "r-stardust": R_STARDUST,
+  "r-embers": R_EMBERS,
+  "r-kaleido": R_KALEIDO,
+  "r-blackhole": R_BLACKHOLE,
+  "r-molten": R_MOLTEN,
+  "r-smokerings": R_SMOKERINGS,
+  "r-growth": R_GROWTH,
+  "r-silk": R_SILK,
+  "r-droplets": R_DROPLETS,
+  // ─── Review pack #2 survivors ───
+  "r2-curlswarm": R2_CURLSWARM,
+  "r2-spiralgal": R2_SPIRALGAL,
+  "r2-marble": R2_MARBLE,
+  "r2-interference": R2_INTERFERENCE,
+  "r2-fibers": R2_FIBERS,
+  "r2-kelvin": R2_KELVIN,
+  "r2-thermal": R2_THERMAL,
+  "r2-magnetic": R2_MAGNETIC,
+  "r2-coral": R2_CORAL,
+  "r2-photon": R2_PHOTON,
+  "r2-pixie": R2_PIXIE,
+  "r2-heavysnow": R2_HEAVYSNOW,
+  "r2-infrared": R2_INFRARED,
+  "r2-portalrim": R2_PORTALRIM,
+  "r2-spore": R2_SPORE,
+  "r2-sunsetcascade": R2_SUNSETCASCADE,
+  // ─── Review pack #3 survivors ───
+  "r3-spirittrails": R3_SPIRITTRAILS,
+  "r3-ghostribbons": R3_GHOSTRIBBONS,
+  "r3-silkwind": R3_SILKWIND,
+  "r3-dreamtendrils": R3_DREAMTENDRILS,
+  "r3-shadowflow": R3_SHADOWFLOW,
+  "r3-lightrivers": R3_LIGHTRIVERS,
+  "r3-aurorastreams": R3_AURORASTREAMS,
+  "r3-waveveil": R3_WAVEVEIL,
+  "r3-moltenglass": R3_MOLTENGLASS,
+  "r3-plasmastorm": R3_PLASMASTORM,
+  "r3-lightningveil": R3_LIGHTNINGVEIL,
+  "r3-coronastreams": R3_CORONASTREAMS,
+  "r3-stellarribbon": R3_STELLARRIBBON,
+  "r3-magneticwisps": R3_MAGNETICWISPS,
+  "r3-arcdischarge": R3_ARCDISCHARGE,
+  "r3-balllightning": R3_BALLLIGHTNING,
+  "r3-coralpulse": R3_CORALPULSE,
+  "r3-fernunfurl": R3_FERNUNFURL,
+  "r3-seaweedsway": R3_SEAWEEDSWAY,
+  "r3-underwatervines": R3_UNDERWATERVINES,
+  "r3-sleepingbloom": R3_SLEEPINGBLOOM,
+  "r3-peelingbark": R3_PEELINGBARK,
+  "r3-heatshimmer": R3_HEATSHIMMER,
+  "r3-monsoonveil": R3_MONSOONVEIL,
+  "r3-fairyglow": R3_FAIRYGLOW,
+  "r3-wishtrails": R3_WISHTRAILS,
+  "r3-memoryflow": R3_MEMORYFLOW,
+  "r3-auroradream": R3_AURORADREAM,
+  "r3-ripplecascade": R3_RIPPLECASCADE,
+  "r3-pulseringssoft": R3_PULSERINGSSOFT,
+  "r3-heartwarmth": R3_HEARTWARMTH,
+  "r3-softorbit": R3_SOFTORBIT,
+  "r3-innerglow": R3_INNERGLOW,
 };
 
 export interface ModeMeta {
   mode: VisualizerMode;
   label: string;
-  category: "Visionary" | "Cosmic" | "Organic" | "Geometry" | "3D Worlds" | "AI Imagery" | "Elemental" | "Dark";
+  category: "Visionary" | "Cosmic" | "Organic" | "Geometry" | "3D Worlds" | "AI Imagery" | "Elemental" | "Dark" | "Review";
   addedDate?: string; // ISO date, e.g. "2026-04-07"
 }
 
@@ -588,7 +680,6 @@ export const MODE_META: ModeMeta[] = [
   { mode: "galaxy", label: "Galaxy", category: "3D Worlds" },
   { mode: "crystal", label: "Crystal", category: "3D Worlds" },
 
-  { mode: "swarm", label: "Swarm", category: "3D Worlds" },
   { mode: "cloud", label: "Cloud", category: "3D Worlds" },
 
   { mode: "wave", label: "Wave", category: "3D Worlds" },
@@ -596,7 +687,6 @@ export const MODE_META: ModeMeta[] = [
   { mode: "seabed", label: "Seabed", category: "3D Worlds" },
 
   { mode: "cage", label: "Cage", category: "3D Worlds" },
-  { mode: "attractor-flow", label: "Attractor Flow", category: "3D Worlds" },
   // Dark
   { mode: "umbra",    label: "Umbra",    category: "Dark" },
   { mode: "inferno",  label: "Inferno",  category: "Dark" },
@@ -715,25 +805,87 @@ export const MODE_META: ModeMeta[] = [
   { mode: "bioluminescence", label: "Bioluminescence", category: "AI Imagery" },
   { mode: "petrified", label: "Petrified", category: "AI Imagery" },
   { mode: "monochrome", label: "Monochrome", category: "AI Imagery" },
+  // ─── Survivors of review pack #1 — distributed into permanent categories ───
+  { mode: "r-mercury", label: "Mercury", category: "Elemental" },
+  { mode: "r-embers", label: "Ember Storm", category: "Elemental" },
+  { mode: "r-molten", label: "Molten Gold", category: "Elemental" },
+  { mode: "r-droplets", label: "Mercury Droplets", category: "Elemental" },
+  { mode: "r-stardust", label: "Stardust River", category: "Cosmic" },
+  { mode: "r-blackhole", label: "Black Hole", category: "Cosmic" },
+  { mode: "r-tendrils", label: "Plasma Tendrils", category: "Cosmic" },
+  { mode: "r-kaleido", label: "Kaleidoscope", category: "Geometry" },
+  { mode: "r-smokerings", label: "Smoke Rings", category: "Organic" },
+  { mode: "r-growth", label: "Tendril Growth", category: "Organic" },
+  { mode: "r-silk", label: "Silk Threads", category: "Organic" },
+  // ─── Review pack #2 survivors — distributed into permanent categories ───
+  { mode: "r2-pixie", label: "Pixie Dust", category: "Visionary" },
+  { mode: "r2-sunsetcascade", label: "Sunset Cascade", category: "Visionary" },
+  { mode: "r2-spiralgal", label: "Spiral Galaxy", category: "Cosmic" },
+  { mode: "r2-photon", label: "Photon Stream", category: "Cosmic" },
+  { mode: "r2-portalrim", label: "Portal Rim", category: "Cosmic" },
+  { mode: "r2-marble", label: "Marble Flow", category: "Organic" },
+  { mode: "r2-curlswarm", label: "Curl Swarm", category: "Organic" },
+  { mode: "r2-fibers", label: "Fiber Strands", category: "Organic" },
+  { mode: "r2-coral", label: "Coral Bloom", category: "Organic" },
+  { mode: "r2-spore", label: "Spore Cloud", category: "Organic" },
+  { mode: "r2-interference", label: "Wave Interference", category: "Geometry" },
+  { mode: "r2-magnetic", label: "Magnetic Field", category: "Geometry" },
+  { mode: "r2-kelvin", label: "Kelvin Helmholtz", category: "Elemental" },
+  { mode: "r2-thermal", label: "Thermal", category: "Elemental" },
+  { mode: "r2-heavysnow", label: "Heavy Snow", category: "Elemental" },
+  { mode: "r2-infrared", label: "Infrared", category: "Dark" },
+  // ─── Review pack #3 survivors — distributed into permanent categories ───
+  { mode: "r3-spirittrails", label: "Spirit Trails", category: "Visionary" },
+  { mode: "r3-ghostribbons", label: "Ghost Ribbons", category: "Visionary" },
+  { mode: "r3-silkwind", label: "Silk Wind", category: "Visionary" },
+  { mode: "r3-dreamtendrils", label: "Dream Tendrils", category: "Visionary" },
+  { mode: "r3-fairyglow", label: "Fairy Glow", category: "Visionary" },
+  { mode: "r3-wishtrails", label: "Wish Trails", category: "Visionary" },
+  { mode: "r3-memoryflow", label: "Memory Flow", category: "Visionary" },
+  { mode: "r3-auroradream", label: "Aurora Dream", category: "Visionary" },
+  { mode: "r3-heartwarmth", label: "Heart Warmth", category: "Visionary" },
+  { mode: "r3-pulseringssoft", label: "Pulse Rings Soft", category: "Visionary" },
+  { mode: "r3-softorbit", label: "Soft Orbit", category: "Visionary" },
+  { mode: "r3-innerglow", label: "Inner Glow", category: "Visionary" },
+  { mode: "r3-plasmastorm", label: "Plasma Storm", category: "Cosmic" },
+  { mode: "r3-coronastreams", label: "Corona Streams", category: "Cosmic" },
+  { mode: "r3-stellarribbon", label: "Stellar Ribbon", category: "Cosmic" },
+  { mode: "r3-aurorastreams", label: "Aurora Streams", category: "Cosmic" },
+  { mode: "r3-lightrivers", label: "Light Rivers", category: "Cosmic" },
+  { mode: "r3-arcdischarge", label: "Arc Discharge", category: "Dark" },
+  { mode: "r3-balllightning", label: "Ball Lightning", category: "Dark" },
+  { mode: "r3-lightningveil", label: "Lightning Veil", category: "Dark" },
+  { mode: "r3-shadowflow", label: "Shadow Flow", category: "Dark" },
+  { mode: "r3-coralpulse", label: "Coral Pulse", category: "Organic" },
+  { mode: "r3-seaweedsway", label: "Seaweed Sway", category: "Organic" },
+  { mode: "r3-underwatervines", label: "Underwater Vines", category: "Organic" },
+  { mode: "r3-sleepingbloom", label: "Sleeping Bloom", category: "Organic" },
+  { mode: "r3-peelingbark", label: "Peeling Bark", category: "Organic" },
+  { mode: "r3-fernunfurl", label: "Fern Unfurl", category: "Organic" },
+  { mode: "r3-ripplecascade", label: "Ripple Cascade", category: "Geometry" },
+  { mode: "r3-magneticwisps", label: "Magnetic Wisps", category: "Geometry" },
+  { mode: "r3-moltenglass", label: "Molten Glass", category: "Elemental" },
+  { mode: "r3-heatshimmer", label: "Heat Shimmer", category: "Elemental" },
+  { mode: "r3-monsoonveil", label: "Monsoon Veil", category: "Elemental" },
+  { mode: "r3-waveveil", label: "Wave Veil", category: "Elemental" },
 ];
 
 // Sort shaders alphabetically within each category
 MODE_META.sort((a, b) => {
-  const catOrder = ["Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"];
+  const catOrder = ["Review", "Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"];
   const catDiff = catOrder.indexOf(a.category) - catOrder.indexOf(b.category);
   if (catDiff !== 0) return catDiff;
   return a.label.localeCompare(b.label);
 });
 
-export const MODE_CATEGORIES = ["Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"] as const;
+export const MODE_CATEGORIES = ["Review", "Visionary", "Cosmic", "Organic", "Geometry", "3D Worlds", "Elemental", "Dark", "AI Imagery"] as const;
 
 export const MODES_3D: Set<string> = new Set([
   "orb",
-  "galaxy", "crystal", "swarm",
+  "galaxy", "crystal",
   "cloud",
   "wave", "seabed",
   "cage",
-  "attractor-flow",
 ]);
 
 /** AI-only modes — no shader rendered, AI images are the sole visual */

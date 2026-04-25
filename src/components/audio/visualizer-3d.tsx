@@ -10,6 +10,26 @@ import {
 } from "./visualizer-3d-extra";
 import type { AnalyserLike } from "@/lib/audio/audio-engine";
 
+// ─── First-frame ready signal ───
+//
+// The A/B buffer crossfade in visualizer.tsx needs an onReady callback
+// to know when the new layer has actually painted, so it can swap from
+// the old shader. 2D ShaderVisualizer fires this on first frame.
+// Without an equivalent for 3D, the buffer eats a 3-second safety
+// timeout — exactly the "lag" users feel when navigating to a 3D mode.
+// This tiny component sits inside the Canvas, calls useFrame once, and
+// fires the callback on the first painted frame.
+
+function ReadySignal({ onReady }: { onReady?: () => void }) {
+  const fired = useRef(false);
+  useFrame(() => {
+    if (fired.current || !onReady) return;
+    fired.current = true;
+    onReady();
+  });
+  return null;
+}
+
 // ─── Error boundary for WebGL context failures ───
 
 class Canvas3DErrorBoundary extends React.Component<
@@ -873,148 +893,6 @@ function CrystalScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArr
   );
 }
 
-// ─── Swarm scene — murmuration of 6000 particles ───
-
-function SwarmScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray: Uint8Array<ArrayBuffer> }) {
-  const audio = useAudioData(analyser, dataArray);
-  const pointsRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-
-  const COUNT = 6000;
-
-  const { positions, randoms, phases } = useMemo(() => {
-    const pos = new Float32Array(COUNT * 3);
-    const rnd = new Float32Array(COUNT);
-    const phs = new Float32Array(COUNT);
-
-    for (let i = 0; i < COUNT; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = Math.pow(Math.random(), 0.5) * 3.0;
-      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      pos[i * 3 + 2] = r * Math.cos(phi);
-      rnd[i] = Math.random();
-      phs[i] = Math.random() * Math.PI * 2;
-    }
-    return { positions: pos, randoms: rnd, phases: phs };
-  }, []);
-
-  const swarmVertexShader = `
-    uniform float u_time;
-    uniform float u_bass;
-    uniform float u_mid;
-    uniform float u_amplitude;
-    attribute float aRandom;
-    attribute float aPhase;
-    varying float vRandom;
-    varying float vDensity;
-
-    void main() {
-      vRandom = aRandom;
-      float t = u_time * 0.15;
-
-      vec3 pos = position;
-      float dist = length(pos);
-
-      // Murmuration: smooth swirling paths
-      // Multiple overlapping rotations create organic flocking motion
-      float a1 = t * 0.6 + aPhase;
-      float a2 = t * 0.4 + aPhase * 1.5;
-      float a3 = t * 0.25 + aRandom * 6.28;
-
-      // Rotate in XZ
-      float ca1 = cos(a1 * 0.3); float sa1 = sin(a1 * 0.3);
-      pos.xz = mat2(ca1, -sa1, sa1, ca1) * pos.xz;
-
-      // Rotate in YZ
-      float ca2 = cos(a2 * 0.2); float sa2 = sin(a2 * 0.2);
-      pos.yz = mat2(ca2, -sa2, sa2, ca2) * pos.yz;
-
-      // Condensing/expanding pulsation
-      float breathe = 1.0 + sin(t * 1.5) * 0.3 + u_bass * 0.2;
-      pos *= breathe;
-
-      // Swirl toward/away from center
-      float centerPull = sin(t * 0.8 + aRandom * 6.28) * 0.5;
-      pos += normalize(pos + vec3(0.001)) * centerPull;
-
-      // Shift the swarm center smoothly
-      pos.x += sin(t * 0.4) * 1.5;
-      pos.y += cos(t * 0.3) * 1.0;
-
-      // Audio sway
-      pos += vec3(u_mid * 0.15 * sin(a3), u_bass * 0.1 * cos(a3), 0.0);
-
-      vDensity = 1.0 / (1.0 + length(pos) * 0.3);
-
-      vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-      float size = (1.5 + aRandom * 1.0) * (1.0 + u_amplitude * 0.5);
-      gl_PointSize = size * (200.0 / -mvPos.z);
-      gl_Position = projectionMatrix * mvPos;
-    }
-  `;
-
-  const swarmFragmentShader = `
-    uniform float u_time;
-    uniform float u_amplitude;
-    varying float vRandom;
-    varying float vDensity;
-
-    void main() {
-      float d = length(gl_PointCoord - vec2(0.5));
-      if (d > 0.5) discard;
-      float alpha = smoothstep(0.5, 0.1, d);
-
-      // Warm amber-gold particles
-      vec3 color = vec3(0.9, 0.6 + vRandom * 0.2, 0.15 + vRandom * 0.1);
-      color *= 0.3 + vDensity * 0.5 + u_amplitude * 0.2;
-
-      alpha *= 0.6 + vDensity * 0.3;
-
-      gl_FragColor = vec4(color, alpha);
-    }
-  `;
-
-  const uniforms = useMemo(() => ({
-    u_time: { value: 0 }, u_bass: { value: 0 },
-    u_mid: { value: 0 }, u_amplitude: { value: 0 },
-  }), []);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-    if (materialRef.current) {
-      const u = materialRef.current.uniforms;
-      u.u_time.value = t; u.u_bass.value = a.bass;
-      u.u_mid.value = a.mid; u.u_amplitude.value = a.amplitude;
-    }
-  });
-
-  return (
-    <>
-      <points ref={pointsRef}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-          <bufferAttribute attach="attributes-aRandom" args={[randoms, 1]} />
-          <bufferAttribute attach="attributes-aPhase" args={[phases, 1]} />
-        </bufferGeometry>
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={swarmVertexShader}
-          fragmentShader={swarmFragmentShader}
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.2} luminanceSmoothing={0.9} intensity={1.3} />
-      </EffectComposer>
-    </>
-  );
-}
 
 // ─── Lotus scene — blooming geometric flower ───
 
@@ -1255,202 +1133,14 @@ function CloudScene({ analyser, dataArray }: { analyser: AnalyserLike; dataArray
   );
 }
 
-// ─── Attractor flow scene — Lorenz strange attractor ───
-//
-// Each particle holds its own (x, y, z) state and is integrated each frame
-// through the classic Lorenz system (σ=10, ρ=28, β=8/3). After a short
-// burn-in every particle lives on the attractor's two-lobed surface,
-// orbiting and occasionally crossing between lobes — producing the
-// signature butterfly silhouette in motion. Color cycles through HSV by
-// particle index so you see distinct streamlines instead of a solid mass.
-// Audio is decoupled from positions per the journey rule "shaders don't
-// respond to audio"; bass only nudges point size for a subtle pulse.
-
-function AttractorFlowScene({
-  analyser,
-  dataArray,
-}: {
-  analyser: AnalyserLike;
-  dataArray: Uint8Array<ArrayBuffer>;
-}) {
-  const audio = useAudioData(analyser, dataArray);
-  const pointsRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const positionAttrRef = useRef<THREE.BufferAttribute>(null);
-
-  const COUNT = 3500;
-  const SIGMA = 10;
-  const RHO = 28;
-  const BETA = 8 / 3;
-  // Integration timestep at runtime (slow + meditative). Pre-warm uses
-  // the larger PREWARM_DT below so initial spread happens fast.
-  const STEP_DT = 0.0008;
-  const SUB_STEPS = 1;
-  const PREWARM_DT = 0.005;
-
-  const { positions, hues, sizes } = useMemo(() => {
-    const pos = new Float32Array(COUNT * 3);
-    const hue = new Float32Array(COUNT);
-    const sz = new Float32Array(COUNT);
-    // Pre-warm each particle: seed across the attractor's bounding box
-    // and integrate for a randomized burn-in count so each particle ends
-    // up at a different phase along its orbit. Without this the user
-    // sees a washed-out cloud near origin while the system converges,
-    // which looked like a "blurry white screen pulsing" in testing.
-    for (let i = 0; i < COUNT; i++) {
-      let x = (Math.random() - 0.5) * 30;
-      let y = (Math.random() - 0.5) * 30;
-      let z = Math.random() * 50;
-      const burnSteps = 250 + Math.floor(Math.random() * 750);
-      for (let j = 0; j < burnSteps; j++) {
-        const dx = SIGMA * (y - x);
-        const dy = x * (RHO - z) - y;
-        const dz = x * y - BETA * z;
-        x += dx * PREWARM_DT;
-        y += dy * PREWARM_DT;
-        z += dz * PREWARM_DT;
-      }
-      pos[i * 3] = x;
-      pos[i * 3 + 1] = y;
-      pos[i * 3 + 2] = z;
-      hue[i] = i / COUNT;
-      sz[i] = 0.5 + Math.random() * 0.5;
-    }
-    return { positions: pos, hues: hue, sizes: sz };
-  }, []);
-
-  const vertexShader = `
-    uniform float u_time;
-    uniform float u_bass;
-    uniform float u_scale;
-    attribute float aHue;
-    attribute float aSize;
-    varying float vHue;
-    varying float vDepth;
-
-    void main() {
-      vHue = aHue;
-      // Lorenz attractor lives in roughly x [-25,25], y [-30,30], z [0,50].
-      // Recenter z so the cloud sits in front of the camera, then scale.
-      vec3 pos = vec3(position.x, position.y, position.z - 25.0) * u_scale;
-      vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);
-      vDepth = -mvPos.z;
-      float size = aSize * (0.9 + u_bass * 0.4);
-      gl_PointSize = size * (140.0 / -mvPos.z);
-      gl_Position = projectionMatrix * mvPos;
-    }
-  `;
-
-  const fragmentShader = `
-    uniform float u_time;
-    varying float vHue;
-    varying float vDepth;
-
-    vec3 hsv2rgb(vec3 c) {
-      vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-      vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-      return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-    }
-
-    void main() {
-      float d = length(gl_PointCoord - vec2(0.5));
-      if (d > 0.5) discard;
-      // Hard-edged sprite so additive overlap can't smear via soft halo.
-      float alpha = smoothstep(0.5, 0.35, d);
-
-      float hue = mod(vHue + u_time * 0.025, 1.0);
-      // Bright color but very low alpha — under additive blending this
-      // means each particle adds a small color contribution. Dense
-      // overlap regions sum to saturated color (not white) instead of
-      // each one already being near-white before stacking.
-      vec3 color = hsv2rgb(vec3(hue, 0.9, 0.55));
-      float depthDim = clamp(1.0 - (vDepth - 4.0) * 0.07, 0.5, 1.0);
-      color *= depthDim;
-
-      gl_FragColor = vec4(color, alpha * 0.07);
-    }
-  `;
-
-  const uniforms = useMemo(
-    () => ({
-      u_time: { value: 0 },
-      u_bass: { value: 0 },
-      u_scale: { value: 0.13 },
-    }),
-    [],
-  );
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    const a = audio.current;
-
-    if (positionAttrRef.current) {
-      const arr = positionAttrRef.current.array as Float32Array;
-      // Integrate Lorenz: 2 Euler sub-steps per frame keeps things stable
-      // at high frame rates without exploding particles off-screen.
-      for (let s = 0; s < SUB_STEPS; s++) {
-        for (let i = 0; i < COUNT; i++) {
-          const idx = i * 3;
-          const x = arr[idx];
-          const y = arr[idx + 1];
-          const z = arr[idx + 2];
-          const dx = SIGMA * (y - x);
-          const dy = x * (RHO - z) - y;
-          const dz = x * y - BETA * z;
-          arr[idx] = x + dx * STEP_DT;
-          arr[idx + 1] = y + dy * STEP_DT;
-          arr[idx + 2] = z + dz * STEP_DT;
-        }
-      }
-      positionAttrRef.current.needsUpdate = true;
-    }
-
-    if (materialRef.current) {
-      const u = materialRef.current.uniforms;
-      u.u_time.value = t;
-      u.u_bass.value = a.bass;
-    }
-    if (pointsRef.current) pointsRef.current.rotation.y = t * 0.025;
-  });
-
-  return (
-    <>
-      <points ref={pointsRef}>
-        <bufferGeometry>
-          <bufferAttribute
-            ref={positionAttrRef}
-            attach="attributes-position"
-            args={[positions, 3]}
-          />
-          <bufferAttribute attach="attributes-aHue" args={[hues, 1]} />
-          <bufferAttribute attach="attributes-aSize" args={[sizes, 1]} />
-        </bufferGeometry>
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={vertexShader}
-          fragmentShader={fragmentShader}
-          uniforms={uniforms}
-          transparent
-          depthWrite={false}
-          blending={THREE.AdditiveBlending}
-        />
-      </points>
-      {/* No EffectComposer — bloom plus 3.5k additive points blew out the
-          dense center of the attractor every time. Without bloom, particles
-          read as crisp colored dots tracing the strange-attractor curves,
-          which is the actual visual we wanted. */}
-    </>
-  );
-}
 
 // ─── Mode type ───
 
 export type Visualizer3DMode =
   | "orb" | "field" | "aurora"
-  | "galaxy" | "bonfire" | "crystal" | "swarm"
+  | "galaxy" | "bonfire" | "crystal"
   | "lotus" | "cloud"
-  | "wave" | "seabed" | "cage"
-  | "attractor-flow";
+  | "wave" | "seabed" | "cage";
 
 // ─── Main 3D visualizer component ───
 
@@ -1476,10 +1166,12 @@ export function Visualizer3D({
   analyser,
   dataArray,
   mode,
+  onReady,
 }: {
   analyser: AnalyserLike;
   dataArray: Uint8Array<ArrayBuffer>;
   mode: Visualizer3DMode;
+  onReady?: () => void;
 }) {
   if (!isWebGL2Available()) {
     return <div className="absolute inset-0 bg-black" />;
@@ -1502,19 +1194,18 @@ export function Visualizer3D({
         style={{ background: "#000" }}
       >
         <color attach="background" args={["#000000"]} />
+        <ReadySignal onReady={onReady} />
         {mode === "orb" && <OrbScene analyser={analyser} dataArray={dataArray} />}
         {mode === "field" && <FieldScene analyser={analyser} dataArray={dataArray} />}
         {mode === "aurora" && <AuroraScene analyser={analyser} dataArray={dataArray} />}
         {mode === "galaxy" && <GalaxyScene analyser={analyser} dataArray={dataArray} />}
         {mode === "bonfire" && <BonfireScene analyser={analyser} dataArray={dataArray} />}
         {mode === "crystal" && <CrystalScene analyser={analyser} dataArray={dataArray} />}
-        {mode === "swarm" && <SwarmScene analyser={analyser} dataArray={dataArray} />}
         {mode === "lotus" && <LotusScene analyser={analyser} dataArray={dataArray} />}
         {mode === "cloud" && <CloudScene analyser={analyser} dataArray={dataArray} />}
         {mode === "wave" && <WaveScene analyser={analyser} dataArray={dataArray} />}
         {mode === "seabed" && <SeabedScene analyser={analyser} dataArray={dataArray} />}
         {mode === "cage" && <CageScene analyser={analyser} dataArray={dataArray} />}
-        {mode === "attractor-flow" && <AttractorFlowScene analyser={analyser} dataArray={dataArray} />}
       </Canvas>
     </Canvas3DErrorBoundary>
   );

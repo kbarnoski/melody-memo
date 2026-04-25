@@ -103,7 +103,7 @@ const ALL_SHADERS_RAW: string[] = [
   "starfield", "radiance",
   // 3D Worlds
   "orb",
-  "galaxy", "crystal", "swarm", "cloud",
+  "galaxy", "crystal", "cloud",
   "wave", "seabed", "cage",
 ];
 const ALL_SHADERS = [...new Set(ALL_SHADERS_RAW)];

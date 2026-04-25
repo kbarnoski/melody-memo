@@ -1284,7 +1284,7 @@ function AttractorFlowScene({
   const BETA = 8 / 3;
   // Integration timestep at runtime (slow + meditative). Pre-warm uses
   // the larger PREWARM_DT below so initial spread happens fast.
-  const STEP_DT = 0.0025;
+  const STEP_DT = 0.0012;
   const SUB_STEPS = 1;
   const PREWARM_DT = 0.005;
 
@@ -1363,11 +1363,11 @@ function AttractorFlowScene({
       // means each particle adds a small color contribution. Dense
       // overlap regions sum to saturated color (not white) instead of
       // each one already being near-white before stacking.
-      vec3 color = hsv2rgb(vec3(hue, 0.85, 0.7));
+      vec3 color = hsv2rgb(vec3(hue, 0.9, 0.55));
       float depthDim = clamp(1.0 - (vDepth - 4.0) * 0.07, 0.5, 1.0);
       color *= depthDim;
 
-      gl_FragColor = vec4(color, alpha * 0.12);
+      gl_FragColor = vec4(color, alpha * 0.07);
     }
   `;
 
@@ -1410,7 +1410,7 @@ function AttractorFlowScene({
       u.u_time.value = t;
       u.u_bass.value = a.bass;
     }
-    if (pointsRef.current) pointsRef.current.rotation.y = t * 0.015;
+    if (pointsRef.current) pointsRef.current.rotation.y = t * 0.008;
   });
 
   return (

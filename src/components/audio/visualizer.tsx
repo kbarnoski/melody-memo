@@ -1530,7 +1530,7 @@ export function VisualizerCore({
                 className="text-white/40 text-sm truncate max-w-[180px]"
                 style={{ fontFamily: "var(--font-geist-sans)" }}
               >
-                {currentTrack.title}
+                {journeyActive && journeyName ? journeyName : currentTrack.title}
               </span>
               <span
                 className="text-white/25"
@@ -1845,7 +1845,7 @@ export function VisualizerCore({
                     className="text-white/50 truncate"
                     style={{ fontSize: "0.72rem", fontFamily: "var(--font-geist-sans)", maxWidth: "140px" }}
                   >
-                    {currentTrack.title}
+                    {journeyActive && journeyName ? journeyName : currentTrack.title}
                   </span>
                   <span
                     className="text-white/25 flex-shrink-0"

@@ -327,9 +327,12 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, [currentTrack]);
 
   // ─── Media Session — lock screen Now Playing + transport controls ───
+  // Watch BOTH currentTrack and activeJourney so the lock-screen title
+  // refreshes when a journey starts/stops on an already-loaded track.
+  const activeJourneyName = useAudioStore((s) => s.activeJourney?.name ?? null);
   useEffect(() => {
-    updateMediaSession(currentTrack);
-  }, [currentTrack]);
+    updateMediaSession(currentTrack, activeJourneyName);
+  }, [currentTrack, activeJourneyName]);
 
   useEffect(() => {
     setMediaSessionPlaybackState(isPlaying ? "playing" : "paused");

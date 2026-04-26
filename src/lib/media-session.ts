@@ -5,7 +5,10 @@
 
 import type { Track } from "@/lib/audio/audio-store";
 
-export function updateMediaSession(track: Track | null): void {
+export function updateMediaSession(
+  track: Track | null,
+  journeyName?: string | null,
+): void {
   if (!("mediaSession" in navigator)) return;
 
   if (!track) {
@@ -13,8 +16,12 @@ export function updateMediaSession(track: Track | null): void {
     return;
   }
 
+  // When a journey is active, the journey IS the experience — show its
+  // name on the OS lock screen / now-playing widget instead of the
+  // underlying track filename (which is often an admin working name
+  // like "KB_SFLAKE_v3"). Track artist remains the music credit.
   navigator.mediaSession.metadata = new MediaMetadata({
-    title: track.title,
+    title: journeyName ?? track.title,
     artist: "Resonance",
     album: "Recordings",
   });

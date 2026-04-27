@@ -1298,7 +1298,12 @@ export const JOURNEYS: Journey[] = [
         voice: "shimmer",
       },
       return: {
-        start: 0.68,
+        // Was start: 0.68 — left a 3% gap between illumination's end
+        // (0.65) and return's start, which made the engine fall back to
+        // the integration phase ("Stillness") inside the gap and then
+        // jump back to "Warmth" once 0.68 was reached. Phase ranges
+        // must be contiguous so this stays at 0.65.
+        start: 0.65,
         end: 0.86,
         aiPrompt: "connected fractal ice lattice arcing from lower left across a deep indigo field, prismatic light threading through the structure — blue to violet to rose to gold, dispersed powder particles catching warm spectrum as they spiral outward into generous dark negative space above and right, channels of amber and copper light glowing through the geometry, the interwoven form is dynamic and flowing not static, composition weighted to the lower half with cosmic darkness opening above, the tension between frozen precision and warm dissolution, no trees no roots, no text no signatures no watermarks no letters no writing",
         guidancePhrases: ["warmth returns...", "home is near...", "the cold made this warmth possible..."],

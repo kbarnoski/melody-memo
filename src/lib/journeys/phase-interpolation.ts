@@ -29,8 +29,18 @@ export function getPhaseBlend(
 ): { phaseIndex: number; nextPhaseIndex: number | null; blend: number } {
   const clamped = clamp(progress, 0, 1);
 
+  // Track the most-recently-started phase as we walk forward. If progress
+  // falls inside a phase we return immediately. Otherwise this fallback
+  // index keeps us in the previous phase across any gap until the next
+  // phase begins — instead of jumping to phases[length-1] (the last phase),
+  // which used to make Snowflake fire "Stillness" inside a 3% gap between
+  // illumination and return before backtracking to "Warmth".
+  let lastStartedIndex = 0;
+
   for (let i = 0; i < phases.length; i++) {
     const phase = phases[i];
+    if (clamped >= phase.start) lastStartedIndex = i;
+
     if (clamped >= phase.start && clamped < phase.end) {
       const phaseDuration = phase.end - phase.start;
       const crossfadeWidth = phaseDuration * CROSSFADE_FRACTION;
@@ -49,8 +59,11 @@ export function getPhaseBlend(
     }
   }
 
-  // Past the end — return last phase
-  return { phaseIndex: phases.length - 1, nextPhaseIndex: null, blend: 0 };
+  // No phase contains this progress — either we're before the first phase,
+  // inside a gap, or past the last end. Stay with the most-recent phase
+  // that started, which preserves narrative direction (no jumping forward
+  // to "the last phase" inside a mid-journey gap).
+  return { phaseIndex: lastStartedIndex, nextPhaseIndex: null, blend: 0 };
 }
 
 /**

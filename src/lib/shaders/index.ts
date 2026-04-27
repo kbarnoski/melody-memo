@@ -233,7 +233,7 @@ import {
   R2_CORAL,
   R2_PHOTON,
   R2_PIXIE,
-  R2_HEAVYSNOW, R2_INFRARED,
+  R2_INFRARED,
   R2_PORTALRIM, R2_SPORE, R2_SUNSETCASCADE,
 } from "./review-pack-2";
 // Pack #3 survivors only — 67 deleted entries removed from import list.
@@ -489,7 +489,6 @@ export const SHADERS: Partial<Record<VisualizerMode, string>> = {
   "r2-coral": R2_CORAL,
   "r2-photon": R2_PHOTON,
   "r2-pixie": R2_PIXIE,
-  "r2-heavysnow": R2_HEAVYSNOW,
   "r2-infrared": R2_INFRARED,
   "r2-portalrim": R2_PORTALRIM,
   "r2-spore": R2_SPORE,
@@ -832,7 +831,6 @@ export const MODE_META: ModeMeta[] = [
   { mode: "r2-magnetic", label: "Magnetic Field", category: "Geometry" },
   { mode: "r2-kelvin", label: "Kelvin Helmholtz", category: "Elemental" },
   { mode: "r2-thermal", label: "Thermal", category: "Elemental" },
-  { mode: "r2-heavysnow", label: "Heavy Snow", category: "Elemental" },
   { mode: "r2-infrared", label: "Infrared", category: "Dark" },
   // ─── Review pack #3 survivors — distributed into permanent categories ───
   { mode: "r3-spirittrails", label: "Spirit Trails", category: "Visionary" },

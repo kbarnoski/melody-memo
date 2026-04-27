@@ -880,7 +880,7 @@ export const R3_CLOUDVEIL = mk(`
 // ─── 82-91: Magical / dreamlike ───
 
 export const R3_FAIRYGLOW = mk(`
-  for (int i = 0; i < 30; i++) {
+  for (int i = 0; i < 18; i++) {
     float fi = float(i);
     vec2 c = vec2(snoise(vec2(fi, 0.0)) * 1.4, snoise(vec2(0.0, fi)) * 0.8);
     c += 0.06 * vec2(sin(t * 0.5 + fi), cos(t * 0.4 + fi * 0.7));

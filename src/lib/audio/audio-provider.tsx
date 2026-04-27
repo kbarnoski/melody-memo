@@ -174,6 +174,11 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
         stopAmbient();
       } else {
         // Normal async load flow (library browser, queue auto-advance, etc.)
+        // Pause IMMEDIATELY before awaiting resolveAudioUrl. Otherwise
+        // the old audio buffer keeps playing during the URL resolution
+        // window — produces a "previous song bleeds for a moment, then
+        // new song loads" glitch when switching journeys quickly.
+        try { audioElement.pause(); } catch { /* element may not be ready */ }
         stopAmbient();
         loadingNewSrc.current = true;
         lastSrcRef.current = newSrc;

@@ -75,7 +75,7 @@ void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / u_resolution.y;
   float t = u_time * 0.4;
   vec3 col = vec3(0.0);
-  for (int i = 0; i < 80; i++) {
+  for (int i = 0; i < 32; i++) {
     float fi = float(i);
     float lane = (fract(fi * 0.13) - 0.5) * 1.4;
     float speed = 0.3 + fract(fi * 0.27) * 0.5;
@@ -97,7 +97,7 @@ void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / u_resolution.y;
   float t = u_time * 0.5;
   vec3 col = vec3(0.0);
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 24; i++) {
     float fi = float(i);
     float life = mod(t * (0.3 + fract(fi * 0.21)) + fi * 0.13, 1.5);
     float x = (fract(fi * 0.31) - 0.5) * 1.4 + sin(life * 6.0 + fi) * 0.08;

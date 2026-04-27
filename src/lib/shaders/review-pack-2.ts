@@ -724,7 +724,7 @@ void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / u_resolution.y;
   float t = u_time * 0.4;
   vec3 col = vec3(0.04, 0.03, 0.08);
-  for (int i = 0; i < 60; i++) {
+  for (int i = 0; i < 28; i++) {
     float fi = float(i);
     float life = mod(t * 0.5 + fi * 0.13, 1.0);
     vec2 origin = vec2(sin(t * 0.3 + fi * 0.7) * 0.5, cos(t * 0.4 + fi * 1.1) * 0.3);
@@ -880,7 +880,7 @@ void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / u_resolution.y;
   float t = u_time * 0.3;
   vec3 col = vec3(0.05, 0.04, 0.08);
-  for (int i = 0; i < 70; i++) {
+  for (int i = 0; i < 30; i++) {
     float fi = float(i);
     vec2 origin = vec2(0.0, -0.3);
     float life = mod(t * 0.3 + fi * 0.07, 1.5);

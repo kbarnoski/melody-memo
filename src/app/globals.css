@@ -116,6 +116,16 @@
   --sidebar-ring: oklch(0.65 0.25 270);
 }
 
+/* Tailwind v4 preflight strips the default `cursor: pointer` from
+   <button> elements. Restore it project-wide so every interactive
+   button gets the standard pointer cursor on hover. Disabled
+   buttons keep the default not-allowed feel. */
+button:not(:disabled),
+[role="button"]:not(:disabled),
+a[href] {
+  cursor: pointer;
+}
+
 /* Waveform thinking animation */
 @keyframes waveform-bar {
   0%, 100% { transform: scaleY(0.3); }

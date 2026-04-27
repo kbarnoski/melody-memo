@@ -2181,7 +2181,7 @@ export function VisualizerClient({
               <div className="flex items-center gap-3" style={{ position: "relative", marginTop: "0.25rem" }}>
                 <button
                   onClick={handleReplayJourney}
-                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150 cursor-pointer"
                   style={{
                     border: "1px solid rgba(255,255,255,0.2)",
                     fontSize: "0.8rem",
@@ -2197,7 +2197,7 @@ export function VisualizerClient({
                 {nextInPath && (
                   <button
                     onClick={() => handleContinuePath(nextInPath)}
-                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150 cursor-pointer"
                     style={{
                       border: `1px solid ${path?.palette.accent ?? "rgba(255,255,255,0.2)"}`,
                       fontSize: "0.8rem",
@@ -2214,7 +2214,7 @@ export function VisualizerClient({
                 {justCompletedPath && path && (
                   <button
                     onClick={() => handleEnterCulmination(path.culminationJourneyId)}
-                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150 cursor-pointer"
                     style={{
                       border: `1px solid ${path.palette.accent}`,
                       fontSize: "0.8rem",
@@ -2232,7 +2232,7 @@ export function VisualizerClient({
                 {justUnlockedGrand && (
                   <button
                     onClick={() => handleEnterCulmination(GRAND_CULMINATION_ID)}
-                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                    className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150 cursor-pointer"
                     style={{
                       border: "1px solid rgba(160,128,208,0.6)",
                       fontSize: "0.8rem",
@@ -2248,7 +2248,7 @@ export function VisualizerClient({
 
                 <button
                   onClick={handleEndJourney}
-                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150"
+                  className="px-5 py-2.5 rounded-lg text-white/80 hover:text-white hover:bg-white/15 transition-colors duration-150 cursor-pointer"
                   style={{
                     border: "1px solid rgba(255,255,255,0.2)",
                     fontSize: "0.8rem",

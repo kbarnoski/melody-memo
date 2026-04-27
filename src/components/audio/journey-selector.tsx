@@ -723,31 +723,33 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             </div>
             <div className="flex items-center gap-2">
               {/* Create Journey — accented so first-time users notice it.
-                  Was nearly invisible at white/35 + thin border; now uses
-                  the same purple accent (#8b5cf6) as the rest of the
-                  primary CTAs and reads as a real call-to-action. */}
+                  Tuned to be findable but not loud: tinted purple bg
+                  (not full saturation), single-color background (no
+                  gradient), soft border. Hover only changes brightness
+                  via background opacity — no transform shift, no
+                  re-layout. Cursor pointer explicit for Tailwind v4
+                  preflight which strips it from <button>. */}
               <button
                 onClick={() => router.push("/create")}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white transition-all duration-150"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white/90 transition-colors duration-150 cursor-pointer"
                 style={{
                   fontSize: "0.82rem",
                   fontFamily: "var(--font-geist-sans)",
                   fontWeight: 500,
                   letterSpacing: "0.01em",
-                  background: "linear-gradient(180deg, rgba(139,92,246,0.95) 0%, rgba(124,77,234,0.95) 100%)",
-                  border: "1px solid rgba(139,92,246,0.6)",
-                  boxShadow: "0 0 18px rgba(139,92,246,0.35)",
+                  background: "rgba(139, 92, 246, 0.18)",
+                  border: "1px solid rgba(139, 92, 246, 0.45)",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 0 28px rgba(139,92,246,0.55)";
+                  e.currentTarget.style.background = "rgba(139, 92, 246, 0.28)";
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.65)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 0 18px rgba(139,92,246,0.35)";
+                  e.currentTarget.style.background = "rgba(139, 92, 246, 0.18)";
+                  e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.45)";
                 }}
               >
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4" style={{ color: "rgba(196, 181, 253, 1)" }} />
                 Create Journey
               </button>
             </div>
@@ -864,7 +866,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             type="button"
                             aria-label="Copy share link"
                             onClick={copyLink}
-                            className="p-1.5 rounded-md text-white/30 hover:text-white/80 transition-colors shrink-0"
+                            className="p-1.5 rounded-md text-white/30 hover:text-white/80 transition-colors shrink-0 cursor-pointer"
                             title="Copy share link"
                           >
                             <Share2 className="h-3.5 w-3.5" />
@@ -2021,7 +2023,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                               type="button"
                               aria-label="Share journey"
                               onClick={(e) => handleShare(journey.id, journey.name, e)}
-                              className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100"
+                              className="p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                               title="Share"
                               disabled={sharingId === journey.id}
                             >

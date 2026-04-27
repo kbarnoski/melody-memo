@@ -1097,6 +1097,24 @@ export function SharedJourneyClient({
 
   return (
     <div className="h-dvh w-screen overflow-hidden bg-black relative">
+      {/* Fullscreen toggle — absolute top-right, matches the in-app
+          visualizer placement. Single button serves desktop + mobile;
+          44px touch target on mobile, normal at desktop. */}
+      <button
+        type="button"
+        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        onClick={toggleFullscreen}
+        className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+        style={{
+          zIndex: 60,
+          minWidth: "44px",
+          minHeight: "44px",
+          border: "1px solid rgba(255,255,255,0.1)",
+        }}
+        title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+      >
+        {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+      </button>
       {analyser && dataArray && (
         <JourneyCompositor
           frame={journeyFrame}
@@ -1383,16 +1401,8 @@ export function SharedJourneyClient({
               <Share2 className="h-3.5 w-3.5" />
               Share
             </button>
-            <button
-              type="button"
-              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-              onClick={toggleFullscreen}
-              className="flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
-              style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            >
-              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            </button>
+            {/* Fullscreen moved to absolute top-right (see render below)
+                to match the in-app journey view's standard placement. */}
             {pathContext && (
               // eslint-disable-next-line @next/next/no-html-link-for-pages
               <a
@@ -1433,15 +1443,8 @@ export function SharedJourneyClient({
               >
                 <Share2 className="h-3.5 w-3.5" />
               </button>
-              <button
-                type="button"
-                aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                onClick={toggleFullscreen}
-                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/35 hover:text-white/65 transition-colors duration-75"
-                title="Fullscreen"
-              >
-                {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-              </button>
+              {/* Mobile fullscreen also moved to absolute top-right
+                  for consistency with the in-app journey view. */}
               {pathContext && (
                 // eslint-disable-next-line @next/next/no-html-link-for-pages
                 <a

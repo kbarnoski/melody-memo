@@ -722,17 +722,33 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               ))}
             </div>
             <div className="flex items-center gap-2">
+              {/* Create Journey — accented so first-time users notice it.
+                  Was nearly invisible at white/35 + thin border; now uses
+                  the same purple accent (#8b5cf6) as the rest of the
+                  primary CTAs and reads as a real call-to-action. */}
               <button
                 onClick={() => router.push("/create")}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/35 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-white transition-all duration-150"
                 style={{
-                  fontSize: "0.72rem",
-                  fontFamily: "var(--font-geist-mono)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  fontSize: "0.82rem",
+                  fontFamily: "var(--font-geist-sans)",
+                  fontWeight: 500,
+                  letterSpacing: "0.01em",
+                  background: "linear-gradient(180deg, rgba(139,92,246,0.95) 0%, rgba(124,77,234,0.95) 100%)",
+                  border: "1px solid rgba(139,92,246,0.6)",
+                  boxShadow: "0 0 18px rgba(139,92,246,0.35)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 0 28px rgba(139,92,246,0.55)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 0 18px rgba(139,92,246,0.35)";
                 }}
               >
-                <Plus className="h-3.5 w-3.5" />
-                Create
+                <Sparkles className="h-4 w-4" />
+                Create Journey
               </button>
             </div>
           </div>

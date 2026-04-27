@@ -1795,9 +1795,12 @@ export function SharedJourneyClient({
               )}
 
               {!isAuthenticated ? (
+                // Sign up first, then land on the create-journey page so
+                // the user's intent ("I want to make my own") is preserved
+                // through the auth gate.
                 // eslint-disable-next-line @next/next/no-html-link-for-pages
                 <a
-                  href="/signup"
+                  href="/signup?redirectTo=%2Fcreate"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1814,12 +1817,12 @@ export function SharedJourneyClient({
                     cursor: "pointer",
                   }}
                 >
-                  Sign Up Free
+                  Sign Up to Create
                 </a>
               ) : (
                 // eslint-disable-next-line @next/next/no-html-link-for-pages
                 <a
-                  href="/"
+                  href="/create"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",

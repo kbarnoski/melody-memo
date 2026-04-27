@@ -121,7 +121,10 @@ function SignupForm() {
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="underline hover:text-foreground">
+          <Link
+            href={`/login?redirectTo=${encodeURIComponent(redirectTo)}`}
+            className="underline hover:text-foreground"
+          >
             Sign in
           </Link>
         </p>

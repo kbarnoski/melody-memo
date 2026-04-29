@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 
 const DESKTOP_DOWNLOAD_URL =
-  "https://github.com/kbarnoski/melody-memo/releases/latest/download/Resonance_0.1.0_aarch64.dmg";
+  "https://github.com/kbarnoski/resonance/releases/latest/download/Resonance_0.1.0_aarch64.dmg";
 
 interface SettingsClientProps {
   userId: string;

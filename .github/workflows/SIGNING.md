@@ -76,7 +76,7 @@ This creates a private/public key pair. The **public** key goes in
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://github.com/kbarnoski/melody-memo/releases/latest/download/latest.json"
+        "https://github.com/kbarnoski/resonance/releases/latest/download/latest.json"
       ],
       "pubkey": "PASTE THE CONTENTS OF ~/.tauri/resonance.key.pub HERE"
     }
@@ -129,4 +129,4 @@ git push --tags
 ```
 
 The workflow runs automatically. Track progress at
-https://github.com/kbarnoski/melody-memo/actions
+https://github.com/kbarnoski/resonance/actions

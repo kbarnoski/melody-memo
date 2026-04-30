@@ -1175,6 +1175,27 @@ export function VisualizerCore({
         </>
       )}
 
+      {/* ─── Studio back — top-left, fades with controls (mirrors fullscreen) ─── */}
+      {!installationMode && exitLabel === "back" && !journeyBrowsing && (currentTrack || journeyActive) && (
+        <button
+          onClick={onExit}
+          className="absolute top-6 left-6 flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75 cursor-pointer"
+          style={{
+            zIndex: 10,
+            opacity: controlsVisible ? 1 : 0,
+            pointerEvents: controlsVisible ? "auto" : "none",
+            border: "1px solid rgba(255,255,255,0.1)",
+            fontSize: "0.72rem",
+            fontFamily: "var(--font-geist-mono)",
+            letterSpacing: "0.05em",
+          }}
+          title="Back to Studio"
+        >
+          <ChevronLeft className="h-3.5 w-3.5" />
+          Studio
+        </button>
+      )}
+
       {/* ─── Fullscreen toggle — top-right corner (standard position) ─── */}
       {!installationMode && onFullscreenToggle && !journeyBrowsing && (currentTrack || journeyActive) && (
         <button

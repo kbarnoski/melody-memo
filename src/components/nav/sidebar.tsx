@@ -18,12 +18,14 @@ import {
   X,
   Settings,
   Sparkles,
+  Route,
 } from "lucide-react";
 
 // Studio destinations (browse-mode, not actions). Settings lives at the
 // bottom near sign-out, so it's listed in `accountItems` instead.
 const navItems = [
   { href: "/library", label: "Library", icon: Library },
+  { href: "/paths", label: "Paths", icon: Route },
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },

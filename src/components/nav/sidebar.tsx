@@ -17,14 +17,19 @@ import {
   Menu,
   X,
   Settings,
+  Sparkles,
 } from "lucide-react";
 
+// Studio destinations (browse-mode, not actions). Settings lives at the
+// bottom near sign-out, so it's listed in `accountItems` instead.
 const navItems = [
   { href: "/library", label: "Library", icon: Library },
-  { href: "/upload", label: "Upload", icon: Upload },
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },
+];
+
+const accountItems = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -111,7 +116,51 @@ export function Sidebar() {
         })}
       </nav>
 
-      <div className="px-3 pb-2">
+      {/* Action buttons — visually unified system.
+          Tier 1 (primary, filled): Enter The Room — the marquee experience.
+          Tier 2 (secondary, tinted): Upload Track / Create Journey — creative actions.
+          Both tiers share the same purple accent so they read as one family. */}
+      <div className="px-3 pb-2 space-y-2">
+        <Link
+          href="/upload"
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 cursor-pointer"
+          style={{
+            background: "rgba(139, 92, 246, 0.14)",
+            border: "1px solid rgba(139, 92, 246, 0.4)",
+            color: "rgba(255, 255, 255, 0.9)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 0.22)";
+            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.6)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 0.14)";
+            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.4)";
+          }}
+        >
+          <Upload className="h-4 w-4" style={{ color: "rgba(196, 181, 253, 1)" }} />
+          Upload Track
+        </Link>
+        <Link
+          href="/create"
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 cursor-pointer"
+          style={{
+            background: "rgba(139, 92, 246, 0.14)",
+            border: "1px solid rgba(139, 92, 246, 0.4)",
+            color: "rgba(255, 255, 255, 0.9)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 0.22)";
+            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.6)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 0.14)";
+            e.currentTarget.style.borderColor = "rgba(139, 92, 246, 0.4)";
+          }}
+        >
+          <Sparkles className="h-4 w-4" style={{ color: "rgba(196, 181, 253, 1)" }} />
+          Create Journey
+        </Link>
         <button
           onClick={() => {
             // If viewing a recording detail page, carry that track into the Room
@@ -122,16 +171,43 @@ export function Sidebar() {
               router.push("/room");
             }
           }}
-          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all
-            bg-white/[0.05] border border-white/10 text-white/60 hover:text-white
-            hover:bg-white/10 hover:border-white/15"
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150 cursor-pointer text-white"
+          style={{
+            background: "rgba(139, 92, 246, 0.85)",
+            border: "1px solid rgba(139, 92, 246, 0.85)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 1)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(139, 92, 246, 0.85)";
+          }}
         >
           <Disc3 className="h-4 w-4" />
           Enter The Room
         </button>
       </div>
 
-      <div className="border-t border-white/[0.06] px-2 py-2">
+      <div className="border-t border-white/[0.06] px-2 py-2 space-y-1">
+        {accountItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-white/30",
+                isActive
+                  ? "bg-white/[0.08] text-white/90"
+                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.05]"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
+            </Link>
+          );
+        })}
         <Button
           variant="ghost"
           className="w-full justify-start gap-2.5 text-white/30 hover:text-white/60 hover:bg-white/[0.05] text-sm h-9"

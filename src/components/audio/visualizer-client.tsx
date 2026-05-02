@@ -29,7 +29,7 @@ import { prepareGhostReference, clearGhostReference } from "@/lib/journeys/ghost
 import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { getPathForJourney, getNextInPath, isPathCulminationUnlocked, isGrandCulminationUnlocked, JOURNEY_PATHS, GRAND_CULMINATION_ID } from "@/lib/journeys/paths";
 import { createClient } from "@/lib/supabase/client";
-import { ShareSheet } from "@/components/ui/share-sheet";
+import { ShareSheet, triggerNativeShare } from "@/components/ui/share-sheet";
 import { Mic } from "lucide-react";
 import { isDesktopApp, enterKioskMode, exitKioskMode, nativeAudioSeek } from "@/lib/tauri";
 import { analyzeAndAdapt, refreshAdaptiveProfile } from "@/lib/journeys/adaptive-engine";
@@ -642,7 +642,7 @@ export function VisualizerClient({
     flashTimerRef.current = setTimeout(() => setSectionFlash(false), 800);
   }, []);
 
-  // Share Room handler
+  // Share Room handler — synchronous so navigator.share retains the user gesture on iOS
   const handleShareRoom = useCallback(() => {
     const config = configRef.current;
     if (!config) return;
@@ -658,19 +658,85 @@ export function VisualizerClient({
       .replace(/=+$/, "");
     const url = `${window.location.origin}/room/${token}`;
     const trackTitle = currentTrack?.title ?? "The Room";
-    setShareSheet({ url, title: `${trackTitle} — Resonance` });
+    const title = `${trackTitle} — Resonance`;
+    if (triggerNativeShare(url, title)) return;
+    setShareSheet({ url, title });
   }, [hudVisible, currentTrack]);
 
-  // Share active journey handler
+  // Pre-mint the journey share URL when a journey is active so the Share
+  // button can call navigator.share synchronously (no async fetch in the
+  // tap handler — iOS Safari drops the user gesture across awaits).
+  const [journeyShareUrl, setJourneyShareUrl] = useState<{ id: string; recordingId: string | null; url: string } | null>(null);
+  const journeyShareInflightRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!activeJourney) return;
+    const journeyId = activeJourney.id;
+    const recordingId = currentTrack?.id ?? null;
+    if (
+      journeyShareUrl &&
+      journeyShareUrl.id === journeyId &&
+      journeyShareUrl.recordingId === recordingId
+    ) {
+      return;
+    }
+    const cacheKey = `${journeyId}::${recordingId ?? ""}`;
+    if (journeyShareInflightRef.current === cacheKey) return;
+    journeyShareInflightRef.current = cacheKey;
+
+    const isBuiltIn = !!getJourney(journeyId);
+    const endpoint = isBuiltIn ? "/api/journeys/share-builtin" : "/api/journeys/share";
+    const body = isBuiltIn
+      ? { journeyId, recordingId }
+      : { journeyId };
+
+    fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error("Failed to mint share URL"))))
+      .then(({ token }: { token: string }) => {
+        if (journeyShareInflightRef.current !== cacheKey) return;
+        setJourneyShareUrl({
+          id: journeyId,
+          recordingId,
+          url: `${window.location.origin}/journey/${token}`,
+        });
+      })
+      .catch(() => {
+        if (journeyShareInflightRef.current === cacheKey) {
+          journeyShareInflightRef.current = null;
+        }
+      });
+  }, [activeJourney, currentTrack, journeyShareUrl]);
+
+  // Share active journey handler — synchronous; uses pre-minted URL when ready.
+  // Falls back to async fetch + modal only when the URL isn't cached yet.
   const [sharingJourney, setSharingJourney] = useState(false);
   const handleShareJourney = useCallback(async () => {
-    if (!activeJourney || sharingJourney) return;
+    if (!activeJourney) return;
+    const title = `${activeJourney.name} — Resonance`;
+    const text = `Check out ${activeJourney.name} on Resonance`;
+    const recordingId = currentTrack?.id ?? null;
+
+    if (
+      journeyShareUrl &&
+      journeyShareUrl.id === activeJourney.id &&
+      journeyShareUrl.recordingId === recordingId
+    ) {
+      const url = journeyShareUrl.url;
+      if (triggerNativeShare(url, title, text)) return;
+      setShareSheet({ url, title, text });
+      return;
+    }
+
+    if (sharingJourney) return;
     setSharingJourney(true);
     try {
       const isBuiltIn = !!getJourney(activeJourney.id);
       const endpoint = isBuiltIn ? "/api/journeys/share-builtin" : "/api/journeys/share";
       const body = isBuiltIn
-        ? { journeyId: activeJourney.id, recordingId: currentTrack?.id ?? null }
+        ? { journeyId: activeJourney.id, recordingId }
         : { journeyId: activeJourney.id };
       const res = await fetch(endpoint, {
         method: "POST",
@@ -680,17 +746,16 @@ export function VisualizerClient({
       if (!res.ok) throw new Error("Failed to share");
       const { token } = await res.json();
       const url = `${window.location.origin}/journey/${token}`;
-      setShareSheet({
-        url,
-        title: `${activeJourney.name} — Resonance`,
-        text: `Check out ${activeJourney.name} on Resonance`,
-      });
+      setJourneyShareUrl({ id: activeJourney.id, recordingId, url });
+      // Gesture is gone after the await — open the fallback modal instead of
+      // calling navigator.share, which would silently fail on iOS.
+      setShareSheet({ url, title, text });
     } catch (err) {
       console.error("Share journey failed:", err);
     } finally {
       setSharingJourney(false);
     }
-  }, [activeJourney, sharingJourney, currentTrack]);
+  }, [activeJourney, sharingJourney, currentTrack, journeyShareUrl]);
 
   // Live speech
   const [liveEnabled, setLiveEnabled] = useState(false);

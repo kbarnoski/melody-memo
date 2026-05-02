@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { X, Copy, Mail, Check } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
 
 interface ShareSheetProps {
   open: boolean;
@@ -11,6 +10,22 @@ interface ShareSheetProps {
   url: string;
   title: string;
   text?: string;
+}
+
+/**
+ * Call this *synchronously* from a user-gesture click handler.
+ * Returns true if the native share sheet was triggered (mobile),
+ * false if there's no Web Share API and the caller should show the fallback modal.
+ *
+ * iOS Safari requires navigator.share to be invoked inside the user gesture —
+ * deferring it through a state update + useEffect breaks that gesture and
+ * causes the share sheet to lag or require a second tap. Always call this
+ * before any await / state update / re-render.
+ */
+export function triggerNativeShare(url: string, title: string, text?: string): boolean {
+  if (typeof navigator === "undefined" || !navigator.share) return false;
+  navigator.share({ title, text: text ?? title, url }).catch(() => {});
+  return true;
 }
 
 /** Twitter / X icon */
@@ -31,87 +46,41 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-/**
- * Try the native Web Share API. Returns true if it was handled (shared or cancelled).
- * Returns false if native share isn't available.
- */
-async function tryNativeShare(url: string, title: string, text?: string): Promise<boolean> {
-  if (typeof navigator === "undefined" || !navigator.share) return false;
-  try {
-    await navigator.share({ title, text: text ?? title, url });
-    return true;
-  } catch {
-    // User cancelled or error — either way, we handled it
-    return true;
-  }
-}
-
 const SHARE_OPTIONS = [
-  {
-    id: "copy" as const,
-    label: "Copy Link",
-    Icon: Copy,
-  },
-  {
-    id: "email" as const,
-    label: "Email",
-    Icon: Mail,
-  },
-  {
-    id: "x" as const,
-    label: "X",
-    CustomIcon: XIcon,
-  },
-  {
-    id: "whatsapp" as const,
-    label: "WhatsApp",
-    CustomIcon: WhatsAppIcon,
-  },
+  { id: "copy" as const, label: "Copy Link", Icon: Copy },
+  { id: "email" as const, label: "Email", Icon: Mail },
+  { id: "x" as const, label: "X", CustomIcon: XIcon },
+  { id: "whatsapp" as const, label: "WhatsApp", CustomIcon: WhatsAppIcon },
 ];
 
+/**
+ * Fallback share modal — used when the Web Share API isn't available
+ * (desktop browsers). Callers should call `triggerNativeShare()` first
+ * inside the click handler and only open this when it returns false.
+ */
 export function ShareSheet({ open, onClose, url, title, text }: ShareSheetProps) {
   const [copied, setCopied] = useState(false);
-  const [showFallback, setShowFallback] = useState(false);
-  const triedNativeRef = useRef(false);
 
-  // When opened, try native share first. If unavailable, show fallback modal.
   useEffect(() => {
-    if (!open) {
-      setShowFallback(false);
-      triedNativeRef.current = false;
-      return;
-    }
-    if (triedNativeRef.current) return;
-    triedNativeRef.current = true;
-    setCopied(false);
-
-    tryNativeShare(url, title, text).then((handled) => {
-      if (handled) {
-        onClose();
-      } else {
-        setShowFallback(true);
-      }
-    });
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Close on escape
-  useEffect(() => {
-    if (!showFallback) return;
+    if (!open) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [showFallback, onClose]);
+  }, [open, onClose]);
 
-  // Reset copied state after 2s
   useEffect(() => {
     if (!copied) return;
     const t = setTimeout(() => setCopied(false), 2000);
     return () => clearTimeout(t);
   }, [copied]);
 
-  if (!showFallback) return null;
+  useEffect(() => {
+    if (!open) setCopied(false);
+  }, [open]);
+
+  if (!open) return null;
 
   const handleOption = async (id: string) => {
     switch (id) {
@@ -180,7 +149,7 @@ export function ShareSheet({ open, onClose, url, title, text }: ShareSheetProps)
               type="button"
               aria-label="Close share sheet"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-white/30 hover:text-white/60 transition-colors"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/30 hover:text-white/60 transition-colors"
             >
               <X className="h-4 w-4" />
             </button>

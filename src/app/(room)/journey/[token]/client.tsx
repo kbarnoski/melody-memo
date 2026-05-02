@@ -11,7 +11,7 @@ const Visualizer3D = dynamic(() => import("@/components/audio/visualizer-3d").th
 });
 import { JourneyCompositor } from "@/components/audio/journey-compositor";
 import { JourneyPhaseIndicator } from "@/components/audio/journey-phase-indicator";
-import { ShareSheet } from "@/components/ui/share-sheet";
+import { ShareSheet, triggerNativeShare } from "@/components/ui/share-sheet";
 import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import { usePathProgressStore } from "@/lib/journeys/path-progress-store";
 import { useAudioStore } from "@/lib/audio/audio-store";
@@ -754,6 +754,12 @@ export function SharedJourneyClient({
   };
 
   const handleShare = () => {
+    // Call navigator.share synchronously inside the user gesture so iOS
+    // doesn't drop it. Fall back to the modal only when Web Share is absent.
+    const url = `${window.location.origin}/journey/${shareToken}`;
+    const title = `${journey.name} — Resonance`;
+    const text = `Check out ${journey.name} on Resonance`;
+    if (triggerNativeShare(url, title, text)) return;
     setShareSheet(true);
   };
 
@@ -1097,14 +1103,12 @@ export function SharedJourneyClient({
 
   return (
     <div className="h-dvh w-screen overflow-hidden bg-black relative">
-      {/* Fullscreen toggle — absolute top-right, matches the in-app
-          visualizer placement. Single button serves desktop + mobile;
-          44px touch target on mobile, normal at desktop. */}
+      {/* Fullscreen toggle — desktop only; iOS Safari doesn't support requestFullscreen. */}
       <button
         type="button"
         aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         onClick={toggleFullscreen}
-        className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+        className="hidden md:flex absolute top-6 right-6 items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
         style={{
           zIndex: 60,
           minWidth: "44px",

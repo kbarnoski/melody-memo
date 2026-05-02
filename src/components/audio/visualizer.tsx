@@ -1196,11 +1196,11 @@ export function VisualizerCore({
         </button>
       )}
 
-      {/* ─── Fullscreen toggle — top-right corner (standard position) ─── */}
+      {/* ─── Fullscreen toggle — top-right corner (desktop only; iOS doesn't support requestFullscreen) ─── */}
       {!installationMode && onFullscreenToggle && !journeyBrowsing && (currentTrack || journeyActive) && (
         <button
           onClick={onFullscreenToggle}
-          className="absolute top-6 right-6 flex items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
+          className="hidden md:flex absolute top-6 right-6 items-center justify-center p-2.5 rounded-lg text-white/50 hover:text-white/80 hover:bg-white/10 transition-colors duration-75"
           style={{
             zIndex: 10,
             opacity: controlsVisible ? 1 : 0,
@@ -1655,7 +1655,7 @@ export function VisualizerCore({
               )}
               {journeyActive && journeyName && (
                 <div
-                  className="flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-lg min-w-0"
+                  className="flex items-center gap-1.5 pr-2.5 rounded-lg min-w-0"
                   style={{
                     backgroundColor: "rgba(255,255,255,0.06)",
                     border: "1px solid rgba(255,255,255,0.08)",
@@ -1663,10 +1663,10 @@ export function VisualizerCore({
                 >
                   <button
                     onClick={onStopJourney}
-                    className="flex-shrink-0 p-1 rounded text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
+                    className="flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded text-white/30 hover:text-white/70 hover:bg-white/10 transition-colors duration-75"
                     title="End journey"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                   <span
                     className="rounded-full flex-shrink-0"
@@ -1694,15 +1694,15 @@ export function VisualizerCore({
                   {onPrevShader && (
                     <button
                       onClick={onPrevShader}
-                      className="flex items-center justify-center rounded-lg p-1.5 text-white/40 hover:text-white/70 transition-colors duration-75"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors duration-75"
                       title="Previous shader"
                     >
-                      <ChevronLeft className="h-3 w-3" />
+                      <ChevronLeft className="h-3.5 w-3.5" />
                     </button>
                   )}
                   <button
                     onClick={() => setModePaletteOpen((v) => !v)}
-                    className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors duration-75 ${
+                    className={`min-h-[44px] flex items-center gap-1.5 rounded-lg px-3 transition-colors duration-75 ${
                       modePaletteOpen ? "bg-white/15 text-white" : "text-white/60 hover:bg-white/10 hover:text-white"
                     }`}
                     style={{ border: "1px solid rgba(255,255,255,0.1)" }}
@@ -1715,10 +1715,10 @@ export function VisualizerCore({
                   {onNextShader && (
                     <button
                       onClick={onNextShader}
-                      className="flex items-center justify-center rounded-lg p-1.5 text-white/40 hover:text-white/70 transition-colors duration-75"
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors duration-75"
                       title="Next shader"
                     >
-                      <ChevronRight className="h-3 w-3" />
+                      <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -1735,7 +1735,7 @@ export function VisualizerCore({
                         setTextOverlayMode("poetry");
                       }
                     }}
-                    className={`flex items-center justify-center rounded-lg p-1.5 transition-colors duration-75 ${
+                    className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors duration-75 ${
                       poetryEnabled || storyEnabled ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
                     }`}
                     title={poetryEnabled || storyEnabled ? "Poetry: On" : "Poetry: Off"}
@@ -1746,7 +1746,7 @@ export function VisualizerCore({
                     <>
                       <button
                         onClick={() => setWhisperEnabled(!whisperEnabled)}
-                        className={`flex items-center justify-center rounded-lg p-1.5 transition-colors duration-75 ${
+                        className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors duration-75 ${
                           whisperEnabled ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
                         }`}
                         title={whisperEnabled ? "Voice: On" : "Voice: Off"}
@@ -1756,7 +1756,7 @@ export function VisualizerCore({
                       {showLiveButton && onLiveToggle && !journeyActive && (
                         <button
                           onClick={onLiveToggle}
-                          className={`flex items-center justify-center rounded-lg p-1.5 transition-colors duration-75 ${
+                          className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors duration-75 ${
                             liveEnabled ? "bg-red-500/20 text-red-400" : "text-white/40 hover:text-white/70"
                           }`}
                           title={liveEnabled ? "Live: On" : "Live: Off"}
@@ -1767,7 +1767,7 @@ export function VisualizerCore({
                       <div className="relative">
                         <button
                           onClick={() => setLangPickerOpen((v) => !v)}
-                          className={`flex items-center justify-center rounded-lg p-1.5 transition-colors duration-75 ${
+                          className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors duration-75 ${
                             langPickerOpen ? "bg-white/15 text-white" : "text-white/40 hover:text-white/70"
                           }`}
                           title="Language"

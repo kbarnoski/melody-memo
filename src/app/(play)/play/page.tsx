@@ -12,6 +12,7 @@ export default async function VisualizerPage({
     autoplay?: string;
     customJourneyId?: string;
     pathToken?: string;
+    picker?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -19,6 +20,7 @@ export default async function VisualizerPage({
   const liveMode = params.live === "true";
   const journey = params.journey;
   const autoplay = params.autoplay !== "0";
+  const initialPicker = params.picker === "journeys" ? "journeys" : undefined;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -109,6 +111,7 @@ export default async function VisualizerPage({
       cueMarkers={cueMarkers}
       initialCustomJourney={initialCustomJourney}
       initialPath={initialPath}
+      initialPicker={initialPicker}
     />
   );
 }

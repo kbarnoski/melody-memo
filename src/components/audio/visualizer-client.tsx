@@ -106,6 +106,9 @@ interface VisualizerClientProps {
   initialCustomJourney?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialPath?: any;
+  /** When "journeys", auto-opens the journey selector on mount.
+   *  Used by /play?picker=journeys (the Journeys pillar entry point). */
+  initialPicker?: "journeys";
 }
 
 // Pointer-fine + hover-hover environments are desktops. The CSS media
@@ -330,6 +333,7 @@ export function VisualizerClient({
   cueMarkers: cueMarkersProp = [],
   initialCustomJourney,
   initialPath,
+  initialPicker,
 }: VisualizerClientProps) {
   const router = useRouter();
 
@@ -616,6 +620,7 @@ export function VisualizerClient({
   const [journeyOpen, setJourneyOpen] = useState(() => {
     if (recording) return false;
     if (initialJourney) return false;
+    if (initialPicker === "journeys") return true;
     return useAudioStore.getState().roomMode === "journey";
   });
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

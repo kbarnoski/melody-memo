@@ -18,14 +18,13 @@ import {
   X,
   Settings,
   Sparkles,
-  Route,
 } from "lucide-react";
 
-// Studio destinations (browse-mode, not actions). Settings lives at the
-// bottom near sign-out, so it's listed in `accountItems` instead.
+// Studio sub-destinations. Paths used to live here but is now a top-level
+// pillar (see PillarNav). Settings lives at the bottom near sign-out, so
+// it's listed in `accountItems` instead.
 const navItems = [
   { href: "/library", label: "Library", icon: Library },
-  { href: "/paths", label: "Paths", icon: Route },
   { href: "/compare", label: "Compare", icon: GitCompareArrows },
   { href: "/collections", label: "Collections", icon: FolderOpen },
   { href: "/insights", label: "Insights", icon: BarChart3 },
@@ -182,7 +181,7 @@ export function Sidebar() {
           }}
         >
           <Disc3 className="h-4 w-4" style={{ color: "rgba(196, 181, 253, 0.9)" }} />
-          Enter The Room
+          Play
         </button>
       </div>
 

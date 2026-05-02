@@ -10,7 +10,14 @@ import type { Journey, JourneyPhase } from "@/lib/journeys/types";
 
 interface CreateJourneyFormProps {
   recordingId?: string;
+  /** When provided, the form opens in edit mode: skips the describe step,
+   *  pre-populates the refine UI with this journey, and saves via PATCH. */
+  initialJourney?: (Journey & { id: string });
+  /** "create" (default) or "edit". When "edit", initialJourney is required. */
+  mode?: "create" | "edit";
   onCreated?: (journey: Journey) => void;
+  onUpdated?: (journey: Journey) => void;
+  onDeleted?: (id: string) => void;
   onCancel?: () => void;
   cancelLabel?: string;
 }
@@ -19,28 +26,41 @@ type Step = "describe" | "refine";
 
 export function CreateJourneyForm({
   recordingId,
+  initialJourney,
+  mode = "create",
   onCreated,
+  onUpdated,
+  onDeleted,
   onCancel,
   cancelLabel = "Cancel",
 }: CreateJourneyFormProps) {
-  const [step, setStep] = useState<Step>("describe");
-  const [journeyName, setJourneyName] = useState("");
-  const [storyText, setStoryText] = useState("");
-  const [audioReactive, setAudioReactive] = useState(false);
+  const isEdit = mode === "edit" && !!initialJourney;
+  const [step, setStep] = useState<Step>(isEdit ? "refine" : "describe");
+  const [journeyName, setJourneyName] = useState(isEdit ? initialJourney!.name : "");
+  const [storyText, setStoryText] = useState(isEdit ? (initialJourney!.storyText ?? "") : "");
+  const [audioReactive, setAudioReactive] = useState(isEdit ? !!initialJourney!.audioReactive : false);
+  // viz-only toggle: false here = pure shaders, no AI imagery generation.
+  const [aiEnabled, setAiEnabled] = useState(isEdit ? initialJourney!.aiEnabled !== false : true);
   const [generating, setGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [statusText, setStatusText] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   const [recordings, setRecordings] = useState<{ id: string; title: string }[]>([]);
-  const [selectedRecordingId, setSelectedRecordingId] = useState<string | null>(recordingId ?? null);
+  const [selectedRecordingId, setSelectedRecordingId] = useState<string | null>(
+    isEdit ? (initialJourney!.recordingId ?? null) : (recordingId ?? null)
+  );
   const [localImageFiles, setLocalImageFiles] = useState<File[]>([]);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(null);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[] | null>(
+    isEdit && initialJourney!.localImageUrls ? initialJourney!.localImageUrls : null
+  );
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [audioArtist, setAudioArtist] = useState("");
   const [audioTitle, setAudioTitle] = useState("");
 
-  // Draft: the AI-generated journey the user is refining.
-  const [draft, setDraft] = useState<Journey | null>(null);
+  // Draft: the journey the user is refining (AI-generated on create, the
+  // existing row on edit).
+  const [draft, setDraft] = useState<Journey | null>(isEdit ? initialJourney! : null);
   // Resolved recording id from any track upload — captured at generate time
   // and re-used on save so we don't re-upload on refine→save.
   const [resolvedRecordingId, setResolvedRecordingId] = useState<string | null>(null);
@@ -216,17 +236,53 @@ export function CreateJourneyForm({
     }
   };
 
-  // Step 2: commit the (possibly edited) draft to the DB.
+  // Step 2: commit the (possibly edited) draft to the DB. Branches on
+  // mode — create POSTs to /create, edit PATCHes /[id] with the
+  // whitelisted updatable fields.
   const handleSaveDraft = async () => {
     if (!draft) return;
     setSaving(true);
     abortRef.current = new AbortController();
     try {
-      // Override draft.name if the user typed one into the describe step.
       const payloadDraft: Journey = {
         ...draft,
         name: journeyName.trim() || draft.name,
       };
+
+      if (isEdit && initialJourney) {
+        // Edit path — PATCH the editable subset.
+        const res = await fetch(`/api/journeys/${initialJourney.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: payloadDraft.name,
+            subtitle: payloadDraft.subtitle,
+            description: payloadDraft.description,
+            phases: payloadDraft.phases,
+            realm_id: payloadDraft.realmId,
+            theme: payloadDraft.theme ?? null,
+            audio_reactive: audioReactive,
+            ai_enabled: aiEnabled,
+            recording_id: selectedRecordingId,
+          }),
+          signal: abortRef.current.signal,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update journey");
+        toast.success(`Journey "${payloadDraft.name}" updated`);
+        const updated: Journey = {
+          ...payloadDraft,
+          id: initialJourney.id,
+          aiEnabled,
+          audioReactive,
+          recordingId: selectedRecordingId,
+          userId: initialJourney.userId,
+        };
+        onUpdated?.(updated);
+        return;
+      }
+
+      // Create path.
       const res = await fetch("/api/journeys/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -235,6 +291,7 @@ export function CreateJourneyForm({
           recordingId: resolvedRecordingId,
           storyText: storyText.trim(),
           audioReactive,
+          aiEnabled,
           localImageUrls: uploadedImageUrls ?? undefined,
           name: payloadDraft.name,
         }),
@@ -247,6 +304,7 @@ export function CreateJourneyForm({
       const fullJourney: Journey = {
         ...data.journey,
         id: data.dbRecord.id,
+        aiEnabled,
         storyText: storyText.trim(),
         recordingId: resolvedRecordingId,
         userId: data.dbRecord.user_id,
@@ -261,6 +319,24 @@ export function CreateJourneyForm({
     } finally {
       setSaving(false);
       abortRef.current = null;
+    }
+  };
+
+  // Edit-mode delete. Confirm, then DELETE. Caller handles routing away.
+  const handleDelete = async () => {
+    if (!isEdit || !initialJourney) return;
+    if (!confirm(`Delete "${initialJourney.name}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/journeys/${initialJourney.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      toast.success("Journey deleted");
+      onDeleted?.(initialJourney.id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(msg);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -532,6 +608,34 @@ export function CreateJourneyForm({
           </div>
         </div>
 
+        {/* AI imagery toggle — turn off for shader/viz-only journeys.
+            Saves API spend and keeps the experience purely audio-reactive. */}
+        <button
+          type="button"
+          onClick={() => !saving && setAiEnabled(!aiEnabled)}
+          disabled={saving}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg mb-2 transition-colors disabled:opacity-50"
+          style={{
+            backgroundColor: aiEnabled ? `${accent}18` : "rgba(255,255,255,0.04)",
+            border: aiEnabled ? `1px solid ${accent}40` : "1px solid rgba(255,255,255,0.08)",
+          }}
+        >
+          <span
+            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+            style={{ backgroundColor: aiEnabled ? accent : "rgba(255,255,255,0.15)" }}
+          />
+          <div className="flex-1 text-left">
+            <div className="text-white/85" style={{ fontSize: "0.8rem", fontFamily: "var(--font-geist-sans)" }}>
+              {aiEnabled ? "AI imagery on" : "Viz only — no AI imagery"}
+            </div>
+            <div className="text-white/40" style={{ fontSize: "0.7rem", fontFamily: "var(--font-geist-mono)" }}>
+              {aiEnabled
+                ? "Shaders + AI-generated phase imagery."
+                : "Shaders only. No image generation, no API spend."}
+            </div>
+          </div>
+        </button>
+
         <button
           type="button"
           onClick={handleSaveDraft}
@@ -549,27 +653,50 @@ export function CreateJourneyForm({
               <Loader2 className="h-4 w-4 animate-spin" />
               Saving...
             </>
+          ) : isEdit ? (
+            "Save Changes"
           ) : (
             "Save Journey"
           )}
         </button>
 
-        <button
-          type="button"
-          onClick={handleRegenerate}
-          disabled={saving || generating}
-          className="w-full mt-2 px-4 py-2 text-white/40 hover:text-white/60 transition-colors disabled:opacity-40"
-          style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
-        >
-          {generating ? (
-            <span className="inline-flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 animate-spin" />
-              Regenerating...
-            </span>
-          ) : (
-            "Regenerate draft"
-          )}
-        </button>
+        {!isEdit && (
+          <button
+            type="button"
+            onClick={handleRegenerate}
+            disabled={saving || generating}
+            className="w-full mt-2 px-4 py-2 text-white/40 hover:text-white/60 transition-colors disabled:opacity-40"
+            style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+          >
+            {generating ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Regenerating...
+              </span>
+            ) : (
+              "Regenerate draft"
+            )}
+          </button>
+        )}
+
+        {isEdit && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={saving || deleting}
+            className="w-full mt-2 px-4 py-2 text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-40"
+            style={{ fontSize: "0.75rem", fontFamily: "var(--font-geist-mono)" }}
+          >
+            {deleting ? (
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Deleting…
+              </span>
+            ) : (
+              "Delete journey"
+            )}
+          </button>
+        )}
 
         {onCancel && (
           <button

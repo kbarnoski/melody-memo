@@ -129,7 +129,8 @@ export default async function SharedJourneyPage({
         description: journeyRow.description || "",
         realmId: journeyRow.realm_id,
         phases: journeyRow.phases,
-        aiEnabled: true,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        aiEnabled: (journeyRow as any).ai_enabled !== false,
         ...(journeyRow.theme ? { theme: journeyRow.theme } : {}),
         ...(Array.isArray(journeyRow.local_image_urls) && journeyRow.local_image_urls.length > 0
           ? { localImageUrls: journeyRow.local_image_urls as string[] }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Shuffle, Sparkles, Plus, Share2, Trash2, Wand2, Loader2, ChevronDown } from "lucide-react";
+import { Shuffle, Sparkles, Plus, Share2, Trash2, Wand2, Loader2, ChevronDown, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { REALMS } from "@/lib/journeys/realms";
 import { JOURNEYS, getJourney } from "@/lib/journeys/journeys";
@@ -126,7 +126,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
               subtitle: (r.subtitle as string) ?? "",
               description: (r.description as string) ?? "",
               realmId: (r.realm_id as string) ?? "custom",
-              aiEnabled: true,
+              aiEnabled: r.ai_enabled !== false,
               phases: (r.phases as Journey["phases"]) ?? [],
               storyText: (r.story_text as string) ?? null,
               recordingId: (r.recording_id as string) ?? null,
@@ -167,7 +167,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
             subtitle: (row.subtitle as string) ?? "",
             description: (row.description as string) ?? "",
             realmId: (row.realm_id as string) ?? "custom",
-            aiEnabled: true,
+            aiEnabled: row.ai_enabled !== false,
             phases: (row.phases as Journey["phases"]) ?? [],
             storyText: (row.story_text as string) ?? null,
             recordingId: (row.recording_id as string) ?? null,
@@ -276,7 +276,7 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
         description: journey.description,
         realmId: journey.realmId,
         phases: journey.phases,
-        aiEnabled: true,
+        aiEnabled: journey.aiEnabled !== false,
         recordingId: currentTrack.id,
         userId: dbRecord?.user_id,
         ...(journey.theme ? { theme: journey.theme } : {}),
@@ -1759,6 +1759,15 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                           )}
                           <button
                             type="button"
+                            aria-label="Edit journey"
+                            onClick={(e) => { e.stopPropagation(); window.location.href = `/edit/${journey.id}`; }}
+                            className={`p-1.5 rounded-md text-white/20 hover:text-white/60 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                            title="Edit"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
                             aria-label="Share journey"
                             onClick={(e) => handleShare(journey.id, journey.name, e)}
                             className={`p-1.5 rounded-md text-white/20 hover:text-white/50 transition-all ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
@@ -2014,6 +2023,15 @@ export function JourneySelector({ open, onClose }: JourneySelectorProps) {
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label="Edit journey"
+                              onClick={(e) => { e.stopPropagation(); window.location.href = `/edit/${journey.id}`; }}
+                              className="p-1.5 rounded-md text-white/20 hover:text-white/60 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                              title="Edit"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
                             <button
                               type="button"
                               aria-label="Share journey"

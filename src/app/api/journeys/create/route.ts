@@ -26,9 +26,13 @@ export async function POST(request: Request) {
       recordingId,
       name,
       audioReactive,
+      aiEnabled,
       localImageUrls,
       draft,
     } = await request.json();
+    // Default true; the toggle in the create form lets users opt out for
+    // shader-only (viz-only) journeys.
+    const aiEnabledFlag: boolean = aiEnabled === false ? false : true;
     const safeLocalImageUrls: string[] | null =
       Array.isArray(localImageUrls) && localImageUrls.length > 0
         ? localImageUrls.filter((u: unknown): u is string => typeof u === "string" && u.length > 0)
@@ -91,6 +95,7 @@ export async function POST(request: Request) {
       phases: JSON.parse(JSON.stringify(journey.phases)),
       theme: journey.theme ? JSON.parse(JSON.stringify(journey.theme)) : null,
       audio_reactive: audioReactive ?? false,
+      ai_enabled: aiEnabledFlag,
       creator_name: creatorName,
       local_image_urls: safeLocalImageUrls,
     }).select().single();
@@ -104,7 +109,12 @@ export async function POST(request: Request) {
     }
 
     return Response.json({
-      journey: { ...journey, id: data.id, localImageUrls: safeLocalImageUrls ?? undefined },
+      journey: {
+        ...journey,
+        id: data.id,
+        aiEnabled: aiEnabledFlag,
+        localImageUrls: safeLocalImageUrls ?? undefined,
+      },
       dbRecord: data,
     });
   } catch (error) {

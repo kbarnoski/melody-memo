@@ -28,7 +28,9 @@ const CSP_DIRECTIVES = [
   // Google Fonts stylesheets are loaded at runtime by journey/poetry code.
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
-  "media-src 'self' blob: https:",
+  // data: needed by primeAudioElement (silent WAV used to unlock <audio>
+  // on first user gesture so subsequent track plays don't get blocked).
+  "media-src 'self' data: blob: https:",
   // Google Fonts ship the actual woff2 files from fonts.gstatic.com.
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https: wss: blob:",

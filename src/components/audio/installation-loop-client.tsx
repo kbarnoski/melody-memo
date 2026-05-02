@@ -24,8 +24,9 @@ interface Props {
 
 // ─── Timing ────────────────────────────────────────────────────────────
 // Intro is held longer than a normal journey intro because the viewer is
-// arriving cold; they need time to read the room.
-const INTRO_MS = 14_000;
+// arriving cold; they need time to read the room — but not so long that
+// a user who clicked "begin" feels stuck.
+const INTRO_MS = 10_000;
 // Credits get an even longer hold — the dedication should land.
 const CREDITS_MS = 16_000;
 // Safety net so the loop keeps moving even when a track is missing or
@@ -280,6 +281,49 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
 
       {phase.kind === "intro" && <InstallationIntro />}
       {phase.kind === "credits" && <InstallationCredits />}
+
+      {/* Path dots — visible during intro + every journey, hidden during
+          credits. Completed journeys fill with the accent color, current
+          journey is a glowing larger dot, upcoming are dim. Tells a viewer
+          what's coming and what's done so they know whether to stay. */}
+      {(phase.kind === "intro" || phase.kind === "journey") && sequence.length > 0 && (
+        <div
+          className="absolute z-30 left-1/2 -translate-x-1/2 flex items-center gap-2"
+          style={{
+            bottom: "calc(36px + env(safe-area-inset-bottom, 0px))",
+            opacity: 0.85,
+            transition: "opacity 600ms ease",
+            pointerEvents: "none",
+          }}
+        >
+          {sequence.map((_, i) => {
+            const currentIndex = phase.kind === "journey" ? phase.index : -1;
+            const done = currentIndex >= 0 && i < currentIndex;
+            const current = i === currentIndex;
+            const size = current ? 10 : 6;
+            return (
+              <span
+                key={i}
+                aria-hidden
+                style={{
+                  width: `${size}px`,
+                  height: `${size}px`,
+                  borderRadius: "50%",
+                  background: done
+                    ? "rgba(196, 181, 253, 0.85)" // acc-light = completed
+                    : current
+                      ? "rgba(255, 255, 255, 0.95)" // bright white = playing
+                      : "rgba(255, 255, 255, 0.18)", // dim = upcoming
+                  boxShadow: current
+                    ? "0 0 14px rgba(196, 181, 253, 0.65)"
+                    : "none",
+                  transition: "all 400ms ease",
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Browser autoplay gate. One click anywhere unlocks audio for the
           rest of the session, then this layer goes away and the loop

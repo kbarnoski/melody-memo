@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2 } from "lucide-react";
 import { VisualizerClient } from "./visualizer-client";
 import { useAudioStore, type Track } from "@/lib/audio/audio-store";
 import { getAudioEngine, ensureResumed, primeAudioElement } from "@/lib/audio/audio-engine";
@@ -45,8 +44,10 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
   const stopJourney = useAudioStore((s) => s.stopJourney);
 
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
-  const [chromeVisible, setChromeVisible] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Title-card window: matches the visualizer-client's built-in journey
+  // intro overlay (~6s when each journey starts). Drives the dot stepper
+  // visibility — dots only show during this window + during credits.
+  const [titleWindow, setTitleWindow] = useState(false);
   // Browser autoplay gate. The desktop app doesn't enforce autoplay so we
   // skip the click prompt there; in a normal browser tab one click anywhere
   // unlocks the audio element + AudioContext for the rest of the session.
@@ -56,7 +57,6 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
   });
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const chromeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleStart = useCallback(() => {
     // Both must run inside the click gesture: primeAudioElement teaches
@@ -96,57 +96,24 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Fullscreen state sync ────────────────────────────────────────
-  useEffect(() => {
-    const handleChange = () => {
-      const doc = document as Document & { webkitFullscreenElement?: Element };
-      setIsFullscreen(!!(document.fullscreenElement || doc.webkitFullscreenElement));
-    };
-    document.addEventListener("fullscreenchange", handleChange);
-    document.addEventListener("webkitfullscreenchange", handleChange);
-    return () => {
-      document.removeEventListener("fullscreenchange", handleChange);
-      document.removeEventListener("webkitfullscreenchange", handleChange);
-    };
-  }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    const doc = document as Document & {
-      webkitFullscreenElement?: Element;
-      webkitExitFullscreen?: () => Promise<void>;
-    };
-    const el = document.documentElement as HTMLElement & {
-      webkitRequestFullscreen?: () => Promise<void>;
-    };
-    const isFs = !!(document.fullscreenElement || doc.webkitFullscreenElement);
-    if (isFs) {
-      (doc.webkitExitFullscreen ?? document.exitFullscreen).call(document).catch(() => {});
-    } else {
-      (el.webkitRequestFullscreen ?? el.requestFullscreen).call(el).catch(() => {});
-    }
-  }, []);
-
-  // ─── Cursor + chrome reveal on activity ───────────────────────────
+  // ─── Cursor reveal on activity ─────────────────────────────────────
+  // No on-screen chrome (no fullscreen toggle) — installation mode
+  // expects the operator to use browser ⌘⌃F or the desktop kiosk; we
+  // only manage the cursor itself.
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     const reveal = () => {
       container.style.cursor = "default";
       setCursorVisible(true).catch(() => {});
-      setChromeVisible(true);
       if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current);
-      if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
       cursorTimerRef.current = setTimeout(() => {
         container.style.cursor = "none";
         setCursorVisible(false).catch(() => {});
       }, 3000);
-      chromeTimerRef.current = setTimeout(() => {
-        setChromeVisible(false);
-      }, 3000);
     };
     container.addEventListener("mousemove", reveal);
     container.addEventListener("touchstart", reveal);
-    // Initial hide after a beat so chrome doesn't flash on mount.
     cursorTimerRef.current = setTimeout(() => {
       container.style.cursor = "none";
       setCursorVisible(false).catch(() => {});
@@ -155,7 +122,6 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
       container.removeEventListener("mousemove", reveal);
       container.removeEventListener("touchstart", reveal);
       if (cursorTimerRef.current) clearTimeout(cursorTimerRef.current);
-      if (chromeTimerRef.current) clearTimeout(chromeTimerRef.current);
       setCursorVisible(true).catch(() => {});
     };
   }, []);
@@ -192,6 +158,10 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
     // generates.
     if (!started) return;
     if (phase.kind === "intro") {
+      // Hide the dot stepper during the installation intro — the intro
+      // already names what the experience is; dots come later at the
+      // per-journey title moment.
+      setTitleWindow(false);
       const t = setTimeout(() => {
         if (sequence.length === 0) {
           setPhase({ kind: "credits" });
@@ -203,6 +173,9 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
     }
 
     if (phase.kind === "credits") {
+      // Show dots during ending titling so the audience sees the full
+      // progress — every dot lit as we wrap.
+      setTitleWindow(true);
       stopJourney();
       const t = setTimeout(() => {
         setPhase({ kind: "intro" });
@@ -216,6 +189,13 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
       setPhase({ kind: "credits" });
       return;
     }
+
+    // Show dots while the per-journey title overlay is up (matches the
+    // visualizer-client's 6s journey intro animation). Hide them again
+    // when the journey moves into its body so the canvas reads as pure
+    // visual / unframed during playback.
+    setTitleWindow(true);
+    const titleHideTimer = setTimeout(() => setTitleWindow(false), 6000);
 
     // Warm engine + ensure audio context is resumed (one user gesture
     // anywhere on the page is enough; this is a no-op afterwards).
@@ -246,7 +226,10 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(titleHideTimer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, sequence, started]);
 
@@ -254,52 +237,30 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
     <div ref={containerRef} className="h-full w-full relative">
       <VisualizerClient />
 
-      {/* Fullscreen toggle — small, top-right, fades with cursor. F also
-          works (passes through our key trap to visualizer-client). */}
-      <button
-        type="button"
-        aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        onClick={toggleFullscreen}
-        className="absolute top-6 right-6 z-30 flex items-center justify-center rounded-lg text-white/45 hover:text-white/85 transition-all"
-        style={{
-          width: "44px",
-          height: "44px",
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          backdropFilter: "blur(8px)",
-          opacity: chromeVisible ? 1 : 0,
-          pointerEvents: chromeVisible ? "auto" : "none",
-        }}
-        title={isFullscreen ? "Exit fullscreen (F)" : "Enter fullscreen (F)"}
-      >
-        {isFullscreen ? (
-          <Minimize2 className="h-4 w-4" />
-        ) : (
-          <Maximize2 className="h-4 w-4" />
-        )}
-      </button>
-
       {phase.kind === "intro" && <InstallationIntro />}
       {phase.kind === "credits" && <InstallationCredits />}
 
-      {/* Path dots — visible during intro + every journey, hidden during
-          credits. Completed journeys fill with the accent color, current
-          journey is a glowing larger dot, upcoming are dim. Tells a viewer
-          what's coming and what's done so they know whether to stay. */}
-      {(phase.kind === "intro" || phase.kind === "journey") && sequence.length > 0 && (
+      {/* Path dots — only visible during the per-journey title window
+          (~6s when each journey starts) and during ending credits.
+          Hidden during ongoing journey playback so the canvas reads as
+          pure visual. Completed journeys fill with the accent color,
+          current journey is a glowing white dot, upcoming are dim. */}
+      {titleWindow && sequence.length > 0 && (phase.kind === "journey" || phase.kind === "credits") && (
         <div
           className="absolute z-30 left-1/2 -translate-x-1/2 flex items-center gap-2"
           style={{
             bottom: "calc(36px + env(safe-area-inset-bottom, 0px))",
-            opacity: 0.85,
+            opacity: 0.9,
             transition: "opacity 600ms ease",
             pointerEvents: "none",
+            animation: "installationDotsFade 600ms ease-out forwards",
           }}
         >
           {sequence.map((_, i) => {
-            const currentIndex = phase.kind === "journey" ? phase.index : -1;
-            const done = currentIndex >= 0 && i < currentIndex;
-            const current = i === currentIndex;
+            // In credits, every dot is "done" (full progress).
+            const currentIndex = phase.kind === "journey" ? phase.index : sequence.length;
+            const done = i < currentIndex;
+            const current = phase.kind === "journey" && i === currentIndex;
             const size = current ? 10 : 6;
             return (
               <span
@@ -310,10 +271,10 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
                   height: `${size}px`,
                   borderRadius: "50%",
                   background: done
-                    ? "rgba(196, 181, 253, 0.85)" // acc-light = completed
+                    ? "rgba(196, 181, 253, 0.9)"
                     : current
-                      ? "rgba(255, 255, 255, 0.95)" // bright white = playing
-                      : "rgba(255, 255, 255, 0.18)", // dim = upcoming
+                      ? "rgba(255, 255, 255, 0.95)"
+                      : "rgba(255, 255, 255, 0.18)",
                   boxShadow: current
                     ? "0 0 14px rgba(196, 181, 253, 0.65)"
                     : "none",
@@ -322,6 +283,12 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
               />
             );
           })}
+          <style jsx>{`
+            @keyframes installationDotsFade {
+              from { opacity: 0; }
+              to { opacity: 0.9; }
+            }
+          `}</style>
         </div>
       )}
 

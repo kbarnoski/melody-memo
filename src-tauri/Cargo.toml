@@ -1,6 +1,6 @@
 [package]
 name = "resonance"
-version = "0.1.0"
+version = "0.1.1"
 description = "Resonance — personal audio workspace for pianists and composers"
 authors = ["Karel Barnoski"]
 edition = "2021"

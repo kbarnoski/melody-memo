@@ -14,6 +14,9 @@ interface DebugSnapshot {
   primingError: string | null;
   paused: boolean;
   src: string;
+  audioErr: string | null;
+  readyState: number;
+  networkState: number;
   curTime: number;
   duration: number;
   isPlaying: boolean;
@@ -38,11 +41,23 @@ export function InstallationDebugHud() {
       let paused = true;
       let src = "";
       let primingError: string | null = null;
+      let audioErr: string | null = null;
+      let readyState = 0;
+      let networkState = 0;
       try {
         const engine = getAudioEngine();
         ctxState = engine.audioContext.state;
-        paused = engine.audioElement.paused;
-        src = engine.audioElement.src.slice(0, 80);
+        const el = engine.audioElement;
+        paused = el.paused;
+        src = el.src.slice(0, 80);
+        readyState = el.readyState;
+        networkState = el.networkState;
+        if (el.error) {
+          // MediaError codes:
+          //   1 ABORTED, 2 NETWORK, 3 DECODE, 4 SRC_NOT_SUPPORTED
+          const codes = ["", "ABORTED", "NETWORK", "DECODE", "SRC_NOT_SUPPORTED"];
+          audioErr = `${codes[el.error.code] || el.error.code}: ${el.error.message || "(no msg)"}`;
+        }
         primingError = getLastPrimingError();
       } catch {
         ctxState = "engine init failed";
@@ -54,6 +69,9 @@ export function InstallationDebugHud() {
         primingError,
         paused,
         src,
+        audioErr,
+        readyState,
+        networkState,
         curTime: s.currentTime,
         duration: s.duration,
         isPlaying: s.isPlaying,
@@ -110,12 +128,15 @@ export function InstallationDebugHud() {
       </div>
       {row("audio ctx", snap.ctxState, snap.ctxState === "running")}
       {row("audio unlocked", snap.unlocked, snap.unlocked)}
-      {snap.primingError && row("priming err", snap.primingError.slice(0, 40), false)}
+      {snap.primingError && row("priming err", snap.primingError.slice(0, 50), false)}
+      {snap.audioErr && row("AUDIO ERROR", snap.audioErr.slice(0, 60), false)}
+      {row("readyState", snap.readyState, snap.readyState >= 2)}
+      {row("networkState", snap.networkState)}
       {row("paused", snap.paused, !snap.paused)}
       {row("isPlaying (store)", snap.isPlaying, snap.isPlaying)}
       {row("currentTime", `${snap.curTime.toFixed(1)} / ${snap.duration.toFixed(1)}`)}
       {row("track", snap.trackTitle.slice(0, 40))}
-      {row("src", snap.src ? snap.src.slice(0, 40) + "…" : "—")}
+      {row("src", snap.src ? snap.src.slice(0, 50) + "…" : "—")}
       {row("journey", snap.journeyName.slice(0, 40))}
       {row("phase", snap.journeyPhase)}
     </div>

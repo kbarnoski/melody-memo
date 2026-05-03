@@ -243,7 +243,18 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
 
     const onError = () => {
       loadingNewSrc.current = false;
-      useAudioStore.getState().pause();
+      // In installation mode a broken track must NEVER strand the loop.
+      // Advance to the next queued track (the loop client wraps if past
+      // the end), so a single bad recording doesn't leave the kiosk
+      // silent forever. Outside installation mode, fall back to pausing.
+      const { installationMode } = useAudioStore.getState();
+      if (installationMode) {
+        // eslint-disable-next-line no-console
+        console.warn("[audio] track load error in installation mode — advancing");
+        useAudioStore.getState().playNext();
+      } else {
+        useAudioStore.getState().pause();
+      }
     };
 
     audioElement.addEventListener("loadedmetadata", onLoadedMetadata);

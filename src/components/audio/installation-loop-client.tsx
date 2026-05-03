@@ -212,14 +212,47 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     if (track) setQueue([track], 0);
     startJourney(entry.journey.id);
 
+    // Listen for audio element errors directly so we can advance to the
+    // next JOURNEY (not just the next track in the queue) when a track
+    // fails to load. Critical for kiosk reliability — one bad recording
+    // shouldn't strand the entire loop.
+    let errorListener: (() => void) | null = null;
+    let earlyAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+    try {
+      const el = getAudioEngine().audioElement;
+      errorListener = () => {
+        // eslint-disable-next-line no-console
+        console.warn("[installation] audio error on journey", phase.index, "— advancing");
+        // Slight delay before advancing so React can settle
+        earlyAdvanceTimer = setTimeout(() => {
+          if (phase.index + 1 < sequence.length) {
+            setPhase({ kind: "journey", index: phase.index + 1 });
+          } else {
+            setPhase({ kind: "credits" });
+          }
+        }, 250);
+      };
+      el.addEventListener("error", errorListener);
+    } catch { /* engine warming */ }
+
     // Subscribe to store; advance when audio finishes or safety expires.
     const startMs = Date.now();
+    // Soft early-advance: if the element is in error state OR after 8s
+    // currentTime hasn't moved off 0, treat it as a stalled track and
+    // skip. The hard MAX_JOURNEY_MS safety net stays as a final backstop.
+    const STALLED_THRESHOLD_MS = 8_000;
     let raf = 0;
     const tick = () => {
       const { currentTime, duration } = useAudioStore.getState();
       const audioEnded = duration > 0 && currentTime >= duration - 0.5;
-      const timedOut = Date.now() - startMs >= MAX_JOURNEY_MS;
-      if (audioEnded || timedOut) {
+      const elapsed = Date.now() - startMs;
+      const stalled = elapsed > STALLED_THRESHOLD_MS && currentTime < 0.05;
+      const timedOut = elapsed >= MAX_JOURNEY_MS;
+      if (audioEnded || stalled || timedOut) {
+        if (stalled) {
+          // eslint-disable-next-line no-console
+          console.warn("[installation] track stalled at 0 — advancing");
+        }
         if (phase.index + 1 < sequence.length) {
           setPhase({ kind: "journey", index: phase.index + 1 });
         } else {
@@ -233,6 +266,12 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(titleHideTimer);
+      if (earlyAdvanceTimer) clearTimeout(earlyAdvanceTimer);
+      if (errorListener) {
+        try {
+          getAudioEngine().audioElement.removeEventListener("error", errorListener);
+        } catch { /* engine gone */ }
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, sequence, started]);

@@ -26,6 +26,29 @@ interface DebugSnapshot {
   journeyPhase: string;
 }
 
+// Persistent global log of journey-track failures so the HUD can show
+// what went wrong even after the loop moved past the broken journey.
+interface FailureRecord {
+  journey: string;
+  track: string;
+  reason: string;
+  at: number;
+}
+declare global {
+  interface Window {
+    __resonanceInstallFailures?: FailureRecord[];
+  }
+}
+function getFailureLog(): FailureRecord[] {
+  if (typeof window === "undefined") return [];
+  return window.__resonanceInstallFailures ?? [];
+}
+export function logInstallFailure(rec: Omit<FailureRecord, "at">): void {
+  if (typeof window === "undefined") return;
+  if (!window.__resonanceInstallFailures) window.__resonanceInstallFailures = [];
+  window.__resonanceInstallFailures.push({ ...rec, at: Date.now() });
+}
+
 /**
  * Small live debug overlay shown only when ?debug=1 is on the URL or
  * in dev. Reads audio + journey state directly from the engine + store
@@ -139,6 +162,44 @@ export function InstallationDebugHud() {
       {row("src", snap.src ? snap.src.slice(0, 50) + "…" : "—")}
       {row("journey", snap.journeyName.slice(0, 40))}
       {row("phase", snap.journeyPhase)}
+
+      {/* Persistent failure log */}
+      {(() => {
+        const failures = getFailureLog();
+        if (failures.length === 0) return null;
+        return (
+          <div
+            style={{
+              marginTop: "10px",
+              paddingTop: "8px",
+              borderTop: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            <div
+              style={{
+                color: "rgba(248, 113, 113, 0.85)",
+                fontSize: "9px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                marginBottom: "4px",
+              }}
+            >
+              Failed Journeys ({failures.length})
+            </div>
+            {failures.slice(-6).map((f, i) => (
+              <div key={i} style={{ color: "rgba(255,255,255,0.55)", marginTop: "2px" }}>
+                <div style={{ color: "rgba(255,255,255,0.8)" }}>{f.journey}</div>
+                <div style={{ paddingLeft: "8px", color: "rgba(255,255,255,0.45)" }}>
+                  track: {f.track.slice(0, 40)}
+                </div>
+                <div style={{ paddingLeft: "8px", color: "rgba(248,113,113,0.85)" }}>
+                  reason: {f.reason}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { isDesktopApp, enterKioskMode, exitKioskMode, setCursorVisible } from "@
 import type { Journey } from "@/lib/journeys/types";
 import { InstallationIntro } from "./installation-intro";
 import { InstallationCredits } from "./installation-credits";
-import { InstallationDebugHud } from "./installation-debug-hud";
+import { InstallationDebugHud, logInstallFailure } from "./installation-debug-hud";
 
 /** One entry in the curated loop sequence. */
 export interface SequenceEntry {
@@ -234,8 +234,17 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     try {
       const el = getAudioEngine().audioElement;
       errorListener = () => {
+        const errCode = el.error?.code;
+        const errMsg = el.error?.message || "(no msg)";
+        const codes = ["", "ABORTED", "NETWORK", "DECODE", "SRC_NOT_SUPPORTED"];
+        const reason = `${codes[errCode || 0] || errCode}: ${errMsg}`;
         // eslint-disable-next-line no-console
-        console.warn("[installation] audio error on journey", phase.index, "— advancing");
+        console.warn(`[installation] audio error on journey ${phase.index} (${entry.journey.name}): ${reason}`);
+        logInstallFailure({
+          journey: entry.journey.name,
+          track: trackForIndex(phase.index)?.title ?? "(none)",
+          reason,
+        });
         setSkippedIndices((s) => {
           const next = new Set(s);
           next.add(phase.index);
@@ -277,10 +286,11 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
 
     // Subscribe to store; advance when audio finishes or safety expires.
     const startMs = Date.now();
-    // Soft early-advance: if the element is in error state OR after 8s
-    // currentTime hasn't moved off 0, treat it as a stalled track and
-    // skip. The hard MAX_JOURNEY_MS safety net stays as a final backstop.
-    const STALLED_THRESHOLD_MS = 8_000;
+    // Soft early-advance: after 15s currentTime hasn't moved off 0 we
+    // give up on this track. Tighter than MAX_JOURNEY_MS but generous
+    // enough that slow CDN starts don't false-trigger. Errors fire
+    // their own immediate skip via the error listener above.
+    const STALLED_THRESHOLD_MS = 15_000;
     let raf = 0;
     const tick = () => {
       const { currentTime, duration, isPlaying } = useAudioStore.getState();
@@ -295,8 +305,17 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       const timedOut = elapsed >= MAX_JOURNEY_MS;
       if (audioEnded || stalled || timedOut) {
         if (stalled || timedOut) {
+          const t = trackForIndex(phase.index);
+          const reason = stalled
+            ? `stalled at 0 after ${(elapsed/1000).toFixed(0)}s — track loaded but never advanced`
+            : `safety timeout after ${(elapsed/1000).toFixed(0)}s`;
           // eslint-disable-next-line no-console
-          console.warn("[installation] track failed (stalled/timed out) — advancing");
+          console.warn(`[installation] ${entry.journey.name}: ${reason}`);
+          logInstallFailure({
+            journey: entry.journey.name,
+            track: t?.title ?? "(no track)",
+            reason,
+          });
           setSkippedIndices((s) => {
             const next = new Set(s);
             next.add(phase.index);

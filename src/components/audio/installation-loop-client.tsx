@@ -52,6 +52,9 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
   // intro overlay (~6s when each journey starts). Drives the dot stepper
   // visibility — dots only show during this window + during credits.
   const [titleWindow, setTitleWindow] = useState(false);
+  // Indices of journeys that were skipped due to audio load failure —
+  // shown as red dots so the operator knows which recordings need fixing.
+  const [skippedIndices, setSkippedIndices] = useState<Set<number>>(() => new Set());
   // Browser autoplay gate. The desktop app doesn't enforce autoplay so we
   // skip the click prompt there; in a normal browser tab one click anywhere
   // unlocks the audio element + AudioContext for the rest of the session.
@@ -223,7 +226,11 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       errorListener = () => {
         // eslint-disable-next-line no-console
         console.warn("[installation] audio error on journey", phase.index, "— advancing");
-        // Slight delay before advancing so React can settle
+        setSkippedIndices((s) => {
+          const next = new Set(s);
+          next.add(phase.index);
+          return next;
+        });
         earlyAdvanceTimer = setTimeout(() => {
           if (phase.index + 1 < sequence.length) {
             setPhase({ kind: "journey", index: phase.index + 1 });
@@ -234,6 +241,29 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       };
       el.addEventListener("error", errorListener);
     } catch { /* engine warming */ }
+
+    // ─── Audio play watchdog ──────────────────────────────────────
+    // Periodically reconcile the gap between store intent (isPlaying=true)
+    // and element reality (paused). Catches every race where the audio
+    // element ends up paused while the store still wants playback —
+    // including the desync caught by the HUD on Mycelium Dream where the
+    // element loaded fully (readyState=4) but stayed paused after a
+    // journey transition.
+    const playWatchdog = setInterval(() => {
+      try {
+        const el = getAudioEngine().audioElement;
+        const s = useAudioStore.getState();
+        if (s.isPlaying && el.paused && el.readyState >= 2 && !el.error) {
+          // Audio is ready, store wants playback, but element is paused.
+          // Force a play attempt. Audio is unlocked from the click gate
+          // so this won't get rejected by autoplay policy.
+          el.play().catch((err) => {
+            // eslint-disable-next-line no-console
+            console.warn("[installation] watchdog play() rejected:", err);
+          });
+        }
+      } catch { /* engine gone */ }
+    }, 500);
 
     // Subscribe to store; advance when audio finishes or safety expires.
     const startMs = Date.now();
@@ -249,9 +279,14 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       const stalled = elapsed > STALLED_THRESHOLD_MS && currentTime < 0.05;
       const timedOut = elapsed >= MAX_JOURNEY_MS;
       if (audioEnded || stalled || timedOut) {
-        if (stalled) {
+        if (stalled || timedOut) {
           // eslint-disable-next-line no-console
-          console.warn("[installation] track stalled at 0 — advancing");
+          console.warn("[installation] track failed (stalled/timed out) — advancing");
+          setSkippedIndices((s) => {
+            const next = new Set(s);
+            next.add(phase.index);
+            return next;
+          });
         }
         if (phase.index + 1 < sequence.length) {
           setPhase({ kind: "journey", index: phase.index + 1 });
@@ -266,6 +301,7 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(titleHideTimer);
+      clearInterval(playWatchdog);
       if (earlyAdvanceTimer) clearTimeout(earlyAdvanceTimer);
       if (errorListener) {
         try {
@@ -306,20 +342,25 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
             const currentIndex = phase.kind === "journey" ? phase.index : sequence.length;
             const done = i < currentIndex;
             const current = phase.kind === "journey" && i === currentIndex;
+            const skipped = skippedIndices.has(i);
             const size = current ? 10 : 6;
+            const background = skipped
+              ? "rgba(248, 113, 113, 0.55)" // muted red — track failed
+              : done
+                ? "rgba(196, 181, 253, 0.9)"
+                : current
+                  ? "rgba(255, 255, 255, 0.95)"
+                  : "rgba(255, 255, 255, 0.18)";
             return (
               <span
                 key={i}
                 aria-hidden
+                title={skipped ? "Track failed — skipped" : undefined}
                 style={{
                   width: `${size}px`,
                   height: `${size}px`,
                   borderRadius: "50%",
-                  background: done
-                    ? "rgba(196, 181, 253, 0.9)"
-                    : current
-                      ? "rgba(255, 255, 255, 0.95)"
-                      : "rgba(255, 255, 255, 0.18)",
+                  background,
                   boxShadow: current
                     ? "0 0 14px rgba(196, 181, 253, 0.65)"
                     : "none",

@@ -8,6 +8,7 @@ import { isDesktopApp, enterKioskMode, exitKioskMode, setCursorVisible } from "@
 import type { Journey } from "@/lib/journeys/types";
 import { InstallationIntro } from "./installation-intro";
 import { InstallationCredits } from "./installation-credits";
+import { InstallationDebugHud } from "./installation-debug-hud";
 
 /** One entry in the curated loop sequence. */
 export interface SequenceEntry {
@@ -19,6 +20,9 @@ interface Props {
   sequence: SequenceEntry[];
   /** Featured-recordings pool used when a journey has no paired track. */
   fallbackTracks: Track[];
+  /** When true, render the live audio + journey debug overlay. Driven by
+   *  ?debug=1 on the page URL. */
+  debug?: boolean;
 }
 
 // ─── Timing ────────────────────────────────────────────────────────────
@@ -37,7 +41,7 @@ type Phase =
   | { kind: "journey"; index: number }
   | { kind: "credits" };
 
-export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
+export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Props) {
   const setInstallationMode = useAudioStore((s) => s.setInstallationMode);
   const setQueue = useAudioStore((s) => s.setQueue);
   const startJourney = useAudioStore((s) => s.startJourney);
@@ -236,6 +240,8 @@ export function InstallationLoopClient({ sequence, fallbackTracks }: Props) {
   return (
     <div ref={containerRef} className="h-full w-full relative">
       <VisualizerClient />
+
+      {debug && <InstallationDebugHud />}
 
       {phase.kind === "intro" && <InstallationIntro />}
       {phase.kind === "credits" && <InstallationCredits />}

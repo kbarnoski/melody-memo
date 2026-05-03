@@ -86,25 +86,41 @@ export async function ensureResumed(): Promise<void> {
   }
 }
 
-// iOS Safari: HTMLAudioElement.play() only works if first called inside a
-// user gesture. After that one priming call the element is "unlocked" for
-// the rest of the session — subsequent src changes and play() calls work
-// even from async callbacks. Without this, journey taps that await Supabase
-// before calling play() silently fail on mobile (gesture context lost).
-// Must be called synchronously from the tap handler, before any await.
+// HTMLAudioElement.play() only works if first called inside a user
+// gesture (iOS Safari is strict, Chrome/Firefox depend on autoplay
+// policy). After one successful play() in a gesture the element is
+// "unlocked" for the session — subsequent src changes + plays work
+// even from async callbacks. Must run synchronously from the click.
 let audioElementUnlocked = false;
+let lastPrimingError: string | null = null;
+export function isAudioElementUnlocked(): boolean { return audioElementUnlocked; }
+export function getLastPrimingError(): string | null { return lastPrimingError; }
+
 export function primeAudioElement(): void {
   if (audioElementUnlocked) return;
   const engine = getAudioEngine();
   const el = engine.audioElement;
-  // Tiny silent WAV — plays instantly, no network.
-  if (!el.src) {
-    el.src =
-      "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAKhWAAACABAAZGF0YQAAAAA=";
-  }
+  // ALWAYS set the silent WAV. The previous `if (!el.src)` guard meant a
+  // stale src from prior page navigation would skip priming and the next
+  // play() rejected (silently) — which was the actual reason audio never
+  // started in the installation loop.
+  el.src =
+    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAVFYAAKhWAAACABAAZGF0YQAAAAA=";
+  el.muted = false;
+  el.volume = 1.0;
   const p = el.play();
-  if (p && typeof p.catch === "function") p.catch(() => {});
-  audioElementUnlocked = true;
+  if (p && typeof p.then === "function") {
+    p.then(() => {
+      audioElementUnlocked = true;
+      lastPrimingError = null;
+    }).catch((err: unknown) => {
+      lastPrimingError = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.warn("[audio] primeAudioElement play() rejected:", err);
+    });
+  } else {
+    audioElementUnlocked = true;
+  }
 }
 
 /**

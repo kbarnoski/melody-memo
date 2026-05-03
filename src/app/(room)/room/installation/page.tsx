@@ -13,12 +13,13 @@ import type { Journey } from "@/lib/journeys/types";
 export const dynamic = "force-dynamic";
 
 interface Props {
-  searchParams: Promise<{ journey?: string; loop?: string }>;
+  searchParams: Promise<{ journey?: string; loop?: string; debug?: string }>;
 }
 
 export default async function InstallationPage({ searchParams }: Props) {
-  const { journey, loop } = await searchParams;
+  const { journey, loop, debug } = await searchParams;
   const isLoop = loop === "1" || loop === "true";
+  const isDebug = debug === "1" || debug === "true";
 
   // Require auth at the page level. The realtime AI image service calls
   // /api/ai-image/token which is gated to authed users; without a session
@@ -101,7 +102,7 @@ export default async function InstallationPage({ searchParams }: Props) {
 
     return (
       <div className="h-screen w-screen overflow-hidden bg-black">
-        <InstallationLoopClient sequence={sequence} fallbackTracks={fallbackTracks} />
+        <InstallationLoopClient sequence={sequence} fallbackTracks={fallbackTracks} debug={isDebug} />
       </div>
     );
   }

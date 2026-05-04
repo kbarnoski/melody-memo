@@ -621,6 +621,15 @@ export function VisualizerClient({
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const iosImmersiveRef = useRef(false);
 
+  // Installation mode never opens the in-player journey selector. If
+  // journeyOpen was true from a prior session's roomMode, it would
+  // suppress JourneyPhaseIndicator (gated by !journeyOpen). Force false.
+  useEffect(() => {
+    if (installationMode && journeyOpen) {
+      setJourneyOpen(false);
+    }
+  }, [installationMode, journeyOpen]);
+
   // Isolate primary shader — strips dual/tertiary when toggled with R key
   const journeyFrame = useMemo(() => {
     if (!rawJourneyFrame || !isolatePrimary) return rawJourneyFrame;

@@ -5,6 +5,7 @@ import { VisualizerClient } from "./visualizer-client";
 import { useAudioStore, type Track } from "@/lib/audio/audio-store";
 import { getAudioEngine, ensureResumed, primeAudioElement, tryPlay } from "@/lib/audio/audio-engine";
 import { isDesktopApp, enterKioskMode, exitKioskMode, setCursorVisible } from "@/lib/tauri";
+import { getJourneyEngine } from "@/lib/journeys/journey-engine";
 import type { Journey } from "@/lib/journeys/types";
 import { InstallationIntro } from "./installation-intro";
 import { InstallationCredits } from "./installation-credits";
@@ -14,6 +15,10 @@ import { InstallationDebugHud, logInstallFailure } from "./installation-debug-hu
 export interface SequenceEntry {
   journey: Journey;
   track: Track | null;
+  /** Cue markers for this track (loaded server-side). The loop client
+   *  applies these to the journey-engine on each transition so per-cue
+   *  effects like Ghost's bass flash actually fire. */
+  cues?: Array<{ time: number; label: string }>;
 }
 
 interface Props {
@@ -235,6 +240,22 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     const track = trackForIndex(phase.index);
     if (track) setQueue([track], 0);
     startJourney(entry.journey.id);
+
+    // Apply cue markers to the journey-engine. Without this, per-cue
+    // events like Ghost's bass_hit flashes never fire because the engine
+    // has no events to trigger on. Mirrors what journey-selector does on
+    // a normal journey click.
+    const cues = entry.cues ?? [];
+    if (cues.length > 0 && track?.duration) {
+      try {
+        const engine = getJourneyEngine();
+        engine.setEvents(
+          cues.map((c) => ({ time: c.time, type: "bass_hit" as const, intensity: 1.0 })),
+          track.duration,
+        );
+        useAudioStore.getState().setCueMarkers(cues);
+      } catch { /* engine warming */ }
+    }
 
     // Listen for audio element errors directly so we can advance to the
     // next JOURNEY (not just the next track in the queue) when a track

@@ -138,11 +138,39 @@ export default async function InstallationPage({ searchParams }: Props) {
         return { journey: j, track: null };
       });
 
+    // Pre-fetch cue markers for every paired track in the sequence.
+    // The journey-engine uses these to fire bass_hit events that drive
+    // Ghost's bass flash overlay (and any future per-cue effects). Without
+    // this, ghost's iconic flashes never trigger in installation mode.
+    const trackedRecordingIds = sequence
+      .map((s) => s.track?.id)
+      .filter((id): id is string => !!id);
+    const cuesByRecordingId: Record<string, Array<{ time: number; label: string }>> = {};
+    if (trackedRecordingIds.length > 0) {
+      const { data: markerRows } = await supabase
+        .from("markers")
+        .select("recording_id, time, label")
+        .in("recording_id", trackedRecordingIds)
+        .eq("type", "cue")
+        .order("time");
+      for (const m of (markerRows ?? []) as Array<{ recording_id: string; time: number; label: string }>) {
+        if (!cuesByRecordingId[m.recording_id]) cuesByRecordingId[m.recording_id] = [];
+        cuesByRecordingId[m.recording_id].push({ time: m.time, label: m.label });
+      }
+    }
+
+    // Attach cues to each sequence entry so the loop client can apply
+    // them to the journey-engine when each journey starts.
+    const sequenceWithCues = sequence.map((entry) => ({
+      ...entry,
+      cues: entry.track ? (cuesByRecordingId[entry.track.id] ?? []) : [],
+    }));
+
     const fallbackTracks = featuredRecordings.map(toTrack);
 
     return (
       <div className="h-screen w-screen overflow-hidden bg-black">
-        <InstallationLoopClient sequence={sequence} fallbackTracks={fallbackTracks} debug={isDebug} />
+        <InstallationLoopClient sequence={sequenceWithCues} fallbackTracks={fallbackTracks} debug={isDebug} />
       </div>
     );
   }

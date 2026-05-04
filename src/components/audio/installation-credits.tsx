@@ -12,8 +12,11 @@ export function InstallationCredits() {
   return (
     <div
       className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black px-8 text-center"
-      style={{ animation: "creditsCycle 12000ms ease-in-out forwards" }}
     >
+      {/* Inner content gets the fade animation; the outer black layer
+          is fully opaque from frame 1 so the shader stack underneath
+          never peeks through. */}
+      <div className="flex flex-col items-center" style={{ animation: "creditsContent 12000ms ease-in-out forwards", opacity: 0 }}>
       {/* Dedication */}
       <div
         className="text-white/35"
@@ -82,9 +85,10 @@ export function InstallationCredits() {
       >
         Resonance · by Karel Barnoski
       </div>
+      </div>
 
       <style jsx>{`
-        @keyframes creditsCycle {
+        @keyframes creditsContent {
           0%   { opacity: 0; }
           7%   { opacity: 1; }
           92%  { opacity: 1; }

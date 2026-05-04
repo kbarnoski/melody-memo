@@ -59,6 +59,12 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
   // Indices of journeys that were skipped due to audio load failure —
   // shown as red dots so the operator knows which recordings need fixing.
   const [skippedIndices, setSkippedIndices] = useState<Set<number>>(() => new Set());
+  // Soft crossfade veil between journeys. Fades in to ~35% opacity
+  // (a gentle radial dim, not full black) over 600ms while the new
+  // journey's shader recompiles + AI imagery first frame loads, then
+  // fades out. Hides the abrupt shader swap without making the screen
+  // go black.
+  const [transitionVeil, setTransitionVeil] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -224,17 +230,12 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       ensureResumed();
     } catch { /* engine warming */ }
 
-    // HARD-RESET the audio element before queueing the next track.
-    // Symptom seen via HUD: readyState stuck at 0, networkState 2 — the
-    // element's load pipeline gets polluted when src changes mid-load
-    // (e.g., previous journey's track was still downloading when we
-    // moved on). removeAttribute + load() forces it back to NETWORK_EMPTY
-    // so audio-provider's subsequent src set + load gets a clean slate.
+    // Smooth handoff into the new journey. Just pause the previous
+    // track (audio-provider will swap src naturally on the new
+    // currentTrack). No removeAttribute/load — that was abrupt and
+    // caused visible state churn between journeys.
     try {
-      const el = getAudioEngine().audioElement;
-      el.pause();
-      el.removeAttribute("src");
-      el.load();
+      getAudioEngine().audioElement.pause();
     } catch { /* engine warming */ }
 
     const track = trackForIndex(phase.index);
@@ -257,13 +258,21 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       } catch { /* engine warming */ }
     }
 
-    // Helper: advance to the next journey, or wrap to credits.
+    // Helper: advance to the next journey, or wrap to credits. Wrap
+    // each advance in a soft 600ms veil so the shader/audio swap
+    // doesn't show as an abrupt cut.
     const advance = () => {
-      if (phase.index + 1 < sequence.length) {
-        setPhase({ kind: "journey", index: phase.index + 1 });
-      } else {
-        setPhase({ kind: "credits" });
-      }
+      setTransitionVeil(true);
+      setTimeout(() => {
+        if (phase.index + 1 < sequence.length) {
+          setPhase({ kind: "journey", index: phase.index + 1 });
+        } else {
+          setPhase({ kind: "credits" });
+        }
+        // Veil fades out 1.4s after new phase mounts, giving the new
+        // journey's shader compile + first AI image time to settle.
+        setTimeout(() => setTransitionVeil(false), 1400);
+      }, 350);
     };
 
     // Listen for audio element errors AND natural end via DOM events.
@@ -416,6 +425,21 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
 
       {phase.kind === "intro" && <InstallationIntro />}
       {phase.kind === "credits" && <InstallationCredits />}
+
+      {/* Crossfade veil — soft radial dim between journey transitions.
+          Not full black; lets old shader/imagery linger underneath
+          while new ones come in. Fades in on advance(), out 1.4s
+          after the new phase mounts. */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-40 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.45) 100%)",
+          opacity: transitionVeil ? 1 : 0,
+          transition: "opacity 600ms ease-in-out",
+        }}
+      />
 
       {/* Path dots — only visible during the per-journey title window
           (~6s when each journey starts) and during ending credits.

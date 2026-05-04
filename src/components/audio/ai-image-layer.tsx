@@ -818,6 +818,7 @@ export function AiImageLayer({
   return (
     <canvas
       ref={canvasRef}
+      data-ai-image-canvas
       className="absolute inset-0 w-full h-full"
       style={
         aiOnly

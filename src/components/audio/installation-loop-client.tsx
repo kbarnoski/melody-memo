@@ -59,12 +59,15 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
   // Indices of journeys that were skipped due to audio load failure —
   // shown as red dots so the operator knows which recordings need fixing.
   const [skippedIndices, setSkippedIndices] = useState<Set<number>>(() => new Set());
-  // Soft crossfade veil between journeys. Fades in to ~35% opacity
-  // (a gentle radial dim, not full black) over 600ms while the new
-  // journey's shader recompiles + AI imagery first frame loads, then
-  // fades out. Hides the abrupt shader swap without making the screen
-  // go black.
-  const [transitionVeil, setTransitionVeil] = useState(false);
+  // True crossfade: at the moment of advance(), snapshot the current
+  // AI imagery canvas to a data URL and render it as a fading-out
+  // overlay. The new journey starts behind the snapshot — its shader
+  // crossfades smoothly via the visualizer's existing A/B layer
+  // system, and its AI imagery streams in fresh. The snapshot fades
+  // 1 → 0 over 2.5s, so the user sees real overlap of old and new
+  // visuals rather than a darken/clear/redraw. Old imagery lingers
+  // exactly the way Karel asked for.
+  const [aiSnapshot, setAiSnapshot] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -258,21 +261,29 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       } catch { /* engine warming */ }
     }
 
-    // Helper: advance to the next journey, or wrap to credits. Wrap
-    // each advance in a soft 600ms veil so the shader/audio swap
-    // doesn't show as an abrupt cut.
+    // Helper: advance to the next journey, or wrap to credits.
+    // Snapshots the current AI imagery canvas first so a true
+    // crossfade overlay fades it out as the new journey renders
+    // underneath. The shader's existing A/B crossfade handles the
+    // shader transition; this snapshot handles the AI layer.
     const advance = () => {
-      setTransitionVeil(true);
-      setTimeout(() => {
-        if (phase.index + 1 < sequence.length) {
-          setPhase({ kind: "journey", index: phase.index + 1 });
-        } else {
-          setPhase({ kind: "credits" });
+      try {
+        const aiCanvas = document.querySelector<HTMLCanvasElement>("canvas[data-ai-image-canvas]");
+        if (aiCanvas && aiCanvas.width > 0) {
+          // toDataURL throws if the canvas is tainted by cross-origin
+          // images. We catch that case and just advance without snapshot.
+          const dataUrl = aiCanvas.toDataURL("image/png");
+          setAiSnapshot(dataUrl);
+          // Clear after the fade animation finishes.
+          setTimeout(() => setAiSnapshot(null), 3000);
         }
-        // Veil fades out 1.4s after new phase mounts, giving the new
-        // journey's shader compile + first AI image time to settle.
-        setTimeout(() => setTransitionVeil(false), 1400);
-      }, 350);
+      } catch { /* tainted canvas — advance without snapshot */ }
+
+      if (phase.index + 1 < sequence.length) {
+        setPhase({ kind: "journey", index: phase.index + 1 });
+      } else {
+        setPhase({ kind: "credits" });
+      }
     };
 
     // Listen for audio element errors AND natural end via DOM events.
@@ -426,20 +437,34 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       {phase.kind === "intro" && <InstallationIntro />}
       {phase.kind === "credits" && <InstallationCredits />}
 
-      {/* Crossfade veil — soft radial dim between journey transitions.
-          Not full black; lets old shader/imagery linger underneath
-          while new ones come in. Fades in on advance(), out 1.4s
-          after the new phase mounts. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 z-40 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.45) 100%)",
-          opacity: transitionVeil ? 1 : 0,
-          transition: "opacity 600ms ease-in-out",
-        }}
-      />
+      {/* True crossfade overlay — a snapshot of the previous journey's
+          AI imagery canvas, fading 1 → 0 over 2.5s while the new
+          journey renders underneath. Old visuals literally overlap
+          with new ones. mixBlendMode "screen" matches the AI image
+          layer's own blend mode so the overlap looks identical to a
+          single layer in transition. */}
+      {aiSnapshot && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={aiSnapshot}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{
+            objectFit: "cover",
+            mixBlendMode: "screen",
+            zIndex: 25,
+            opacity: 1,
+            animation: "installSnapshotFade 2500ms ease-out forwards",
+          }}
+        />
+      )}
+      <style jsx>{`
+        @keyframes installSnapshotFade {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+      `}</style>
 
       {/* Path dots — only visible during the per-journey title window
           (~6s when each journey starts) and during ending credits.

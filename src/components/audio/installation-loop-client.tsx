@@ -26,11 +26,10 @@ interface Props {
 }
 
 // ─── Timing ────────────────────────────────────────────────────────────
-// Intro is held longer than a normal journey intro because the viewer is
-// arriving cold; they need time to read the room — but not so long that
-// a user who clicked "begin" feels stuck.
-const INTRO_MS = 10_000;
-// Credits get an even longer hold — the dedication should land.
+// Per Karel: 7s intro that doubles as a countdown into each cycle.
+// Auto-starts on page load — no Begin click. Credits are held longer
+// so the dedication lands, then we loop straight back to the intro.
+const INTRO_MS = 7_000;
 const CREDITS_MS = 16_000;
 // Safety net so the loop keeps moving even when a track is missing or
 // has no metadata duration. Tuned generously above the longest journey.
@@ -55,27 +54,19 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
   // Indices of journeys that were skipped due to audio load failure —
   // shown as red dots so the operator knows which recordings need fixing.
   const [skippedIndices, setSkippedIndices] = useState<Set<number>>(() => new Set());
-  // Browser autoplay gate. The desktop app doesn't enforce autoplay so we
-  // skip the click prompt there; in a normal browser tab one click anywhere
-  // unlocks the audio element + AudioContext for the rest of the session.
-  const [started, setStarted] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return isDesktopApp();
-  });
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleStart = useCallback(() => {
-    // Both must run inside the click gesture: primeAudioElement teaches
-    // iOS / Safari that this audio element is "user-allowed", and
-    // ensureResumed wakes a suspended AudioContext. After this one
-    // gesture, every subsequent setQueue + play in the loop just works.
+  // Audio unlock helper. Idempotent — safe to call multiple times.
+  // Runs on mount (works automatically in the desktop app where Tauri
+  // has no autoplay restriction) AND on the first click anywhere on
+  // the page (catches browser users where autoplay is blocked).
+  const tryUnlockAudio = useCallback(() => {
     try {
       getAudioEngine();
       primeAudioElement();
     } catch { /* engine warming */ }
     void ensureResumed();
-    setStarted(true);
   }, []);
 
   // Pick the right track for this index — paired first, then a
@@ -101,10 +92,22 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     setInstallationMode(true);
     if (isDesktopApp()) enterKioskMode().catch(() => {});
 
+    // Fire audio unlock on mount — in the desktop app this works
+    // immediately (no autoplay restriction); in browser it'll succeed
+    // only if the page already had a prior user gesture (e.g.,
+    // navigation click). The document-click listener below catches
+    // the browser case where audio doesn't unlock on mount.
+    tryUnlockAudio();
+    const onAnyClick = () => tryUnlockAudio();
+    document.addEventListener("click", onAnyClick, { once: false });
+    document.addEventListener("touchstart", onAnyClick, { once: false });
+
     return () => {
       setInstallationMode(false);
       stopJourney();
       if (isDesktopApp()) exitKioskMode().catch(() => {});
+      document.removeEventListener("click", onAnyClick);
+      document.removeEventListener("touchstart", onAnyClick);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -169,11 +172,6 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
 
   // ─── Phase machine ────────────────────────────────────────────────
   useEffect(() => {
-    // Hold the loop until the user has tapped to unlock audio. Without
-    // this gate, autoplay rejection silently strands the journey on
-    // phase 0: no sound, currentTime stuck at 0, only one AI image ever
-    // generates.
-    if (!started) return;
     if (phase.kind === "intro") {
       // Hide the dot stepper during the installation intro — the intro
       // already names what the experience is; dots come later at the
@@ -354,7 +352,7 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, sequence, started]);
+  }, [phase, sequence]);
 
   return (
     <div ref={containerRef} className="h-full w-full relative">
@@ -422,45 +420,6 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
         </div>
       )}
 
-      {/* Browser autoplay gate. One click anywhere unlocks audio for the
-          rest of the session, then this layer goes away and the loop
-          starts. The desktop app skips this entirely because Tauri
-          doesn't enforce autoplay restrictions. */}
-      {!started && (
-        <button
-          type="button"
-          aria-label="Begin"
-          onClick={handleStart}
-          className="absolute inset-0 z-[60] flex items-end justify-center pb-24 cursor-pointer focus:outline-none"
-          style={{
-            background: "rgba(0, 0, 0, 0.0)",
-            animation: "installationGateFadeIn 800ms ease-out forwards",
-          }}
-        >
-          <span
-            className="text-white/35"
-            style={{
-              fontFamily: "var(--font-geist-mono)",
-              fontSize: "0.78rem",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              animation: "installationGatePulse 2400ms ease-in-out infinite",
-            }}
-          >
-            Click anywhere to begin
-          </span>
-          <style jsx>{`
-            @keyframes installationGateFadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
-            }
-            @keyframes installationGatePulse {
-              0%, 100% { opacity: 0.5; }
-              50% { opacity: 1; }
-            }
-          `}</style>
-        </button>
-      )}
     </div>
   );
 }

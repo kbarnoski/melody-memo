@@ -16,7 +16,7 @@ import type { Journey } from "@/lib/journeys/types";
  * text starts appearing — no morph between two texts at the same
  * position.
  */
-type Mode = "cycle" | "journey";
+type Mode = "cycle" | "fading-cycle" | "empty" | "journey";
 
 interface Props {
   mode?: Mode;
@@ -27,45 +27,52 @@ interface Props {
 export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Props) {
   return (
     <div className="absolute inset-0 z-50 bg-black">
-      {/* Cycle text layer */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 2rem",
-          textAlign: "center",
-          opacity: mode === "cycle" ? 1 : 0,
-          transition: "opacity 1500ms ease-out",
-        }}
-      >
-        <CycleTextInner />
-      </div>
+      {/* Cycle text layer — mounted in "cycle" and "fading-cycle"
+          stages. In "fading-cycle", layer opacity transitions to 0
+          over 1.5s; parent state then transitions to "empty" which
+          unmounts this layer. */}
+      {(mode === "cycle" || mode === "fading-cycle") && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 2rem",
+            textAlign: "center",
+            opacity: mode === "fading-cycle" ? 0 : 1,
+            transition: "opacity 1500ms ease-out",
+          }}
+        >
+          <CycleTextInner />
+        </div>
+      )}
 
-      {/* Journey text layer */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "0 2rem",
-          textAlign: "center",
-          opacity: mode === "journey" ? 1 : 0,
-          // Delay fade-in so cycle text fully clears first.
-          transition:
-            mode === "journey"
-              ? "opacity 2200ms ease-out 1300ms"
-              : "opacity 1500ms ease-out",
-        }}
-      >
-        <JourneyTextInner journey={journey} trackArtist={trackArtist} />
-      </div>
+      {/* "empty" stage: nothing rendered — just the bg-black of the
+          parent overlay. Brief gap (~400ms) between cycle text fade
+          and journey text mount so they never coexist in the DOM. */}
+
+      {/* Journey text layer — mounted only in "journey" stage.
+          Inner content has its own slow fade-in animation. Because
+          cycle text is fully unmounted by this stage, no overlap. */}
+      {mode === "journey" && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "0 2rem",
+            textAlign: "center",
+          }}
+        >
+          <JourneyTextInner journey={journey} trackArtist={trackArtist} />
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes installationContentFade {

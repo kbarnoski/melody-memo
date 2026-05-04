@@ -221,6 +221,19 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       ensureResumed();
     } catch { /* engine warming */ }
 
+    // HARD-RESET the audio element before queueing the next track.
+    // Symptom seen via HUD: readyState stuck at 0, networkState 2 — the
+    // element's load pipeline gets polluted when src changes mid-load
+    // (e.g., previous journey's track was still downloading when we
+    // moved on). removeAttribute + load() forces it back to NETWORK_EMPTY
+    // so audio-provider's subsequent src set + load gets a clean slate.
+    try {
+      const el = getAudioEngine().audioElement;
+      el.pause();
+      el.removeAttribute("src");
+      el.load();
+    } catch { /* engine warming */ }
+
     const track = trackForIndex(phase.index);
     if (track) setQueue([track], 0);
     startJourney(entry.journey.id);

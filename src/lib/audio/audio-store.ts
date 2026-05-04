@@ -459,6 +459,17 @@ export const useAudioStore = create<AudioState>()((set, get) => ({
       service.cancelInFlight();
       service.clearFrameCallback();
     } catch {}
+    // Force-pause the audio element directly — don't wait for the
+    // store-flag → audio-provider react cycle. Otherwise, if the
+    // current page is navigating away (handleExit fires router.push
+    // before stopJourney), audio-provider may already be unmounting
+    // and never reacts to isPlaying=false. Symptom: audio kept
+    // playing after the user exited the journey.
+    try {
+      if (typeof window !== "undefined") {
+        getAudioEngine().audioElement.pause();
+      }
+    } catch { /* engine not initialized yet */ }
     set({
       activeJourney: null,
       activeRealm: null,

@@ -348,6 +348,25 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     }
   }, [currentTrack]);
 
+  // ─── Pagehide safety net ───────────────────────────────────────
+  // If the page is about to be hidden (tab close, navigation away,
+  // mobile background), force-pause the audio element. Backstops every
+  // exit path that might otherwise leave audio playing.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onPageHide = () => {
+      try {
+        if (engineReady.current) getAudioEngine().audioElement.pause();
+      } catch { /* engine gone */ }
+    };
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
+    };
+  }, []);
+
   // ─── Media Session — lock screen Now Playing + transport controls ───
   // Watch BOTH currentTrack and activeJourney so the lock-screen title
   // refreshes when a journey starts/stops on an already-loaded track.

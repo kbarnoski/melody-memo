@@ -560,10 +560,21 @@ export function SharedJourneyClient({
 
     init();
 
+    // Tab close / navigation away — make absolutely sure the audio
+    // element pauses. React's effect cleanup catches client-side
+    // navigation; pagehide catches tab close + cross-origin nav cases.
+    const onPageHide = () => {
+      try { audioRef.current?.pause(); } catch {}
+    };
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("beforeunload", onPageHide);
+
     return () => {
       cancelled = true;
       audioRef.current?.pause();
       ctx.close();
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("beforeunload", onPageHide);
     };
   }, [started]);
 

@@ -112,7 +112,7 @@ function JourneyText({ journey, trackArtist }: { journey?: Journey | null; track
   return (
     <div
       key={`journey-${journey.id}`}
-      style={{ animation: "installationContentFade 1500ms ease-out forwards", opacity: 0 }}
+      style={{ animation: "installationContentFade 2800ms ease-out forwards", opacity: 0 }}
     >
       <div
         className="text-white/45"

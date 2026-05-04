@@ -46,11 +46,22 @@ export function AiOverlayElements({
   const lastImageUrlRef = useRef<string | null>(null);
   const respawnTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  /** Purge all clones immediately */
+  /** Soft purge — fade clones out over 1.5s then remove. Used on
+   *  journey change so overlay elements don't snap-disappear; they
+   *  drift away as the new journey's elements come in. */
   const purgeAll = useCallback(() => {
+    const FADE_MS = 1500;
     for (const clone of activeClonesRef.current) {
-      clone.el.remove();
-      clone.styleEl.remove();
+      const el = clone.el;
+      const styleEl = clone.styleEl;
+      // Override the keyframe animation with a smooth fade-to-zero.
+      el.style.animation = "none";
+      el.style.transition = `opacity ${FADE_MS}ms ease-out`;
+      el.style.opacity = "0";
+      setTimeout(() => {
+        el.remove();
+        styleEl.remove();
+      }, FADE_MS + 100);
     }
     activeClonesRef.current = [];
   }, []);

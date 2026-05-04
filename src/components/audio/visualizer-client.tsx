@@ -444,12 +444,12 @@ export function VisualizerClient({
         useAudioStore.getState().setSuppressNextJourneyIntro(false);
       }
       setPhaseIndicatorReady(false);
-      // Intro overlay duration. Installation mode holds longer so the
-      // title doubles as a perceptual mask while the AI image layer
-      // crossfades old → new and the shader's A/B layers swap. Normal
-      // (interactive) playback keeps the original 6s.
-      const introMs = installationMode ? 10000 : 6000;
-      const phaseReadyMs = installationMode ? 12000 : 8000;
+      // Intro overlay duration. Installation mode keeps the original
+      // 6s — long enough for the title to land while AI imagery soft-
+      // fades and shader A/B crossfades, short enough that the journey
+      // body starts unhindered.
+      const introMs = 6000;
+      const phaseReadyMs = 8000;
       journeyIntroTimerRef.current = setTimeout(() => {
         setJourneyIntroVisible(false);
       }, introMs);

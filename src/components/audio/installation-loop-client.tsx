@@ -203,15 +203,16 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       // Reset intro overlay to cycle text at the top of every loop.
       setIntroStage("cycle");
 
-      // Phase machine for the cycle intro:
-      //   t=0     → show "Resonance" cycle text (this state)
+      // Phase machine for the cycle intro — paced to feel mesmerizing
+      // rather than rushed.
+      //   t=0     → show "Resonance" cycle text (1.4s fade in, then held)
       //   t=7s    → suppress visualizer's journey intro for journey 0,
       //             pre-start journey 0 (audio + shader crossfade kicks
       //             in BEHIND the still-opaque installation intro), and
-      //             swap intro text to journey title (in same overlay,
-      //             so no competing intro overlays appear)
-      //   t=12s   → begin overlay fade-out (1.6s)
-      //   t=13.6s → snap-change phase to journey 0 (overlay unmounts;
+      //             swap intro text to journey title (2.8s slow fade-in
+      //             of the new text within the same overlay)
+      //   t=15s   → begin overlay fade-out (3s slow ease)
+      //   t=18s   → snap-change phase to journey 0 (overlay unmounts;
       //             journey shader is fully established underneath)
       //
       // No competing texts: installation intro shows "Ascension" title
@@ -247,18 +248,19 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
         setIntroStage("journey");
       }, INTRO_MS);
 
-      // Hold the journey title for 5s, then fade the whole overlay out.
+      // Hold the journey title for 8s (3s fade-in + 5s held), then
+      // fade the whole overlay out slowly.
       const beginFadeOut = setTimeout(() => {
         setIntroStage("fading-out");
-      }, INTRO_MS + 5_000);
+      }, INTRO_MS + 8_000);
 
-      // After fade completes, change phase. By now journey shader has
-      // had ~6.6s to establish via the visualizer's A/B crossfade, so
-      // the unmount reveals the journey visuals cleanly.
+      // After fade completes, change phase. Journey shader has had ~11s
+      // to establish via the visualizer's A/B crossfade, so the unmount
+      // reveals the journey visuals cleanly.
       const finalPhaseChange = setTimeout(() => {
         setIntroStage("gone");
         setPhase({ kind: "journey", index: 0 });
-      }, INTRO_MS + 6_600);
+      }, INTRO_MS + 11_000);
 
       return () => {
         clearTimeout(showCycleText);
@@ -289,7 +291,9 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     // installation mode the title runs 10s (extended in visualizer-
     // client to mask the AI/shader handoff), so dots match.
     setTitleWindow(true);
-    const titleHideTimer = setTimeout(() => setTitleWindow(false), 10_000);
+    // Match the visualizer-client journey intro's 6s window in
+    // installation mode — keeps dots in sync with the title overlay.
+    const titleHideTimer = setTimeout(() => setTitleWindow(false), 6_000);
 
     // No special intro handoff here — the intro phase pre-started
     // journey 0 1.5s before the phase change, so by now the journey
@@ -550,7 +554,7 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
           className="absolute inset-0 z-50 pointer-events-none"
           style={{
             opacity: introStage === "fading-out" ? 0 : 1,
-            transition: "opacity 1600ms ease-out",
+            transition: "opacity 3000ms ease-out",
           }}
         >
           <InstallationIntro

@@ -474,7 +474,10 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
     <div ref={containerRef} className="h-full w-full relative">
       <VisualizerClient />
 
-      {debug && <InstallationDebugHud />}
+      {/* Debug HUD intentionally disabled in render. Re-enable by
+          flipping back to `{debug && <InstallationDebugHud />}` —
+          the prop wiring + page param are still in place. */}
+      {false && debug && <InstallationDebugHud />}
 
       {/* Intro stays mounted past the phase change so we can fade it
           out smoothly while the new journey's shader establishes

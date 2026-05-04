@@ -59,20 +59,21 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
   // Indices of journeys that were skipped due to audio load failure —
   // shown as red dots so the operator knows which recordings need fixing.
   const [skippedIndices, setSkippedIndices] = useState<Set<number>>(() => new Set());
-  // Installation intro overlay state.
-  //   "cycle"          — "Resonance — A contemplative listening room"
-  //                       text mounted, fades in via its own animation
-  //   "fading-cycle"   — cycle text still mounted; outer layer fading
-  //                       its opacity to 0 over 1.5s, then unmount
-  //   "journey-empty"  — both texts unmounted; brief moment of pure
-  //                       black overlay (~400ms gap) before journey
-  //                       text mounts. Prevents any text-overlap morph.
-  //   "journey"        — journey 0's title text mounted, fades in via
-  //                       its own slow animation
-  //   "fading-out"     — overlay fades to opacity 0 over 3s revealing
-  //                       the journey shader/imagery underneath
-  //   "gone"           — overlay unmounted; journey visuals are sole layer
-  type IntroStage = "cycle" | "fading-cycle" | "journey-empty" | "journey" | "fading-out" | "gone";
+  // Installation intro stages — three independent layers (bg, cycle
+  // text, journey text) sequenced so the bg fades BEFORE the journey
+  // title shows. That way the journey title lands over the live
+  // shader/AI imagery, not on a black panel.
+  //
+  //   cycle           — bg opaque, "Resonance" cycle text shown
+  //   fading-cycle    — cycle text fades to 0 over 1.5s; bg stays opaque
+  //   fading-bg       — cycle text unmounted; bg fades to 0 over 2.5s,
+  //                     revealing the shader/AI imagery (which has been
+  //                     rendering behind the bg since pre-start)
+  //   journey         — bg gone; journey title fades in via own 2.4s
+  //                     animation, floats over the live visuals
+  //   fading-journey  — journey title fades out over 1.8s
+  //   gone            — everything unmounted; phase change to journey 0
+  type IntroStage = "cycle" | "fading-cycle" | "fading-bg" | "journey" | "fading-journey" | "gone";
   const [introStage, setIntroStage] = useState<IntroStage>("cycle");
   const containerRef = useRef<HTMLDivElement>(null);
   const cursorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,35 +212,32 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
 
       // Refs to scoped timers so an early error listener can abort them.
       let fadeCycleStart: ReturnType<typeof setTimeout> | null = null;
-      let cycleUnmount: ReturnType<typeof setTimeout> | null = null;
+      let fadeBgStart: ReturnType<typeof setTimeout> | null = null;
       let mountJourney: ReturnType<typeof setTimeout> | null = null;
-      let beginFadeOut: ReturnType<typeof setTimeout> | null = null;
+      let fadeJourneyStart: ReturnType<typeof setTimeout> | null = null;
       let finalPhaseChange: ReturnType<typeof setTimeout> | null = null;
       let earlyErrorListener: (() => void) | null = null;
 
-      // Phase machine for the cycle intro — staged so that cycle text,
-      // journey text, and overlay fade never overlap visually.
-      //   t=0      → "Resonance" cycle text mounts + fades in (1.4s)
-      //              and is held visible
-      //   t=7s     → setIntroStage("fading-cycle"): cycle layer
-      //              is unmounted via the React conditional once we
-      //              transition state, BUT we want a smooth opacity
-      //              fade — handled by setting cycle's wrapper opacity
-      //              first, then swapping mode after 1.5s
-      //              (Implemented as two timers below.)
-      //   t=8.5s   → cycle unmounts, brief 400ms gap of pure black
-      //              ("journey-empty" stage) — no text-on-text morph
-      //   t=8.9s   → pre-start journey 0 (audio + shader behind overlay)
-      //              + setIntroStage("journey"): journey title mounts
-      //              and slowly fades in via its own 2.8s animation
-      //   t=17.7s  → begin overlay fade-out (3s slow ease)
-      //   t=20.7s  → snap-change phase to journey 0 (overlay unmounts;
-      //              journey shader has had ~12s to establish)
+      // Phase machine for the cycle intro — staged so layers (bg,
+      // cycle text, journey text) hand off cleanly with no morph.
+      //
+      //   t=0      → cycle text fades in (1.4s) over opaque bg
+      //   t=7s     → cycle text fades out (1.5s) — fading-cycle stage
+      //   t=8.5s   → bg starts fading out (3.0s). Pre-start journey 0
+      //              now: audio loads, shader A/B crossfade begins,
+      //              first AI image generates. All happens BEHIND the
+      //              still-fading bg.
+      //   t=11.5s  → bg fully gone. Pure-shader/AI visible alone.
+      //   t=12.5s  → journey title mounts (after a 1s "world is here"
+      //              beat) and fades in slowly (3.8s) over the live
+      //              shader/AI imagery — never on a black panel.
+      //   t=18.5s  → journey title fades out (1.8s) — fading-journey
+      //   t=20.3s  → phase change to journey 0; overlay fully unmounted
       //
       // No competing texts: installation intro shows "Ascension" title
-      // by swapping its own inner text (1.5s inner fade), then fades
-      // the entire overlay; visualizer-client's journey intro is
-      // suppressed for journey 0 via the store flag set above.
+      // by swapping its own inner text, then fades the entire overlay;
+      // visualizer-client's journey intro is suppressed for journey 0
+      // via the store flag set above.
       // t=INTRO_MS (7s): begin cycle text fade-out
       fadeCycleStart = setTimeout(() => {
         if (sequence.length === 0) {
@@ -249,19 +247,13 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
         setIntroStage("fading-cycle");
       }, INTRO_MS);
 
-      // t=INTRO_MS+1.5s: cycle text unmounts, brief black gap begins
-      cycleUnmount = setTimeout(() => {
-        setIntroStage("journey-empty");
-      }, INTRO_MS + 1500);
-
-      // t=INTRO_MS+1.9s: pre-start journey 0 + mount journey text
-      mountJourney = setTimeout(() => {
+      // t=INTRO_MS+1.5s: cycle text gone. Begin bg fade. Pre-start
+      // journey 0 NOW so audio + shader + AI start loading behind the
+      // still-fading bg. By the time bg is gone (~2.5s later), shader
+      // and AI imagery are visible.
+      fadeBgStart = setTimeout(() => {
         const entry = sequence[0];
-        // Suppress visualizer's intro overlay for journey 0 so it
-        // doesn't fire alongside the installation intro's journey title.
         useAudioStore.getState().setSuppressNextJourneyIntro(true);
-        // Pre-start journey 0 — shader A/B crossfade begins under the
-        // still-opaque installation intro.
         const track = trackForIndex(0);
         if (track) setQueue([track], 0);
         startJourney(entry.journey.id);
@@ -276,8 +268,7 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
             useAudioStore.getState().setCueMarkers(cues);
           } catch { /* engine warming */ }
         }
-        // Mount journey text (its own 2.8s slow fade-in animation runs)
-        setIntroStage("journey");
+        setIntroStage("fading-bg");
 
         // Early error listener: if Ascension's audio fails during the
         // cycle intro window, abort and skip to journey 1.
@@ -287,7 +278,8 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
             // eslint-disable-next-line no-console
             console.warn("[installation] early audio error during cycle intro — skipping to journey 1");
             setSkippedIndices((s) => new Set(s).add(0));
-            if (beginFadeOut) clearTimeout(beginFadeOut);
+            if (mountJourney) clearTimeout(mountJourney);
+            if (fadeJourneyStart) clearTimeout(fadeJourneyStart);
             if (finalPhaseChange) clearTimeout(finalPhaseChange);
             setIntroStage("gone");
             if (sequence.length > 1) {
@@ -298,24 +290,32 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
           };
           el.addEventListener("error", earlyErrorListener);
         } catch { /* engine warming */ }
-      }, INTRO_MS + 1900);
+      }, INTRO_MS + 1500);
 
-      // t=INTRO_MS+10.7s: begin overlay fade-out
-      beginFadeOut = setTimeout(() => {
-        setIntroStage("fading-out");
-      }, INTRO_MS + 10_700);
+      // t=INTRO_MS+5.5s: bg has been gone ~1s. Pure shader/AI has had a
+      // moment to read on its own. Mount journey title (fades in 3.8s
+      // via its own animation) over the live imagery — never on black.
+      mountJourney = setTimeout(() => {
+        setIntroStage("journey");
+      }, INTRO_MS + 5500);
 
-      // t=INTRO_MS+13.7s: phase change → installation overlay unmounts
+      // t=INTRO_MS+11.5s: title has been fully visible ~2s. Begin fade.
+      fadeJourneyStart = setTimeout(() => {
+        setIntroStage("fading-journey");
+      }, INTRO_MS + 11_500);
+
+      // t=INTRO_MS+13.3s: phase change → overlay fully unmounted,
+      // journey is sole visual layer
       finalPhaseChange = setTimeout(() => {
         setIntroStage("gone");
         setPhase({ kind: "journey", index: 0 });
-      }, INTRO_MS + 13_700);
+      }, INTRO_MS + 13_300);
 
       return () => {
         if (fadeCycleStart) clearTimeout(fadeCycleStart);
-        if (cycleUnmount) clearTimeout(cycleUnmount);
+        if (fadeBgStart) clearTimeout(fadeBgStart);
         if (mountJourney) clearTimeout(mountJourney);
-        if (beginFadeOut) clearTimeout(beginFadeOut);
+        if (fadeJourneyStart) clearTimeout(fadeJourneyStart);
         if (finalPhaseChange) clearTimeout(finalPhaseChange);
         if (earlyErrorListener) {
           try {
@@ -487,31 +487,51 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
 
     // ─── Audio play watchdog ──────────────────────────────────────
     // Periodically reconcile the gap between store intent (isPlaying=true)
-    // and element reality (paused). Catches every race where the audio
-    // element ends up paused while the store still wants playback —
-    // including the desync caught by the HUD on Mycelium Dream where the
-    // element loaded fully (readyState=4) but stayed paused after a
-    // journey transition.
+    // and element reality (paused). In installation mode we drop the
+    // isPlaying gate — there's no operator pause UI, so any time the
+    // element is paused-and-ready we should be playing. Catches the
+    // case where startJourney's isPlaying flip raced the canplay event
+    // and play() never got called (which would otherwise strand the
+    // journey at currentTime=0 until the stalled detector skipped it).
     const playWatchdog = setInterval(() => {
       try {
         const el = getAudioEngine().audioElement;
-        const s = useAudioStore.getState();
-        if (s.isPlaying && el.paused && el.readyState >= 2 && !el.error) {
-          // Audio is ready, store wants playback, but element is paused.
-          // Force a play attempt via tryPlay so the rejection (if any)
-          // surfaces in the HUD via lastPlayError.
+        if (el.paused && el.readyState >= 2 && !el.error) {
           tryPlay(el);
         }
       } catch { /* engine gone */ }
     }, 250);
 
+    // ─── Mid-stall re-load attempt ────────────────────────────────
+    // If after 12s the audio element still hasn't started (readyState
+    // low or currentTime stuck at 0), force a fresh URL resolve + load
+    // before the stalled detector gives up at 30s. Catches expired
+    // signed URLs and CDN cold-starts that occasionally bite the
+    // 2nd/3rd journeys in a long-running kiosk session.
+    const reloadAttempt = setTimeout(async () => {
+      try {
+        const el = getAudioEngine().audioElement;
+        if (el.error) return; // already errored — let onError handle skip
+        if (el.currentTime > 0.1) return; // already playing — fine
+        const t = trackForIndex(phase.index);
+        if (!t?.audioUrl) return;
+        // eslint-disable-next-line no-console
+        console.warn(`[installation] ${entry.journey.name}: stuck at 0 after 12s — force-reload`);
+        const { resolveAudioUrl } = await import("@/lib/audio/resolve-audio-url");
+        const fresh = await resolveAudioUrl(t.audioUrl, t.id);
+        el.src = fresh;
+        el.load();
+        // Audio-provider's canplay will tryPlay; watchdog is also live.
+      } catch { /* best-effort */ }
+    }, 12_000);
+
     // Subscribe to store; advance when audio finishes or safety expires.
     const startMs = Date.now();
-    // Soft early-advance: after 15s currentTime hasn't moved off 0 we
-    // give up on this track. Tighter than MAX_JOURNEY_MS but generous
-    // enough that slow CDN starts don't false-trigger. Errors fire
-    // their own immediate skip via the error listener above.
-    const STALLED_THRESHOLD_MS = 15_000;
+    // Soft early-advance: after 30s currentTime hasn't moved off 0 we
+    // give up on this track. Generous so slow CDN starts + the mid-
+    // stall re-load attempt (at 12s) both have time to recover. Errors
+    // fire their own immediate skip via the error listener above.
+    const STALLED_THRESHOLD_MS = 30_000;
     let raf = 0;
     const tick = () => {
       const { currentTime, duration, isPlaying } = useAudioStore.getState();
@@ -575,6 +595,7 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       clearInterval(preloadCheckId);
       clearTimeout(titleHideTimer);
       clearInterval(playWatchdog);
+      clearTimeout(reloadAttempt);
       if (earlyAdvanceTimer) clearTimeout(earlyAdvanceTimer);
       if (endedListener) {
         try {
@@ -599,93 +620,93 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
           the prop wiring + page param are still in place. */}
       {false && debug && <InstallationDebugHud />}
 
-      {/* Installation intro overlay — staged. Cycle text and journey
-          text are NEVER both in the DOM (each is conditionally
-          mounted), so they can't morph into each other visually. Stage
-          machine handles the timing of mount/unmount + the outer
-          opacity transitions for fade-in/out of each. */}
-      {introStage !== "gone" && (phase.kind === "intro" || (phase.kind === "journey" && phase.index === 0 && introStage === "fading-out")) && (
-        <div
-          className="absolute inset-0 z-50 pointer-events-none"
-          style={{
-            // Outer overlay opacity stays at 1 during cycle / fading-
-            // cycle / empty / journey stages — the bg-black continues
-            // to fully cover the journey shader behind. Only at the
-            // very end (fading-out) does the outer overlay fade,
-            // revealing the journey visuals.
-            opacity: introStage === "fading-out" ? 0 : 1,
-            transition: "opacity 3000ms ease-out",
-          }}
-        >
-          <InstallationIntro
-            mode={
-              introStage === "cycle"
-                ? "cycle"
-                : introStage === "fading-cycle"
-                  ? "fading-cycle"
-                  : introStage === "journey-empty"
-                    ? "empty"
-                    : "journey"
-            }
-            journey={sequence[0]?.journey ?? null}
-            trackArtist={sequence[0]?.track?.artist ?? null}
-          />
-        </div>
+      {/* Installation intro overlay — staged. Cycle text, bg, and
+          journey title are three independent layers, each conditionally
+          mounted with its own opacity transition. The intro component
+          handles all visual choreography; we just hand it the current
+          stage. The overlay stays mounted through the journey-0 phase
+          while the journey-title fade-out is still happening. */}
+      {introStage !== "gone" && (phase.kind === "intro" || (phase.kind === "journey" && phase.index === 0 && (introStage === "journey" || introStage === "fading-journey"))) && (
+        <InstallationIntro
+          stage={introStage}
+          journey={sequence[0]?.journey ?? null}
+          trackArtist={sequence[0]?.track?.artist ?? null}
+        />
       )}
       {phase.kind === "credits" && <InstallationCredits />}
 
-      {/* Path dots — only visible during the per-journey title window
-          (~6s when each journey starts) and during ending credits.
-          Hidden during ongoing journey playback so the canvas reads as
-          pure visual. Completed journeys fill with the accent color,
-          current journey is a glowing white dot, upcoming are dim. */}
+      {/* Progress stepper — visible during the per-journey title window
+          (~6s) and during ending credits. Hidden during ongoing journey
+          playback so the canvas stays pure. Five horizontal pill
+          segments give an unmistakable "I of V" read; the current
+          segment glows white, completed segments fill violet, upcoming
+          stay as thin outlines. A small label below names the current
+          journey + position so there's no ambiguity from across a
+          gallery floor. */}
       {titleWindow && sequence.length > 0 && (phase.kind === "journey" || phase.kind === "credits") && (
         <div
-          className="absolute z-30 left-1/2 -translate-x-1/2 flex items-center gap-2"
+          className="absolute z-30 left-1/2 -translate-x-1/2 flex flex-col items-center"
           style={{
-            bottom: "calc(36px + env(safe-area-inset-bottom, 0px))",
-            opacity: 0.9,
-            transition: "opacity 600ms ease",
+            bottom: "calc(40px + env(safe-area-inset-bottom, 0px))",
             pointerEvents: "none",
-            animation: "installationDotsFade 600ms ease-out forwards",
+            animation: "installationStepperFade 600ms ease-out forwards",
+            opacity: 0,
           }}
         >
-          {sequence.map((_, i) => {
-            // In credits, every dot is "done" (full progress).
-            const currentIndex = phase.kind === "journey" ? phase.index : sequence.length;
-            const done = i < currentIndex;
-            const current = phase.kind === "journey" && i === currentIndex;
-            const skipped = skippedIndices.has(i);
-            const size = current ? 10 : 6;
-            const background = skipped
-              ? "rgba(248, 113, 113, 0.55)" // muted red — track failed
-              : done
-                ? "rgba(196, 181, 253, 0.9)"
-                : current
-                  ? "rgba(255, 255, 255, 0.95)"
-                  : "rgba(255, 255, 255, 0.18)";
-            return (
-              <span
-                key={i}
-                aria-hidden
-                title={skipped ? "Track failed — skipped" : undefined}
-                style={{
-                  width: `${size}px`,
-                  height: `${size}px`,
-                  borderRadius: "50%",
-                  background,
-                  boxShadow: current
-                    ? "0 0 14px rgba(196, 181, 253, 0.65)"
-                    : "none",
-                  transition: "all 400ms ease",
-                }}
-              />
-            );
-          })}
+          <div className="flex items-center gap-1.5">
+            {sequence.map((_, i) => {
+              const currentIndex = phase.kind === "journey" ? phase.index : sequence.length;
+              const done = i < currentIndex;
+              const current = phase.kind === "journey" && i === currentIndex;
+              const skipped = skippedIndices.has(i);
+              const background = skipped
+                ? "rgba(248, 113, 113, 0.55)"
+                : done
+                  ? "rgba(196, 181, 253, 0.9)"
+                  : current
+                    ? "rgba(255, 255, 255, 0.95)"
+                    : "rgba(255, 255, 255, 0.10)";
+              const border = !done && !current && !skipped
+                ? "1px solid rgba(255, 255, 255, 0.30)"
+                : "none";
+              return (
+                <span
+                  key={i}
+                  aria-hidden
+                  title={skipped ? "Track failed — skipped" : undefined}
+                  style={{
+                    width: current ? "72px" : "44px",
+                    height: "4px",
+                    borderRadius: "2px",
+                    background,
+                    border,
+                    boxShadow: current
+                      ? "0 0 12px rgba(255, 255, 255, 0.55), 0 0 4px rgba(196, 181, 253, 0.4)"
+                      : "none",
+                    transition: "width 500ms ease, background 400ms ease, box-shadow 400ms ease",
+                  }}
+                />
+              );
+            })}
+          </div>
+          <div
+            className="mt-3 text-white/55"
+            style={{
+              fontFamily: "var(--font-geist-mono)",
+              fontSize: "0.65rem",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              textShadow: "0 1px 8px rgba(0,0,0,0.85)",
+            }}
+          >
+            {phase.kind === "credits"
+              ? `${sequence.length} of ${sequence.length} · Complete`
+              : `${phase.index + 1} of ${sequence.length} · ${sequence[phase.index]?.journey.name ?? ""}`}
+          </div>
           <style jsx>{`
-            @keyframes installationDotsFade {
+            @keyframes installationStepperFade {
               from { opacity: 0; }
-              to { opacity: 0.9; }
+              to { opacity: 1; }
             }
           `}</style>
         </div>

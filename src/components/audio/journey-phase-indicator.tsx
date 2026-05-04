@@ -23,6 +23,17 @@ const PHASE_LABELS: Record<JourneyPhaseId, string> = {
  * and picks a random guidance phrase from the journey definition.
  * Fades in on transitions, holds, then fades out.
  */
+/** Minimum time between consecutive phase-indicator displays. The
+ *  default phase definitions place threshold at 0-10% of the track —
+ *  for a 3-minute song that's only ~18s, which means the threshold→
+ *  expansion transition fires very soon after the indicator becomes
+ *  ready (10-15s after journey start). Without a min interval, the
+ *  audience saw "Awakening" then "Rising" almost back-to-back. 45s
+ *  collapses the short threshold and short return phases into the
+ *  surrounding ones for label purposes — the transcendence/illumination
+ *  transitions are still spaced out and feel contemplative. */
+const PHASE_LABEL_MIN_INTERVAL_MS = 45_000;
+
 export function JourneyPhaseIndicator({
   journey,
   currentPhase,
@@ -31,6 +42,7 @@ export function JourneyPhaseIndicator({
   const [displayPhrase, setDisplayPhrase] = useState<string | null>(null);
   const [displayPhaseId, setDisplayPhaseId] = useState<string | null>(null);
   const prevPhaseRef = useRef<string | null>(null);
+  const lastShownAtRef = useRef<number>(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fadeInTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafRef = useRef<number>(0);
@@ -54,15 +66,35 @@ export function JourneyPhaseIndicator({
   useEffect(() => {
     usedIndicesRef.current.clear();
     prevPhaseRef.current = null;
+    lastShownAtRef.current = 0;
   }, [journey.id]);
 
   // Detect phase changes from the frame-driven currentPhase prop
   useEffect(() => {
     if (!currentPhase) return;
 
+    // First currentPhase observation for this journey — initialize
+    // prevPhaseRef + lastShownAtRef but DON'T fire. The journey title
+    // overlay already names the journey; firing the current phase
+    // label right after the title fades adds noise on top of the same
+    // moment. Phase labels are reserved for actual transitions.
+    if (prevPhaseRef.current === null) {
+      prevPhaseRef.current = currentPhase;
+      lastShownAtRef.current = Date.now();
+      return;
+    }
+
     // Only trigger on actual phase change
     if (currentPhase === prevPhaseRef.current) return;
     prevPhaseRef.current = currentPhase;
+
+    // Min-interval gate — skip transitions that happen too soon after
+    // the previous label. Keeps the experience contemplative; collapses
+    // tightly-spaced phase boundaries (threshold→expansion, return→
+    // integration) into a single show rather than rapid-fire labels.
+    const now = Date.now();
+    if (now - lastShownAtRef.current < PHASE_LABEL_MIN_INTERVAL_MS) return;
+    lastShownAtRef.current = now;
 
     // Find phase data and pick a guidance phrase
     const phaseData = journey.phases.find((p) => p.id === currentPhase);

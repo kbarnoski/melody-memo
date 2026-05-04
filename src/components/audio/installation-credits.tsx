@@ -46,7 +46,7 @@ export function InstallationCredits() {
         my father
       </div>
 
-      {/* Thanks */}
+      {/* Special thanks — life partner */}
       <div
         className="text-white/30"
         style={{
@@ -57,21 +57,20 @@ export function InstallationCredits() {
           marginBottom: "1.25rem",
         }}
       >
-        With thanks to
+        Special thanks to my life partner
       </div>
 
       <p
-        className="text-white/65 max-w-xl"
+        className="text-white/75 max-w-xl"
         style={{
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontStyle: "italic",
           fontWeight: 300,
-          fontSize: "clamp(1.1rem, 2vw, 1.4rem)",
-          lineHeight: 1.7,
+          fontSize: "clamp(1.4rem, 2.4vw, 1.8rem)",
+          lineHeight: 1.5,
         }}
       >
-        Evelina, Johnny, and the countless others who held this project up
-        along the way.
+        Evelina
       </p>
 
       <div

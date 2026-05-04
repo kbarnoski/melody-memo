@@ -5,44 +5,64 @@ import type { Journey } from "@/lib/journeys/types";
 /**
  * Installation loop — intro overlay.
  *
- * Renders BOTH the cycle text ("Resonance — listening room") and the
- * journey text ("Ascension" + credits) simultaneously, with each in
- * its own opacity-transition wrapper. The active one is visible; the
- * other is at opacity 0. Mode swap = parent opacity transition (no
- * remount, no abrupt unmount).
+ * Three independent layers:
+ *   1. Black background (full bg, controlled opacity)
+ *   2. Cycle text ("Resonance — A contemplative listening room")
+ *   3. Journey text (journey 0's title + credits)
  *
- * The journey-text wrapper has a 1.3s transition delay when fading
- * in, so the cycle text fully fades out (1.5s) before the journey
- * text starts appearing — no morph between two texts at the same
- * position.
+ * Each layer is conditionally mounted AND has its own opacity. The
+ * stage machine in installation-loop-client controls the timing so
+ * the bg can fade BEFORE the journey title shows — that way the
+ * journey title lands over the live shader/AI imagery, not on black.
  */
-type Mode = "cycle" | "fading-cycle" | "empty" | "journey";
+type Stage =
+  | "cycle"
+  | "fading-cycle"
+  | "fading-bg"
+  | "journey"
+  | "fading-journey"
+  | "gone";
 
 interface Props {
-  mode?: Mode;
+  stage?: Stage;
   journey?: Journey | null;
   trackArtist?: string | null;
 }
 
-export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Props) {
+export function InstallationIntro({ stage = "cycle", journey, trackArtist }: Props) {
+  // Black background: visible during cycle/fading-cycle/fading-bg,
+  // fades to 0 during fading-bg, gone after.
+  const bgMounted = stage === "cycle" || stage === "fading-cycle" || stage === "fading-bg";
+  const bgOpacity = stage === "fading-bg" ? 0 : 1;
+
+  // Cycle text mounted in cycle + fading-cycle, fades in fading-cycle.
+  const cycleMounted = stage === "cycle" || stage === "fading-cycle";
+  const cycleOpacity = stage === "fading-cycle" ? 0 : 1;
+
+  // Journey text mounted in journey + fading-journey, fades-in via own
+  // animation, fades out via opacity transition in fading-journey.
+  const journeyMounted = stage === "journey" || stage === "fading-journey";
+  const journeyOpacity = stage === "fading-journey" ? 0 : 1;
+
   return (
-    <div className="absolute inset-0 z-50 bg-black">
-      {/* Cycle text layer — mounted in "cycle" and "fading-cycle"
-          stages. In "fading-cycle", layer opacity transitions to 0
-          over 1.5s; parent state then transitions to "empty" which
-          unmounts this layer. */}
-      {(mode === "cycle" || mode === "fading-cycle") && (
+    <>
+      {bgMounted && (
         <div
+          className="absolute inset-0 z-50 pointer-events-none"
           style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 2rem",
-            textAlign: "center",
-            opacity: mode === "fading-cycle" ? 0 : 1,
+            backgroundColor: "black",
+            opacity: bgOpacity,
+            transition: "opacity 3000ms ease-out",
+          }}
+        />
+      )}
+
+      {cycleMounted && (
+        <div
+          className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center px-8 text-center"
+          style={{
+            zIndex: 51,
+            opacity: cycleOpacity,
             transition: "opacity 1500ms ease-out",
           }}
         >
@@ -50,24 +70,13 @@ export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Prop
         </div>
       )}
 
-      {/* "empty" stage: nothing rendered — just the bg-black of the
-          parent overlay. Brief gap (~400ms) between cycle text fade
-          and journey text mount so they never coexist in the DOM. */}
-
-      {/* Journey text layer — mounted only in "journey" stage.
-          Inner content has its own slow fade-in animation. Because
-          cycle text is fully unmounted by this stage, no overlap. */}
-      {mode === "journey" && (
+      {journeyMounted && (
         <div
+          className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center px-8 text-center"
           style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "0 2rem",
-            textAlign: "center",
+            zIndex: 51,
+            opacity: journeyOpacity,
+            transition: "opacity 1800ms ease-out",
           }}
         >
           <JourneyTextInner journey={journey} trackArtist={trackArtist} />
@@ -80,7 +89,7 @@ export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Prop
           to { opacity: 1; }
         }
       `}</style>
-    </div>
+    </>
   );
 }
 
@@ -143,7 +152,7 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
   if (!journey) return null;
   const creator = journey.creatorName || "Karel Barnoski";
   return (
-    <div>
+    <div style={{ animation: "installationContentFade 3800ms ease-out forwards", opacity: 0 }}>
       <div
         className="text-white/45"
         style={{
@@ -152,41 +161,45 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           marginBottom: "1.5rem",
+          textShadow: "0 2px 12px rgba(0,0,0,0.85)",
         }}
       >
         Journey
       </div>
       <div
-        className="text-white/95"
+        className="text-white"
         style={{
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontWeight: 300,
           fontSize: "clamp(3rem, 6.5vw, 5rem)",
           letterSpacing: "-0.01em",
           lineHeight: 1.05,
+          textShadow: "0 4px 24px rgba(0,0,0,0.9)",
         }}
       >
         {journey.name}
       </div>
       {journey.subtitle && (
         <div
-          className="text-white/55 mt-3"
+          className="text-white/65 mt-3"
           style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontStyle: "italic",
             fontSize: "clamp(1rem, 2vw, 1.4rem)",
             letterSpacing: "0.01em",
+            textShadow: "0 2px 16px rgba(0,0,0,0.85)",
           }}
         >
           {journey.subtitle}
         </div>
       )}
       <div
-        className="text-white/35 mt-10"
+        className="text-white/45 mt-10"
         style={{
           fontFamily: "var(--font-geist-mono)",
           fontSize: "0.78rem",
           letterSpacing: "0.05em",
+          textShadow: "0 2px 12px rgba(0,0,0,0.85)",
         }}
       >
         by {creator}
@@ -194,12 +207,13 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
       </div>
       {journey.dedication && (
         <div
-          className="text-white/40 mt-8 max-w-2xl mx-auto"
+          className="text-white/55 mt-8 max-w-2xl mx-auto"
           style={{
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontStyle: "italic",
             fontSize: "clamp(0.95rem, 1.6vw, 1.15rem)",
             letterSpacing: "0.02em",
+            textShadow: "0 2px 14px rgba(0,0,0,0.85)",
           }}
         >
           {journey.dedication}

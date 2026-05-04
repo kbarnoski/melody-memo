@@ -62,47 +62,52 @@ export default async function InstallationPage({ searchParams }: Props) {
       }
     }
 
-    // Resolve PAIRED_TRACKS patterns → recording rows so we can hand the
-    // exact track to a journey by id rather than mid-flight pattern match.
-    // Each entry value is either:
+    // Resolve PAIRED_TRACKS values → recording rows. Two value formats:
     //   "%pattern%"  — SQL ILIKE pattern; first matching title wins
-    //   "=Exact"     — exact title match (no substring); avoids collisions
-    //                  like "17th St 63" vs "17th St 63 spectre".
-    // Always restricted to the current user's recordings — installation
-    // pairings should never play someone else's track.
+    //   "=Exact"     — exact title match; avoids collisions like
+    //                  "17th St 63" vs "17th St 63 spectre"
+    // Restricted to the current user's recordings — installation pairings
+    // never play someone else's track.
+    //
+    // Exact matches are queried separately because PostgREST OR-filter
+    // values with spaces are fiddly to encode reliably (URL encoding
+    // breaks it; quoting requires careful escaping). Two queries is
+    // simpler and more robust than one OR with mixed types.
     const pairedPatterns = Object.entries(PAIRED_TRACKS);
     const pairedRecordingByJourneyId: Record<string, typeof featuredRecordings[number]> = {};
-    if (pairedPatterns.length > 0) {
-      const orFilter = pairedPatterns
-        .map(([, p]) =>
-          p.startsWith("=")
-            ? `title.eq.${encodeURIComponent(p.slice(1))}`
-            : `title.ilike.${p}`,
-        )
-        .join(",");
-      const { data: pairedRows } = await supabase
+
+    const ilikePatterns = pairedPatterns.filter(([, p]) => !p.startsWith("="));
+    const exactPatterns = pairedPatterns.filter(([, p]) => p.startsWith("="));
+
+    // ILIKE patterns — single OR query
+    if (ilikePatterns.length > 0) {
+      const orFilter = ilikePatterns.map(([, p]) => `title.ilike.${p}`).join(",");
+      const { data: ilikeRows } = await supabase
         .from("recordings")
         .select("id, title, artist, duration")
         .eq("user_id", authUser.id)
         .or(orFilter);
-      if (pairedRows) {
-        for (const [jid, p] of pairedPatterns) {
-          const isExact = p.startsWith("=");
-          if (isExact) {
-            const exactTitle = p.slice(1);
-            const hit = (pairedRows as typeof featuredRecordings).find(
-              (r) => (r.title ?? "") === exactTitle,
-            );
-            if (hit) pairedRecordingByJourneyId[jid] = hit;
-          } else {
-            const needle = p.replace(/^%|%$/g, "").toLowerCase();
-            const hit = (pairedRows as typeof featuredRecordings).find((r) =>
-              (r.title ?? "").toLowerCase().includes(needle),
-            );
-            if (hit) pairedRecordingByJourneyId[jid] = hit;
-          }
+      if (ilikeRows) {
+        for (const [jid, p] of ilikePatterns) {
+          const needle = p.replace(/^%|%$/g, "").toLowerCase();
+          const hit = (ilikeRows as typeof featuredRecordings).find((r) =>
+            (r.title ?? "").toLowerCase().includes(needle),
+          );
+          if (hit) pairedRecordingByJourneyId[jid] = hit;
         }
       }
+    }
+
+    // Exact matches — one query each (simple .eq, no OR-encoding issues)
+    for (const [jid, p] of exactPatterns) {
+      const exactTitle = p.slice(1);
+      const { data: row } = await supabase
+        .from("recordings")
+        .select("id, title, artist, duration")
+        .eq("user_id", authUser.id)
+        .eq("title", exactTitle)
+        .maybeSingle();
+      if (row) pairedRecordingByJourneyId[jid] = row as typeof featuredRecordings[number];
     }
 
     const toTrack = (r: { id: string; title: string; artist: string | null; duration: number | null }): Track => ({

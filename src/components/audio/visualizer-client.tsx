@@ -444,12 +444,13 @@ export function VisualizerClient({
         useAudioStore.getState().setSuppressNextJourneyIntro(false);
       }
       setPhaseIndicatorReady(false);
-      // Intro overlay duration. Installation mode keeps the original
-      // 6s — long enough for the title to land while AI imagery soft-
-      // fades and shader A/B crossfades, short enough that the journey
-      // body starts unhindered.
+      // Intro overlay duration. 6s for both modes. Phase-indicator
+      // delay is longer in installation mode (14s) so the indicator
+      // doesn't appear while the installation cycle intro overlay is
+      // still up — avoids "Awaken" / similar phase labels overlapping
+      // with the journey title text in the cycle intro.
       const introMs = 6000;
-      const phaseReadyMs = 8000;
+      const phaseReadyMs = installationMode ? 14000 : 8000;
       journeyIntroTimerRef.current = setTimeout(() => {
         setJourneyIntroVisible(false);
       }, introMs);

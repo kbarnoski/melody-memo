@@ -5,17 +5,16 @@ import type { Journey } from "@/lib/journeys/types";
 /**
  * Installation loop — intro overlay.
  *
- * Has two text modes:
- *   - "cycle":   "Resonance — A contemplative listening room" branding
- *   - "journey": the first journey's title + credits (replaces the
- *                visualizer-client's normal journey intro for journey 0
- *                so the cycle handoff doesn't show two competing
- *                overlays at once)
+ * Renders BOTH the cycle text ("Resonance — listening room") and the
+ * journey text ("Ascension" + credits) simultaneously, with each in
+ * its own opacity-transition wrapper. The active one is visible; the
+ * other is at opacity 0. Mode swap = parent opacity transition (no
+ * remount, no abrupt unmount).
  *
- * The outer black layer is fully opaque from frame 1 — only the inner
- * text content fades in. Swapping mode renders a different inner text
- * block under the same React key, so the inner fade animation runs
- * cleanly each time.
+ * The journey-text wrapper has a 1.3s transition delay when fading
+ * in, so the cycle text fully fades out (1.5s) before the journey
+ * text starts appearing — no morph between two texts at the same
+ * position.
  */
 type Mode = "cycle" | "journey";
 
@@ -27,12 +26,46 @@ interface Props {
 
 export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Props) {
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black px-8 text-center">
-      {mode === "cycle" ? (
-        <CycleText />
-      ) : (
-        <JourneyText journey={journey} trackArtist={trackArtist} />
-      )}
+    <div className="absolute inset-0 z-50 bg-black">
+      {/* Cycle text layer */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 2rem",
+          textAlign: "center",
+          opacity: mode === "cycle" ? 1 : 0,
+          transition: "opacity 1500ms ease-out",
+        }}
+      >
+        <CycleTextInner />
+      </div>
+
+      {/* Journey text layer */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 2rem",
+          textAlign: "center",
+          opacity: mode === "journey" ? 1 : 0,
+          // Delay fade-in so cycle text fully clears first.
+          transition:
+            mode === "journey"
+              ? "opacity 2200ms ease-out 1300ms"
+              : "opacity 1500ms ease-out",
+        }}
+      >
+        <JourneyTextInner journey={journey} trackArtist={trackArtist} />
+      </div>
 
       <style jsx>{`
         @keyframes installationContentFade {
@@ -44,12 +77,9 @@ export function InstallationIntro({ mode = "cycle", journey, trackArtist }: Prop
   );
 }
 
-function CycleText() {
+function CycleTextInner() {
   return (
-    <div
-      key="cycle"
-      style={{ animation: "installationContentFade 1400ms ease-out forwards", opacity: 0 }}
-    >
+    <div style={{ animation: "installationContentFade 1400ms ease-out forwards", opacity: 0 }}>
       <div
         className="text-white/90"
         style={{
@@ -58,7 +88,6 @@ function CycleText() {
           fontSize: "clamp(3.5rem, 8vw, 6rem)",
           letterSpacing: "-0.02em",
           lineHeight: 1.05,
-          textAlign: "center",
         }}
       >
         Resonance
@@ -71,7 +100,6 @@ function CycleText() {
           fontWeight: 300,
           fontSize: "clamp(1.1rem, 2.4vw, 1.7rem)",
           letterSpacing: "0.01em",
-          textAlign: "center",
         }}
       >
         A contemplative listening room
@@ -83,7 +111,6 @@ function CycleText() {
           fontWeight: 400,
           fontSize: "clamp(0.85rem, 1.4vw, 1rem)",
           lineHeight: 1.7,
-          textAlign: "center",
         }}
       >
         Composed music drives a slow audiovisual landscape — shaders, light,
@@ -97,7 +124,6 @@ function CycleText() {
           fontSize: "0.72rem",
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          textAlign: "center",
         }}
       >
         by Karel Barnoski
@@ -106,14 +132,11 @@ function CycleText() {
   );
 }
 
-function JourneyText({ journey, trackArtist }: { journey?: Journey | null; trackArtist?: string | null }) {
+function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; trackArtist?: string | null }) {
   if (!journey) return null;
   const creator = journey.creatorName || "Karel Barnoski";
   return (
-    <div
-      key={`journey-${journey.id}`}
-      style={{ animation: "installationContentFade 2800ms ease-out forwards", opacity: 0 }}
-    >
+    <div>
       <div
         className="text-white/45"
         style={{

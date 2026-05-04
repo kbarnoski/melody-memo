@@ -203,6 +203,11 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
       // Reset intro overlay to cycle text at the top of every loop.
       setIntroStage("cycle");
 
+      // Refs to scoped timers so an early error listener can abort them.
+      let beginFadeOut: ReturnType<typeof setTimeout> | null = null;
+      let finalPhaseChange: ReturnType<typeof setTimeout> | null = null;
+      let earlyErrorListener: (() => void) | null = null;
+
       // Phase machine for the cycle intro — paced to feel mesmerizing
       // rather than rushed.
       //   t=0     → show "Resonance" cycle text (1.4s fade in, then held)
@@ -244,28 +249,59 @@ export function InstallationLoopClient({ sequence, fallbackTracks, debug }: Prop
             useAudioStore.getState().setCueMarkers(cues);
           } catch { /* engine warming */ }
         }
-        // Swap inner text: cycle → journey (1.5s inner fade in).
+        // Swap inner text: cycle → journey.
         setIntroStage("journey");
+
+        // Early error listener: if Ascension's audio fails during the
+        // cycle intro window (before the planned phase change), abort
+        // the cycle intro flow and skip directly to journey 1. Avoids
+        // the orphaned "Ascension" title showing while audio is dead
+        // and the loop is silently stalled.
+        try {
+          const el = getAudioEngine().audioElement;
+          earlyErrorListener = () => {
+            // eslint-disable-next-line no-console
+            console.warn("[installation] early audio error during cycle intro — skipping to journey 1");
+            setSkippedIndices((s) => new Set(s).add(0));
+            if (beginFadeOut) clearTimeout(beginFadeOut);
+            if (finalPhaseChange) clearTimeout(finalPhaseChange);
+            setIntroStage("gone");
+            // Jump straight to journey 1 (skip Ascension entirely)
+            if (sequence.length > 1) {
+              setPhase({ kind: "journey", index: 1 });
+            } else {
+              setPhase({ kind: "credits" });
+            }
+          };
+          el.addEventListener("error", earlyErrorListener);
+        } catch { /* engine warming */ }
       }, INTRO_MS);
 
-      // Hold the journey title for 8s (3s fade-in + 5s held), then
-      // fade the whole overlay out slowly.
-      const beginFadeOut = setTimeout(() => {
+      // Hold the journey title (1.3s delay + 2.2s fade-in + 6.5s held),
+      // then fade the whole overlay out slowly. The 2s extension over
+      // the previous timing makes the journey title sit longer before
+      // the overlay fades — feels more mesmerizing.
+      beginFadeOut = setTimeout(() => {
         setIntroStage("fading-out");
-      }, INTRO_MS + 8_000);
+      }, INTRO_MS + 10_000);
 
-      // After fade completes, change phase. Journey shader has had ~11s
-      // to establish via the visualizer's A/B crossfade, so the unmount
-      // reveals the journey visuals cleanly.
-      const finalPhaseChange = setTimeout(() => {
+      // After overlay fade completes, change phase. Journey shader has
+      // had ~13s to establish via the visualizer's A/B crossfade, so
+      // the unmount reveals the journey visuals cleanly.
+      finalPhaseChange = setTimeout(() => {
         setIntroStage("gone");
         setPhase({ kind: "journey", index: 0 });
-      }, INTRO_MS + 11_000);
+      }, INTRO_MS + 13_000);
 
       return () => {
         clearTimeout(showCycleText);
-        clearTimeout(beginFadeOut);
-        clearTimeout(finalPhaseChange);
+        if (beginFadeOut) clearTimeout(beginFadeOut);
+        if (finalPhaseChange) clearTimeout(finalPhaseChange);
+        if (earlyErrorListener) {
+          try {
+            getAudioEngine().audioElement.removeEventListener("error", earlyErrorListener);
+          } catch { /* engine gone */ }
+        }
       };
     }
 

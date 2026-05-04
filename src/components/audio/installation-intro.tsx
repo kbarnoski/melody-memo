@@ -52,7 +52,7 @@ export function InstallationIntro({ stage = "cycle", journey, trackArtist }: Pro
           style={{
             backgroundColor: "black",
             opacity: bgOpacity,
-            transition: "opacity 3000ms ease-out",
+            transition: "opacity 4500ms ease-out",
           }}
         />
       )}
@@ -152,10 +152,34 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
   if (!journey) return null;
   const creator = journey.creatorName || "Karel Barnoski";
   return (
-    <div style={{ animation: "installationContentFade 3800ms ease-out forwards", opacity: 0 }}>
+    <div
+      style={{
+        animation: "installationContentFade 3800ms ease-out forwards",
+        opacity: 0,
+        position: "relative",
+        padding: "4rem 6rem",
+        maxWidth: "90vw",
+      }}
+    >
+      {/* Soft radial-gradient backdrop — matches the in-journey intro
+          overlay (visualizer-client). The shader behind can be bright
+          or busy; without this halo the title and dedication can fight
+          for legibility. blur(40px) keeps the edge soft so the backdrop
+          doesn't read as a "card" — it's just a quiet darkening of the
+          area behind the text. */}
+      <div
+        style={{
+          position: "absolute",
+          inset: "-40%",
+          background: "radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, transparent 65%)",
+          filter: "blur(40px)",
+          pointerEvents: "none",
+        }}
+      />
       <div
         className="text-white/45"
         style={{
+          position: "relative",
           fontFamily: "var(--font-geist-mono)",
           fontSize: "0.72rem",
           letterSpacing: "0.18em",
@@ -169,6 +193,7 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
       <div
         className="text-white"
         style={{
+          position: "relative",
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontWeight: 300,
           fontSize: "clamp(3rem, 6.5vw, 5rem)",
@@ -183,6 +208,7 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
         <div
           className="text-white/65 mt-3"
           style={{
+            position: "relative",
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontStyle: "italic",
             fontSize: "clamp(1rem, 2vw, 1.4rem)",
@@ -196,6 +222,7 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
       <div
         className="text-white/45 mt-10"
         style={{
+          position: "relative",
           fontFamily: "var(--font-geist-mono)",
           fontSize: "0.78rem",
           letterSpacing: "0.05em",
@@ -209,6 +236,7 @@ function JourneyTextInner({ journey, trackArtist }: { journey?: Journey | null; 
         <div
           className="text-white/55 mt-8 max-w-2xl mx-auto"
           style={{
+            position: "relative",
             fontFamily: "'Cormorant Garamond', Georgia, serif",
             fontStyle: "italic",
             fontSize: "clamp(0.95rem, 1.6vw, 1.15rem)",

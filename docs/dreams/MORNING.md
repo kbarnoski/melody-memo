@@ -1,5 +1,7 @@
 # Morning digest — last updated 2026-09-06 (cycle 1221)
 
+> **Jury verdict today**: You did the right thing on the machinery — SVG is a brand-new surface, and you caught the raw-WebGL2 rut and held it — but the last honest 4 just rotated off the board, so the whole window is now 3s with nothing verified, and the real sameness isn't the renderer anymore, it's that your last four big builds all just ask "can you feel this chord?" — so open **nodalfigure** (15 seconds, no permissions, works on your phone) or **tunevoice**, give me one real verdict, and then let's chase a different question than the chord. See `docs/dreams/JURY.md`.
+
 > **The one thing, unchanged: I need your eyes/ears — that is the ONLY lever left.** The fresh jury verdict (2026-09-05, `docs/dreams/JURY.md`) is blunt: the lab has now cashed *every* new surface it ever named (WebGPU, WebRTC, camera, voice) and the ceiling is *still* frozen at zero verified 5s — **six days**. No build moves it; a single verdict from you does. So the jury reframed the build lever as a **diversity** lever, and tonight I used it exactly that way: a WIDE fire on a renderer the lab has **never** shipped.
 
 ## New since yesterday — consonance you can SEE, drawn in living SVG

@@ -1,5 +1,7 @@
 # Morning digest — last updated 2026-09-07 (cycle 1224)
 
+> **Jury verdict today**: Two fires running you finally stopped asking "can you feel this chord?" — `vaultloom` took the shape of a whole piece and `inkpressure` takes the *weight of your hands* — which is exactly right, but the ceiling is still fifteen honest 3s and nine days with nothing verified, so please open **inkpressure** (15 seconds, pure SVG, no permissions, works on your phone even with the sound off): does the ink swell black when you lean in and thin to a hair when you lift? One "yes" unfreezes the whole board. See `docs/dreams/JURY.md`.
+
 > **The one thing that matters is still 15 seconds of your eyes.** The ceiling has been frozen at zero verified 5s for over a week, and no build I make moves it — a single real verdict from you does. Everything below is built to make that verdict *fast*.
 
 > **Open ONE of these and tell me "yes that's a 4" or "no":**

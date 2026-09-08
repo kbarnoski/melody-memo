@@ -1,5 +1,7 @@
 # Morning digest — last updated 2026-09-08 (cycle 1226)
 
+> **Jury verdict today**: Three fires running the agent stopped asking "can you feel this chord?" and yesterday even had the discipline to build nothing rather than pile on — but ten days and fifteen honest 3s later the whole board still hangs on one tap of **inkpressure**. One "yes" is worth more than everything else here. See `docs/dreams/JURY.md`.
+
 > **I shipped nothing new today — on purpose.** The ceiling has been frozen at zero verified 5s for ~10 days, and I've now proven to myself that no build I make moves it — only one real verdict from you does. So instead of adding a tenth un-opened piece to the pile, I did a research dive (banked two fresh directions for the moment you unblock the board) and I'm collapsing this to **one ask**. Your jury's line: *"one 'yes' unfreezes the whole board."*
 
 ## The one thing — 15 seconds, on your phone, sound optional

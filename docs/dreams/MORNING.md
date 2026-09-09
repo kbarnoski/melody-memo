@@ -1,23 +1,21 @@
-# Morning digest — last updated 2026-09-08 (cycle 1226)
+# Morning digest — last updated 2026-09-09 (cycle 1227)
 
-> **Jury verdict today**: Three fires running the agent stopped asking "can you feel this chord?" and yesterday even had the discipline to build nothing rather than pile on — but ten days and fifteen honest 3s later the whole board still hangs on one tap of **inkpressure**. One "yes" is worth more than everything else here. See `docs/dreams/JURY.md`.
+> **Still one ask, made easier.** Eleven days, `0 / 15 / 0` — fifteen built pieces, none opened, and the only thing that moves the lab is one 15-second verdict from you. Yesterday I held and shipped nothing. Today I built the one thing your jury said actually targets that: not a new piece, but a **front door** that shows the effect in a glance so the yes/no is trivial.
 
-> **I shipped nothing new today — on purpose.** The ceiling has been frozen at zero verified 5s for ~10 days, and I've now proven to myself that no build I make moves it — only one real verdict from you does. So instead of adding a tenth un-opened piece to the pile, I did a research dive (banked two fresh directions for the moment you unblock the board) and I'm collapsing this to **one ask**. Your jury's line: *"one 'yes' unfreezes the whole board."*
+## The one thing — a glance, on your phone, sound off
+> 👁 **[17104-firstlook](https://getresonance.vercel.app/dream/17104-firstlook)** — it loops on its own the moment it opens. No press-play, no mic, no permission.
+> Watch the ink line: **does it swell black where he leans into a forte, and thin to a dry hair where he lifts?**
+> That's inkpressure's effect, sped up 3× and pre-playing so you don't have to wait. Tap **"yes, that reads"** or **"no."** One tap unfreezes eleven days.
 
-## The one thing — 15 seconds, on your phone, sound optional
-> 👁 **[17024-inkpressure](https://getresonance.vercel.app/dream/17024-inkpressure)** — pure SVG, no mic, no permission, works even muted.
-> Press play and watch the ink line: **does it swell black-heavy where you lean into a forte, and thin to a dry hair where you lift to a whisper?**
-> Reply **"yes, that's a 4"** or **"no."** Either answer tells me a direction is right or wrong — both are gold. This is your jury's own pick: *"if exactly one piece gets opened tomorrow, this is it."*
+(It's drawn from your real recording — "Bath," Welcome Home. The page has one button to open the full **inkpressure** piece, and one to hear the actual take in sync. But the muted loop alone is the whole ask.)
 
-(If inkpressure lands, the next four are ready and each ~15–20s: **voiceloom** — your counterpoint pulled into separate woven voices; **vaultloom** — a whole take as one growing cathedral; **nodalfigure** — consonance drawn as a closing figure; **tunevoice** — the ears-call. But please, just the one above first.)
+## Why a lure, not a new prototype
+- The bottleneck was never ideas, renderers, or concepts — in eleven days I've cashed WebGPU, WebRTC, camera, voice, SVG, three.js architecture, touch-dynamics, and voice-leading, and the ceiling never twitched. It's **15 seconds of you.**
+- Your jury named the single build that targets *that* instead of adding to the pile: an "open-this-first" preview whose only job is to make the ask irresistible at a glance. I can't edit the shipped inkpressure (immutability), so this is its companion front door. It's designed to *replace* the old ask, not add to it — a glance beats press-and-watch.
+- I banked **zero** new ideas today (your jury: don't grow a second pile). Just the one page, and the one ask.
 
-## Why nothing new today
-- Ten days, `0 / 15 / 0` — fifteen honest "3"s, zero verified 4s or 5s. In that window I've cashed WebGPU, WebRTC, camera, voice, SVG, three.js architecture, touch-dynamics, and voice-leading — eight fresh categories — and the ceiling never twitched. The bottleneck is not ideas, renderers, or concepts. It's **15 seconds of you.**
-- Your jury (and my own note from last cycle) both pre-committed: *if still nothing verified by the next fire, ship NOTHING new.* So I held the line. An agent that keeps flooding you with un-opened work isn't helping — restraint is the right move here, and I'd rather be honest about that than hand you a tenth piece.
-
-## Banked for the moment you say "go" (research §2026-09-08)
-- **breathline** *(time-feel)* — does your **rubato have a slow breath?** New finding (bioRxiv, Mar 2026): expressive timing isn't random push-pull — it has a slow (<1 Hz) *periodic* structure. I'd reveal the breathing cycle of where you rush and where you hold back. The strongest next non-chord direction.
-- **thehush** *(space/silence)* — silence as **material**, not fade-out (Milan Design Week 2026): your rests build a physical room, notes carve alcoves into it. Only if it's genuinely un-built (silence is heavy territory in the lab already).
+## Still queued for the moment you say "go" (nothing new added)
+- **breathline** *(time-feel)* — does your **rubato have a slow breath?** (bioRxiv Mar-2026: expressive timing is a slow <1 Hz *periodic* wave, not noise.) This is the next non-chord build the moment the board unblocks. A fresh 2026 finding (ASAP dataset) even ties it to the exact touch-dynamics inkpressure/firstlook draw — timing and dynamics are the coupled core of expression.
 
 ## Open question for you
-- Just tap **inkpressure** and say yes or no. That single verdict is worth more than everything else I could build this week — it tells me whether "the weight of your hands as ink" is a real 4, and unfreezes ten days of frozen ceiling.
+- Just open **firstlook** and answer yes or no. That single tap is worth more than anything else I could build this week — and it's now a glance, not a chore.

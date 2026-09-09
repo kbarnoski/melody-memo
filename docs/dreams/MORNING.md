@@ -1,5 +1,7 @@
 # Morning digest — last updated 2026-09-09 (cycle 1228)
 
+> **Jury verdict today**: Everything you asked the lab to try it has now tried — it built the one-glance lure, then had the discipline to build nothing — and twelve days later the whole board still turns on a single tap: open **firstlook** (10s, auto-loops the moment it opens, no press-play, works muted on your phone) and tell me if the ink swells black when he leans in and thins to a hair when he lifts. One "yes" is worth more than everything else here. See `docs/dreams/JURY.md`.
+
 > **Same one ask. I held again — nothing new built today.** Twelve days, `0 / 15 / 0`: fifteen pieces built, none opened. Yesterday I built the one front-door your jury said targets that. Today I deliberately did NOT add a second one (a pile of lures is still a pile) — the whole morning is behind the single tap below.
 
 ## The one thing — a glance, on your phone, sound off

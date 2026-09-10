@@ -1,20 +1,21 @@
-# Morning digest — last updated 2026-09-09 (cycle 1228)
+# Morning digest — last updated 2026-09-10 (cycle 1229)
 
-> **Jury verdict today**: Everything you asked the lab to try it has now tried — it built the one-glance lure, then had the discipline to build nothing — and twelve days later the whole board still turns on a single tap: open **firstlook** (10s, auto-loops the moment it opens, no press-play, works muted on your phone) and tell me if the ink swells black when he leans in and thins to a hair when he lifts. One "yes" is worth more than everything else here. See `docs/dreams/JURY.md`.
-
-> **Same one ask. I held again — nothing new built today.** Twelve days, `0 / 15 / 0`: fifteen pieces built, none opened. Yesterday I built the one front-door your jury said targets that. Today I deliberately did NOT add a second one (a pile of lures is still a pile) — the whole morning is behind the single tap below.
+> **Third day, same one ask — I built nothing again, on purpose.** 13 days, `0 / 15 / 0`: fifteen pieces, none opened. The bottleneck was never ideas or renderers — it's 15 seconds of you at one page. So no new pages, zero new ideas banked. The whole morning is the single tap below.
 
 ## The one thing — a glance, on your phone, sound off
 > 👁 **[17104-firstlook](https://getresonance.vercel.app/dream/17104-firstlook)** — it loops on its own the moment it opens. No press-play, no mic, no permission.
 > Watch the ink line: **does it swell black where he leans into a forte, and thin to a dry hair where he lifts?**
-> Tap **"yes, that reads"** or **"no."** One tap unfreezes twelve days. (Drawn from your real "Bath," Welcome Home.)
+> Tap **"yes, that reads"** or **"no."** One tap unfreezes 13 days. (Drawn from your real "Bath," Welcome Home.)
 
-## Why nothing new today
-- The bottleneck was never ideas, renderers, or concepts — I've cashed WebGPU, WebRTC, camera, voice, SVG, three.js, touch-dynamics, voice-leading, and the ceiling never twitched. It's **15 seconds of you.**
-- So today I built nothing and banked **zero** new ideas — holding harder, not wider (your jury's call). More pages would be more inventory, not more signal.
+## A question I owe you — the cadence itself
+- This is the **third fire in a row** I've held and built nothing. That's the right call for a board that isn't buying — but three holds is also a signal about *me*: fires twice a day may be over-producing for a lab that's waiting on one human tap.
+- **Your call:** keep 2×/day, drop to 1×/day, or **pause the agent entirely until you verify something** and just resume me when you want a build. I'll follow whatever you decide. (I can't change the schedule myself — it's set outside my scope.)
+
+## One infra option, if the freeze is really about *me not being able to see my own work*
+- Fresh this week: **vgpu.sh** (Vercel, Aug 27) — a headless WebGPU renderer that runs in CI. In principle it'd let me drop a real *screenshot* of a piece into this digest instead of a text promise. Caveat: it proves pixels render, not that an effect *reads to you* — so it narrows the gap, doesn't close it. Flagging only; I built nothing toward it.
 
 ## Queued for the moment you say "go" (nothing added)
-- **breathline** *(time-feel)* — does your **rubato breathe on a slow pulse?** Today's research sharpened it: expressive timing carries a shared **~0.36 Hz** (~2.8-second) oscillation, so I can draw that exact rhythm of your push-and-pull, not guess it. First non-chord build the instant the board unblocks.
+- **breathline** *(time-feel)* — does your **rubato breathe on a slow pulse?** Research still points to a shared **~0.36 Hz** (~2.8s) oscillation in expressive timing, so I'd draw that exact push-and-pull. First non-chord build the instant the board unblocks — off firstlook's tags (warm/neutral, Canvas2D or audio-forward, not SVG).
 
 ## Open question for you
-- Just open **firstlook** and answer yes or no. That single tap is worth more than anything else I could build this week.
+- Open **firstlook** (yes/no), or tell me the cadence you want. Either one moves this more than anything I could build this week.

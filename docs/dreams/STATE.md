@@ -1,3 +1,23 @@
+## Cycle 1229 — 2026-09-10T00:5xZ (2026-09-09 17:45 PT fire) · **HOLD — third consecutive; no proto, ZERO seeds. Surfaced the cadence question to Karel.**
+
+_(Two lines of substance, per jury 2026-09-08 #4: on a frozen board the log itself is inventory — state the decision + evidence, nothing more.)_
+
+**Orient.** `git fetch && checkout main && pull --ff-only` → fast-forwarded `e1e3a05..7cbc74a` (15 commits incl. jury 2026-09-09 + c1228 hold). `node_modules` absent → `npm ci --ignore-scripts` (Node 20.20.2; env Node 22 blocked by prebuild gate) → EXIT 0. Re-read AGENT.md + JURY.md 2026-09-09 + STATE/IDEAS/INDEX/MORNING/RESEARCH heads. **Votes: 43 loved, unchanged; grep-verified NONE on any 16xxx/17xxx ship.** Logs all <2MB (INDEX exempt), no rotation.
+
+**Decide — HOLD. Exactly the condition c1228's queued note + jury 2026-09-09 #2/#4 pre-committed to.** Ceiling `0/15/0`, now ~13 days flat; nothing verified since the concept-break; firstlook (the sanctioned lure) already stands as the one door. c1228 queued: *"a THIRD research-only fire would itself be a pile of holds… consider the most restrained option… OR flag in MORNING that the twice-daily cadence itself may be over-producing, and let Karel decide."* Jury #2: do NOT build a second lure/third front-door; #4: collapse the log. → **HOLD, no build, no seeds; and surface the cadence question** (three holds = the standoff the queued note named). `mode: HOLD (no fan-out). Ambition/Diversity: N/A (no build)` — board unchanged from jury 2026-09-09: `banned=[pointer/touch (5×) · chord-consonance (~5×) · cool-luminous (5×)] · released=[keyboard · DOM-typographic · prosody · near-dark] · WATCH=[three.js · raw-WebGL2 · SVG (all 3×)] · rested=[audio-only 0× · Canvas2D 1×]`.
+
+**Research-first (RESEARCH §2026-09-09 c1229).** Two searches. (1) PianoKontext (arXiv 2606.12282, Jun-2026) frames expressive rendering as deviation-over-deadpan — corroborates the queued `breathline`, no new direction. (2) **vgpu.sh (Vercel, Aug-27-2026, genuinely <30d): headless WebGPU verify in Node/CI.** Surprising because it aims at the lab's exact freeze ("not run in this env"), but it verifies *pixels render*, not *that a human reads the effect* — so it's an INFRA note for Karel, NOT a build seed. Banked ZERO IDEAS seeds.
+
+**Act — RESEARCH-ONLY (no `src/app/dream/**` change; no builders).** Rewrote MORNING: kept the SINGLE firstlook ask; added the honest cadence flag for Karel; noted vgpu.sh as an infra option he may want. IDEAS/INDEX unchanged.
+
+**Validate.** No code changed. Substance/dosing self-check on staged docs diff → empty (verified). Ran `npm run build` anyway (result at commit). `catalog.generated.json` unchanged (no new README).
+
+**Log + commit.** STATE (this) + RESEARCH §c1229 + MORNING. One commit, push main.
+
+**Queued next (c1230).** Verification is still the only lever. If Karel taps firstlook / any vote changes / he says go → cash `breathline` (audio-forward or Canvas2D, warm/neutral, NOT SVG/three.js/cool-luminous). If he answers the cadence question → follow his call. If STILL nothing and no cadence answer → the next fire should be near-empty (dive + one-line log, no MORNING churn) — do NOT build, do NOT bank, do NOT re-ask a fourth way. The pile discipline holds until a human acts.
+
+---
+
 ## Cycle 1228 — 2026-09-09T12:5xZ (05:45 PT fire) · **HOLD — no proto, ZERO seeds (second consecutive anti-pile fire, jury 2026-09-08 #3 "hold harder not wider")** — RESEARCH-ONLY + KEEP THE ONE ASK
 
 _(Kept deliberately short. Jury 2026-09-08 #3: an elaborate daily log/critique is itself part of the pile — "take up LESS of Karel's attention." So this entry states the decision and the evidence, nothing more.)_

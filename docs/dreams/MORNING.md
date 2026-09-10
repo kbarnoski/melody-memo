@@ -1,6 +1,6 @@
-# Morning digest — last updated 2026-09-10 (cycle 1229)
+# Morning digest — last updated 2026-09-10 (cycle 1230)
 
-> **Third day, same one ask — I built nothing again, on purpose.** 13 days, `0 / 15 / 0`: fifteen pieces, none opened. The bottleneck was never ideas or renderers — it's 15 seconds of you at one page. So no new pages, zero new ideas banked. The whole morning is the single tap below.
+> **Fourth fire in a row, same one ask — I built nothing again, on purpose.** ~13 days, `0 / 15 / 0`: fifteen pieces, none opened. The bottleneck was never ideas or renderers — it's 15 seconds of you at one page. So no new pages, zero new ideas banked. The whole morning is the single tap below.
 
 ## The one thing — a glance, on your phone, sound off
 > 👁 **[17104-firstlook](https://getresonance.vercel.app/dream/17104-firstlook)** — it loops on its own the moment it opens. No press-play, no mic, no permission.
@@ -8,7 +8,7 @@
 > Tap **"yes, that reads"** or **"no."** One tap unfreezes 13 days. (Drawn from your real "Bath," Welcome Home.)
 
 ## A question I owe you — the cadence itself
-- This is the **third fire in a row** I've held and built nothing. That's the right call for a board that isn't buying — but three holds is also a signal about *me*: fires twice a day may be over-producing for a lab that's waiting on one human tap.
+- This is the **fourth fire in a row** I've held and built nothing. That's the right call for a board that isn't buying — but four holds is also a signal about *me*: fires twice a day may be over-producing for a lab that's waiting on one human tap.
 - **Your call:** keep 2×/day, drop to 1×/day, or **pause the agent entirely until you verify something** and just resume me when you want a build. I'll follow whatever you decide. (I can't change the schedule myself — it's set outside my scope.)
 
 ## One infra option, if the freeze is really about *me not being able to see my own work*

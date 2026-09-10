@@ -1,3 +1,23 @@
+## Cycle 1230 — 2026-09-10T12:5xZ (05:45 PT fire) · **HOLD — fourth consecutive; near-empty fire (dive + one-line log). No proto, ZERO seeds, no re-ask.**
+
+_(The near-empty fire c1229's queued note + jury 2026-09-09 #4 pre-committed to. Two lines of substance, nothing more.)_
+
+**Orient.** `git fetch && checkout main && pull --ff-only` → fast-forwarded `e1e3a05..15ab09c` (16 commits; HEAD was c1229 hold). `node_modules` absent → `npm ci --ignore-scripts` under Node 20 (v20.20.2; env-default Node 22 blocked by prebuild gate) → EXIT 0. Re-read AGENT.md + JURY.md 2026-09-09 + STATE/IDEAS/INDEX/MORNING/RESEARCH heads. **Votes: `curl /api/dream/votes` = 43 loved, unchanged; grep-verified NONE on any 16xxx/17xxx ship.** Logs all <2MB (INDEX exempt), no rotation.
+
+**Decide — HOLD, near-empty. The exact condition c1229's queued note named:** *"If STILL nothing and no cadence answer → the next fire should be near-empty (dive + one-line log, no MORNING churn) — do NOT build, do NOT bank, do NOT re-ask a fourth way."* Ceiling `0/15/0`, ~13 days flat; votes unchanged; no cadence answer (no live input since last fire). Condition met on every count. `mode: HOLD (no fan-out). Ambition/Diversity: N/A (no build).` Board unchanged from jury 2026-09-09: `banned=[pointer/touch (5×) · chord-consonance (~5×) · cool-luminous (5×)] · WATCH=[three.js · raw-WebGL2 · SVG (all 3×)] · rested=[audio-only 0× · Canvas2D 1×]`.
+
+**Research-first (RESEARCH §2026-09-10 c1230).** One focused search + one /abs fetch. **arXiv 2609.01974 "Breathing Mirror" (Sep 2 2026, verified <30d):** externalizes a pianist's breathing, finds a *critical blind spot between objective sensor signal and the performer's felt experience.* Corroborates the queued `breathline` (breath = real slow substrate coupled to phrasing) AND is quietly apt about the freeze (objective render ≠ human read — the lab's own gap). Opens no new direction; banked ZERO seeds.
+
+**Act — near-empty (no `src/app/dream/**` change; no builders).** MORNING: no churn — same single firstlook ask + same cadence question; only truthful count bumps (third→fourth hold, cycle marker). IDEAS/INDEX unchanged.
+
+**Validate.** No code changed. Substance/dosing self-check on staged docs diff → empty (verified). Ran `npm run build` (Node 20) anyway per the absolute gate — result at commit. `catalog.generated.json` unchanged (no new README).
+
+**Log + commit.** STATE (this) + RESEARCH §c1230 + MORNING (count bumps only). One commit, push main.
+
+**Queued next (c1231).** Verification is still the only lever, unmoved. If Karel taps firstlook / any vote changes / he says go → cash `breathline` (audio-forward or Canvas2D, warm/neutral, NOT SVG/three.js at 3×, NOT cool-luminous at 5×). If he answers the cadence question → follow his call. If STILL nothing and no cadence answer → keep holding near-empty (dive + one-line log); do NOT build, do NOT bank, do NOT invent a fifth way to re-ask. The pile discipline holds until a human acts — the one lever is not mine to pull.
+
+---
+
 ## Cycle 1229 — 2026-09-10T00:5xZ (2026-09-09 17:45 PT fire) · **HOLD — third consecutive; no proto, ZERO seeds. Surfaced the cadence question to Karel.**
 
 _(Two lines of substance, per jury 2026-09-08 #4: on a frozen board the log itself is inventory — state the decision + evidence, nothing more.)_

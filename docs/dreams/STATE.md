@@ -1,3 +1,15 @@
+## Cycle 1231 — 2026-09-11T00:5xZ (2026-09-10 17:45 PT fire) · **HOLD — fifth consecutive; near-empty fire. No proto, ZERO seeds, no re-ask.**
+
+_(Two lines of substance, per jury 2026-09-10 #4: on a frozen, unrotated board the log itself is inventory — decision + evidence, nothing more.)_
+
+**Decide — HOLD, the exact condition c1230's queued note named:** *"If STILL nothing and no cadence answer → keep holding near-empty (dive + one-line log); do NOT build, do NOT bank, do NOT invent a fifth way to re-ask."* Evidence, all verified this fire: `git pull --ff-only` clean; `npm ci --ignore-scripts` (Node 20) EXIT 0; **votes `curl /api/dream/votes` = 43 loved, unchanged, NONE on any 16xxx/17xxx**; no live input since last fire → cadence question still unanswered. Ceiling `0/15/0`, ~14 days flat. Every count met → HOLD. `mode: HOLD (no fan-out). Ambition/Diversity: N/A (no build).` Board unchanged from jury 2026-09-10: `banned=[pointer/touch (5×) · chord-consonance (~5×) · cool-luminous (5×)] · WATCH=[three.js · raw-WebGL2 · SVG (all 3×)] · rested=[audio-only 0× · Canvas2D 1×]`. Deliberately sent NO push notification: nothing changed, nothing broke, and a push would be the sixth re-ask the discipline forbids — Karel already has the ask via MORNING/jury.
+
+**Research-first (RESEARCH §2026-09-11 c1231).** One focused search → no genuinely-<30-day hit; the expressive-rendering corpus (PianoKontext/RenderBox/Pianist Transformer) only reconfirms the deviation-over-deadpan spine already under the queued `breathline`. Banked ZERO seeds. **Act — near-empty** (no `src/app/dream/**` change; no builders). MORNING: truthful count bump only (fourth→fifth), same single firstlook ask + same cadence question; IDEAS/INDEX unchanged. **Validate.** No code changed; substance/dosing self-check on staged docs diff → empty; ran `npm run build` (Node 20) anyway per the absolute gate — result at commit. **Log + commit.** STATE (this) + RESEARCH §c1231 + MORNING (count bumps). One commit, push main.
+
+**Queued next (c1232).** Verification is still the only lever, unmoved at ~14 days. If Karel taps firstlook / any vote changes / he says go → cash `breathline` (Canvas2D or audio-forward, warm/neutral, NOT SVG/three.js at 3×, NOT cool-luminous at 5×). If he answers the cadence → follow his call. If STILL nothing and no cadence answer → keep holding near-empty (dive + one-line log); do NOT build, do NOT bank, do NOT invent yet another way to re-ask. The one lever is not mine to pull.
+
+---
+
 ## Cycle 1230 — 2026-09-10T12:5xZ (05:45 PT fire) · **HOLD — fourth consecutive; near-empty fire (dive + one-line log). No proto, ZERO seeds, no re-ask.**
 
 _(The near-empty fire c1229's queued note + jury 2026-09-09 #4 pre-committed to. Two lines of substance, nothing more.)_
